@@ -523,6 +523,7 @@ const sel2 = grid.getPlugin(SelectionPlugin);
 15. **Use `focusCell()` and `scrollToRow()` for programmatic navigation** - `grid.focusCell(rowIndex, column)` accepts a column index or field name. `grid.scrollToRow(rowIndex, { align, behavior })` scrolls a row into view. `grid.scrollToRowById(rowId, options)` does the same by ID. Read `grid.focusedCell` for the current focus position.
 16. **Dirty tracking is opt-in** - Enable via `new EditingPlugin({ dirtyTracking: true })`. Requires `getRowId` (or `id`/`_id` on rows). Provides `isDirty()`, `getDirtyRows()`, `markAsPristine()`, `revertRow()`, and the `dirty-change` event. Auto-applies `tbw-row-dirty` / `tbw-row-new` CSS classes to rows.
 17. **Silent filter updates for batching** - `setFilter()`, `setFilterModel()`, `clearAllFilters()`, and `clearFieldFilter()` accept `{ silent: true }` to update filter state without triggering a re-render. Call the last filter method without `silent` to apply all pending changes at once.
+18. **Filter state and column state persistence** - By default, `FilteringPlugin` does **not** include filter state in `column-state-change` events or `getColumnState()` snapshots. Set `trackColumnState: true` in the plugin config to opt in. When enabled, filter changes fire `column-state-change` (debounced) and `getColumnState()`/`applyColumnState()` include filter data.
 
 ## Runtime Configuration Validation
 

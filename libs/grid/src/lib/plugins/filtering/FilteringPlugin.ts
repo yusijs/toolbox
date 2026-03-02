@@ -510,6 +510,9 @@ export class FilteringPlugin extends BaseGridPlugin<FilterConfig> {
         filteredRowCount: 0, // Will be accurate after processRows
         selected: this.computeSelected(),
       });
+      if (this.config.trackColumnState) {
+        this.grid.requestStateChange?.();
+      }
     }
     // Notify other plugins via Event Bus
     this.emitPluginEvent('filter-applied', { filters: [...this.filters.values()] });
@@ -558,6 +561,9 @@ export class FilteringPlugin extends BaseGridPlugin<FilterConfig> {
         filteredRowCount: 0,
         selected: this.computeSelected(),
       });
+      if (this.config.trackColumnState) {
+        this.grid.requestStateChange?.();
+      }
     }
     // Notify other plugins via Event Bus
     this.emitPluginEvent('filter-applied', { filters: [...this.filters.values()] });
@@ -1636,6 +1642,9 @@ export class FilteringPlugin extends BaseGridPlugin<FilterConfig> {
             filteredRowCount: rows.length,
             selected: this.computeSelected(),
           });
+          if (this.config.trackColumnState) {
+            this.grid.requestStateChange?.();
+          }
         }
         // Notify other plugins via Event Bus
         this.emitPluginEvent('filter-applied', { filters: filterList });
@@ -1659,6 +1668,9 @@ export class FilteringPlugin extends BaseGridPlugin<FilterConfig> {
         filteredRowCount: 0,
         selected: this.computeSelected(),
       });
+      if (this.config.trackColumnState) {
+        this.grid.requestStateChange?.();
+      }
     }
     // Notify other plugins via Event Bus
     this.emitPluginEvent('filter-applied', { filters: filterList });
@@ -1670,9 +1682,12 @@ export class FilteringPlugin extends BaseGridPlugin<FilterConfig> {
 
   /**
    * Return filter state for a column if it has an active filter.
+   * Only contributes state when `trackColumnState` is enabled.
    * @internal
    */
   override getColumnState(field: string): Partial<ColumnState> | undefined {
+    if (!this.config.trackColumnState) return undefined;
+
     const filterModel = this.filters.get(field);
     if (!filterModel) return undefined;
 
@@ -1688,9 +1703,12 @@ export class FilteringPlugin extends BaseGridPlugin<FilterConfig> {
 
   /**
    * Apply filter state from column state.
+   * Only applies state when `trackColumnState` is enabled.
    * @internal
    */
   override applyColumnState(field: string, state: ColumnState): void {
+    if (!this.config.trackColumnState) return;
+
     // Only process if the column has filter state
     if (!state.filter) {
       this.filters.delete(field);

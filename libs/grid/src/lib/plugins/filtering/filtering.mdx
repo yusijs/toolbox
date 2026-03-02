@@ -305,15 +305,16 @@ This is useful for toggling filtering on/off at runtime without removing the plu
 
 ### Plugin Options
 
-| Option                | Type                  | Default | Description                                 |
-| --------------------- | --------------------- | ------- | ------------------------------------------- |
-| `debounceMs`          | `number`              | `300`   | Debounce delay for filter input             |
-| `caseSensitive`       | `boolean`             | `false` | Case-sensitive string matching              |
-| `trimInput`           | `boolean`             | `true`  | Trim whitespace from filter input           |
-| `useWorker`           | `boolean`             | `true`  | Use Web Worker for datasets >1000 rows      |
-| `filterPanelRenderer` | `FilterPanelRenderer` | -       | Custom filter panel renderer                |
-| `valuesHandler`       | `FilterValuesHandler` | -       | Async handler to fetch unique filter values |
-| `filterHandler`       | `FilterHandler<TRow>` | -       | Async handler to apply filters remotely     |
+| Option                | Type                  | Default | Description                                                       |
+| --------------------- | --------------------- | ------- | ----------------------------------------------------------------- |
+| `debounceMs`          | `number`              | `300`   | Debounce delay for filter input                                   |
+| `caseSensitive`       | `boolean`             | `false` | Case-sensitive string matching                                    |
+| `trimInput`           | `boolean`             | `true`  | Trim whitespace from filter input                                 |
+| `useWorker`           | `boolean`             | `true`  | Use Web Worker for datasets >1000 rows                            |
+| `trackColumnState`    | `boolean`             | `false` | Include filter state in column state persistence                  |
+| `filterPanelRenderer` | `FilterPanelRenderer` | -       | Custom filter panel renderer                                      |
+| `valuesHandler`       | `FilterValuesHandler` | -       | Async handler to fetch unique filter values                       |
+| `filterHandler`       | `FilterHandler<TRow>` | -       | Async handler to apply filters remotely                           |
 
 ## Column Configuration
 
@@ -354,6 +355,36 @@ plugin.clearFilter('name');
 // Useful for batching multiple filter changes
 plugin.setFilter('name', 'Alice', { silent: true });
 plugin.setFilter('dept', 'Engineering'); // last call applies all
+```
+
+## Column State Persistence
+
+By default, filter state is **not** included in column state and does not fire `column-state-change`.
+Enable `trackColumnState` to opt in:
+
+```ts
+new FilteringPlugin({ trackColumnState: true })
+```
+
+When enabled:
+- Filter state is included in `getColumnState()` / `columnState` snapshots
+- Filter changes fire the `column-state-change` event (debounced)
+- `applyColumnState()` / `columnState` restores filter state
+
+This is useful when you want to persist and restore the full grid state (including active filters)
+via `localStorage` or a server:
+
+```ts
+// Save full state including filters
+grid.addEventListener('column-state-change', (e) => {
+  localStorage.setItem('grid-state', JSON.stringify(e.detail));
+});
+
+// Restore state (filters are re-applied automatically)
+gridConfig: {
+  columnState: JSON.parse(localStorage.getItem('grid-state')),
+  plugins: [new FilteringPlugin({ trackColumnState: true })],
+}
 ```
 
 ## Events

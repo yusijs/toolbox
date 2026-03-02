@@ -270,6 +270,22 @@ export interface FilterConfig<TRow = unknown> {
   filterPanelRenderer?: FilterPanelRenderer;
 
   /**
+   * Whether filter state should be included in column state persistence.
+   *
+   * When `true`:
+   * - `getColumnState()` includes filter data for each column
+   * - Filter changes fire the `column-state-change` event (debounced)
+   * - `applyColumnState()` restores filter state
+   *
+   * When `false` (default):
+   * - Filters are excluded from column state entirely
+   * - Filter changes do not fire `column-state-change`
+   *
+   * @default false
+   */
+  trackColumnState?: boolean;
+
+  /**
    * Async handler for fetching unique values from a server.
    * When provided, this is called instead of extracting values from local rows.
    * Useful for server-side datasets where not all data is loaded.

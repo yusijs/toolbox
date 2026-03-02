@@ -1394,6 +1394,152 @@ describe('FilteringPlugin class', () => {
     grid._cleanup();
   });
 
+  // #region trackColumnState
+
+  it('getColumnState returns undefined when trackColumnState is false (default)', () => {
+    const plugin = new FilteringPlugin();
+    const grid = createGridMock();
+    plugin.attach(grid as any);
+
+    plugin.setFilter('name', { type: 'text', operator: 'contains', value: 'Alice' });
+    expect(plugin.getColumnState('name')).toBeUndefined();
+    grid._cleanup();
+  });
+
+  it('getColumnState returns filter state when trackColumnState is true', () => {
+    const plugin = new FilteringPlugin({ trackColumnState: true });
+    const grid = createGridMock();
+    plugin.attach(grid as any);
+
+    plugin.setFilter('name', { type: 'text', operator: 'contains', value: 'Alice' });
+    const state = plugin.getColumnState('name');
+    expect(state).toBeDefined();
+    expect(state?.filter).toEqual({
+      type: 'text',
+      operator: 'contains',
+      value: 'Alice',
+      valueTo: undefined,
+    });
+    grid._cleanup();
+  });
+
+  it('getColumnState returns undefined for unfiltered column even with trackColumnState', () => {
+    const plugin = new FilteringPlugin({ trackColumnState: true });
+    const grid = createGridMock();
+    plugin.attach(grid as any);
+
+    expect(plugin.getColumnState('name')).toBeUndefined();
+    grid._cleanup();
+  });
+
+  it('applyColumnState is a no-op when trackColumnState is false', () => {
+    const plugin = new FilteringPlugin();
+    const grid = createGridMock();
+    plugin.attach(grid as any);
+
+    plugin.applyColumnState('name', {
+      field: 'name',
+      order: 0,
+      visible: true,
+      filter: { type: 'text', operator: 'contains', value: 'Alice' },
+    });
+    expect(plugin.getFilter('name')).toBeUndefined();
+    grid._cleanup();
+  });
+
+  it('applyColumnState restores filter when trackColumnState is true', () => {
+    const plugin = new FilteringPlugin({ trackColumnState: true });
+    const grid = createGridMock();
+    plugin.attach(grid as any);
+
+    plugin.applyColumnState('name', {
+      field: 'name',
+      order: 0,
+      visible: true,
+      filter: { type: 'text', operator: 'contains', value: 'Alice' },
+    });
+    const filter = plugin.getFilter('name');
+    expect(filter).toBeDefined();
+    expect(filter?.field).toBe('name');
+    expect(filter?.operator).toBe('contains');
+    expect(filter?.value).toBe('Alice');
+    grid._cleanup();
+  });
+
+  it('setFilter calls requestStateChange when trackColumnState is true', () => {
+    const plugin = new FilteringPlugin({ trackColumnState: true });
+    const grid = createGridMock();
+    (grid as any).requestStateChange = vi.fn();
+    plugin.attach(grid as any);
+
+    plugin.setFilter('name', { type: 'text', operator: 'contains', value: 'Alice' });
+    expect((grid as any).requestStateChange).toHaveBeenCalled();
+    grid._cleanup();
+  });
+
+  it('setFilter does not call requestStateChange when trackColumnState is false', () => {
+    const plugin = new FilteringPlugin();
+    const grid = createGridMock();
+    (grid as any).requestStateChange = vi.fn();
+    plugin.attach(grid as any);
+
+    plugin.setFilter('name', { type: 'text', operator: 'contains', value: 'Alice' });
+    expect((grid as any).requestStateChange).not.toHaveBeenCalled();
+    grid._cleanup();
+  });
+
+  it('setFilter with { silent: true } does not call requestStateChange even with trackColumnState', () => {
+    const plugin = new FilteringPlugin({ trackColumnState: true });
+    const grid = createGridMock();
+    (grid as any).requestStateChange = vi.fn();
+    plugin.attach(grid as any);
+
+    plugin.setFilter('name', { type: 'text', operator: 'contains', value: 'Alice' }, { silent: true });
+    expect((grid as any).requestStateChange).not.toHaveBeenCalled();
+    grid._cleanup();
+  });
+
+  it('setFilterModel calls requestStateChange when trackColumnState is true', () => {
+    const plugin = new FilteringPlugin({ trackColumnState: true });
+    const grid = createGridMock();
+    (grid as any).requestStateChange = vi.fn();
+    plugin.attach(grid as any);
+
+    plugin.setFilterModel([{ field: 'name', type: 'text', operator: 'contains', value: 'A' }]);
+    expect((grid as any).requestStateChange).toHaveBeenCalled();
+    grid._cleanup();
+  });
+
+  it('clearAllFilters calls requestStateChange when trackColumnState is true', () => {
+    const plugin = new FilteringPlugin({ trackColumnState: true });
+    const grid = createGridMock();
+    (grid as any).requestStateChange = vi.fn();
+    plugin.attach(grid as any);
+
+    plugin.setFilter('name', { type: 'text', operator: 'contains', value: 'A' });
+    (grid as any).requestStateChange.mockClear();
+
+    plugin.clearAllFilters();
+    expect((grid as any).requestStateChange).toHaveBeenCalled();
+    grid._cleanup();
+  });
+
+  it('clearFieldFilter calls requestStateChange when trackColumnState is true', () => {
+    const plugin = new FilteringPlugin({ trackColumnState: true });
+    const grid = createGridMock();
+    (grid as any).requestStateChange = vi.fn();
+    plugin.attach(grid as any);
+
+    plugin.setFilter('name', { type: 'text', operator: 'contains', value: 'A' });
+    (grid as any).requestStateChange.mockClear();
+
+    plugin.clearFieldFilter('name');
+    expect((grid as any).requestStateChange).toHaveBeenCalled();
+    grid._cleanup();
+  });
+
+  // #endregion
+
   // #endregion
 });
 
