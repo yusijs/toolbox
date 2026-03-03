@@ -662,6 +662,10 @@ export class EditingPlugin<T = unknown> extends BaseGridPlugin<EditingConfig> {
         'focusin',
         (e: FocusEvent) => {
           const target = e.target as HTMLElement;
+          // Ignore focus on the grid element itself — it has tabindex=0 so it
+          // matches FOCUSABLE_EDITOR_SELECTOR, but blurring + re-focusing it
+          // would cause infinite recursion.
+          if (target === this.gridElement) return;
           if (target.matches(FOCUSABLE_EDITOR_SELECTOR)) {
             // If edit is locked (navigation mode), blur the input immediately
             if (this.#gridModeEditLocked) {
