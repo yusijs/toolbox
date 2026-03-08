@@ -3,12 +3,9 @@ title: Getting Started
 description: Install @toolbox-web/grid and render your first grid in under a minute. Covers npm, CDN, ES modules, declarative HTML, and full framework integration for Vanilla JS, React, Vue, and Angular.
 ---
 
-import { Tabs, TabItem, Steps, LinkCard, CardGrid, Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem, Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
 
-<Aside type="tip" title="Using a framework?">
-  Jump directly to a framework-specific guide:
-  **[Angular](/grid/angular/getting-started/)** · **[React](/grid/react/getting-started/)** · **[Vue](/grid/vue/getting-started/)**
-</Aside>
+**Using a framework?** Jump directly to [Angular](/grid/angular/getting-started/), [React](/grid/react/getting-started/), or [Vue](/grid/vue/getting-started/).
 
 ## Quick Start
 
@@ -82,9 +79,7 @@ For simple use cases (without editing), configure the grid entirely via HTML att
 </tbw-grid>
 ```
 
-:::note
 For inline editing, use JavaScript configuration to register the `EditingPlugin` — see the framework examples below.
-:::
 
 ### Declarative Configuration (Light DOM)
 
@@ -120,20 +115,16 @@ The grid will:
 - Use the property name as the header (with basic formatting)
 - Apply appropriate built-in renderers for each type
 
-:::tip
 You can also set `grid.columns` directly as a shorthand for `gridConfig.columns`, but using `gridConfig` is more versatile as it includes columns, plugins, and behavioral settings in one place.
-:::
 
 ## Framework Integration
 
-The grid is a standard web component that works in any JavaScript environment. For React, Vue, and Angular, we provide dedicated adapter packages that enable custom component renderers and editors.
+The grid is a standard web component that works in any JavaScript environment — you can always use the Vanilla JS approach in any framework. For React, Vue, and Angular, we also provide dedicated adapter packages that enable custom component renderers and editors.
 
 <Tabs syncKey="framework">
   <TabItem label="Vanilla JS">
 
-### Configuration via JavaScript
-
-```typescript
+```typescript title="main.ts"
 import '@toolbox-web/grid';
 import { createGrid, queryGrid } from '@toolbox-web/grid';
 import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
@@ -205,8 +196,6 @@ grid.addEventListener('cell-commit', (e: CustomEvent) => {
   </TabItem>
   <TabItem label="React">
 
-### React Adapter (Recommended)
-
 For React projects, use the `@toolbox-web/grid-react` adapter package for enhanced integration:
 
 ```bash
@@ -214,7 +203,7 @@ For React projects, use the `@toolbox-web/grid-react` adapter package for enhanc
 npm install @toolbox-web/grid @toolbox-web/grid-react
 ```
 
-```tsx
+```tsx title="EmployeeGrid.tsx"
 import { DataGrid, type ReactGridConfig } from '@toolbox-web/grid-react';
 import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
 import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
@@ -286,14 +275,8 @@ The `DataGrid` component provides:
 
 See the [React adapter docs](/grid/react/getting-started/) for the complete API reference.
 
-:::note
-**Without the adapter:** You can also use the grid without the adapter package by following the Vanilla JS approach — it works in any framework since the grid is a standard web component.
-:::
-
   </TabItem>
   <TabItem label="Vue">
-
-### Vue Adapter (Recommended)
 
 For Vue projects, use the `@toolbox-web/grid-vue` adapter package for enhanced integration:
 
@@ -302,7 +285,7 @@ For Vue projects, use the `@toolbox-web/grid-vue` adapter package for enhanced i
 npm install @toolbox-web/grid @toolbox-web/grid-vue
 ```
 
-```html
+```html title="EmployeeGrid.vue"
 <script setup>
 import '@toolbox-web/grid-vue/features/editing';
 import '@toolbox-web/grid-vue/features/selection';
@@ -359,14 +342,8 @@ The `TbwGrid` component provides:
 
 See the [Vue adapter docs](/grid/vue/getting-started/) for the complete API reference.
 
-:::note
-**Without the adapter:** You can also use the grid without the adapter package by following the Vanilla JS approach — it works in any framework since the grid is a standard web component.
-:::
-
   </TabItem>
   <TabItem label="Angular">
-
-### Angular Adapter (Recommended)
 
 For Angular projects, use the `@toolbox-web/grid-angular` adapter package for enhanced integration:
 
@@ -375,8 +352,7 @@ For Angular projects, use the `@toolbox-web/grid-angular` adapter package for en
 npm install @toolbox-web/grid @toolbox-web/grid-angular
 ```
 
-```typescript
-// grid.component.ts
+```typescript title="grid.component.ts"
 // Feature imports — enable the feature inputs
 import '@toolbox-web/grid-angular/features/editing';
 import '@toolbox-web/grid-angular/features/selection';
@@ -450,10 +426,6 @@ The `Grid` directive automatically registers the Angular adapter, enabling:
 - **Grid-level events** — `(cellCommit)`, `(rowCommit)` outputs
 
 See the [Angular adapter docs](/grid/angular/getting-started/) for the complete API reference.
-
-:::note
-**Without the adapter:** You can also use the grid without the adapter package by following the Vanilla JS approach — it works in any framework since the grid is a standard web component.
-:::
 
   </TabItem>
 </Tabs>

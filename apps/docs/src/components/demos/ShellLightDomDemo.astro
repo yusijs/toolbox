@@ -4,10 +4,10 @@
  */
 ---
 
+<p class="grid-demo-description">
+  Shell configured via <code>&lt;tbw-grid-header&gt;</code> light DOM elements — no JavaScript shell config needed.
+</p>
 <div class="grid-demo">
-  <p class="grid-demo-description">
-    Shell configured via <code>&lt;tbw-grid-header&gt;</code> light DOM elements — no JavaScript shell config needed.
-  </p>
   <div data-demo-id="shell-lightdom-wrap">
     <tbw-grid style="height: 420px; display: block;">
       <tbw-grid-header title="Employee Directory">
@@ -21,7 +21,7 @@
 
 <script>
   import '@toolbox-web/grid';
-  import type { ColumnConfig } from '@toolbox-web/grid';
+import type { ColumnConfig } from '@toolbox-web/grid';
 
   const grid = document.querySelector<HTMLElement & {
     columns: ColumnConfig[];

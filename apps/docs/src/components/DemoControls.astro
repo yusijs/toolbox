@@ -82,13 +82,14 @@ for (const ctrl of controls) {
               </label>
             )}
             {ctrl.type === 'boolean' && (
-              <label class="dc-checkbox-wrap">
+              <label class="dc-toggle">
                 <input
                   type="checkbox"
                   data-ctrl={ctrl.name}
                   data-type="boolean"
                   checked={ctrl.default === true ? true : undefined}
                 />
+                <span class="dc-toggle-track"></span>
               </label>
             )}
             {ctrl.type === 'radio' && ctrl.options && (
@@ -191,6 +192,8 @@ for (const ctrl of controls) {
         if (output) output.textContent = target.value;
         emitChange(name, Number(target.value));
       } else if (type === 'boolean') {
+        const badge = target.closest('.dc-row')?.querySelector('.dc-default-badge');
+        if (badge) badge.textContent = String(target.checked);
         emitChange(name, target.checked);
       } else if (type === 'radio') {
         emitChange(name, target.value);
@@ -300,10 +303,47 @@ for (const ctrl of controls) {
     font-weight: 600;
   }
 
-  .dc-checkbox-wrap input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
+  /* Slide-toggle for boolean controls */
+  .dc-toggle {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 18px;
     cursor: pointer;
+  }
+  .dc-toggle input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .dc-toggle-track {
+    position: absolute;
+    inset: 0;
+    border-radius: 9px;
+    background: var(--sl-color-gray-5);
+    transition: background 0.2s;
+  }
+  .dc-toggle-track::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: white;
+    transition: transform 0.2s;
+  }
+  .dc-toggle input:checked + .dc-toggle-track {
+    background: var(--sl-color-accent);
+  }
+  .dc-toggle input:checked + .dc-toggle-track::after {
+    transform: translateX(16px);
+  }
+  .dc-toggle input:focus-visible + .dc-toggle-track {
+    outline: 2px solid var(--sl-color-accent);
+    outline-offset: 2px;
   }
 
   .dc-radio-group, .dc-check-group {

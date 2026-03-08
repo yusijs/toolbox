@@ -4,16 +4,16 @@
  */
 ---
 
+<p class="grid-demo-description">
+  Use <code>rowClass</code> and <code>cellClass</code> to apply conditional styles based on data.
+</p>
 <div class="grid-demo">
-  <p class="grid-demo-description">
-    Use <code>rowClass</code> and <code>cellClass</code> to apply conditional styles based on data.
-  </p>
   <tbw-grid data-demo-id="row-cell-styling" style="height: 280px; display: block;"></tbw-grid>
 </div>
 
 <script>
   import '@toolbox-web/grid';
-  import type { GridConfig } from '@toolbox-web/grid';
+import type { GridConfig } from '@toolbox-web/grid';
 
   interface Employee {
     id: number;

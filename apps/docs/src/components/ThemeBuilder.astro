@@ -895,6 +895,29 @@ VisibilityPlugin,
     // Create panel
     panelEl = createThemePanel(state, handleUpdate);
     panelSlot.replaceWith(panelEl);
+
+    // Watch for grid theme switcher changes
+    document.addEventListener('tbw-theme-change', () => {
+      requestAnimationFrame(() => {
+        // Clear inline overrides so computed styles reflect the new theme
+        for (const category of Object.values(CSS_VARIABLES)) {
+          for (const variable of category) {
+            grid.style.removeProperty(variable.name);
+          }
+        }
+        const computed = readComputedVariables(grid);
+        state.values = { ...computed.light };
+        state.darkValues = { ...computed.dark };
+        state.baselineValues = { ...computed.light };
+        state.baselineDarkValues = { ...computed.dark };
+        applyStateToGrid(grid, state);
+        if (panelEl) {
+          const newPanel = createThemePanel(state, handleUpdate);
+          panelEl.replaceWith(newPanel);
+          panelEl = newPanel;
+        }
+      });
+    });
   });
   // #endregion
 </script>

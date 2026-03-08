@@ -264,6 +264,9 @@
   const observer = new MutationObserver(updateValues);
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class', 'style'] });
 
+  // Watch for grid theme switcher changes
+  document.addEventListener('tbw-theme-change', () => requestAnimationFrame(updateValues));
+
   // Watch for color-scheme media changes
   const mql = window.matchMedia('(prefers-color-scheme: dark)');
   mql.addEventListener('change', updateValues);

@@ -4,16 +4,16 @@
  */
 ---
 
+<p class="grid-demo-description">
+  Renderers give full control over cell content — create badges, checkboxes, progress bars, and more.
+</p>
 <div class="grid-demo">
-  <p class="grid-demo-description">
-    Renderers give full control over cell content — create badges, checkboxes, progress bars, and more.
-  </p>
   <tbw-grid data-demo-id="custom-renderers" style="height: 280px; display: block;"></tbw-grid>
 </div>
 
 <script>
   import '@toolbox-web/grid';
-  import type { ColumnConfig } from '@toolbox-web/grid';
+import type { ColumnConfig } from '@toolbox-web/grid';
 
   interface Employee {
     id: number;

@@ -88,7 +88,7 @@ export default defineConfig({
   integrations: [
     mermaid({ autoTheme: true, enableLog: false }),
     starlight({
-      title: 'Toolbox Grid',
+      title: 'ToolboxJS',
       logo: {
         src: './src/assets/logo.svg',
         replacesTitle: false,

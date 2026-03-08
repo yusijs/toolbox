@@ -87,11 +87,15 @@ import vibrantCss from '@toolbox/themes/dg-theme-vibrant.css?raw';
 
   function applyTheme(name: string) {
     document.getElementById(STYLE_ID)?.remove();
-    if (!name || !THEMES[name]) return;
+    if (!name || !THEMES[name]) {
+      document.dispatchEvent(new CustomEvent('tbw-theme-change', { detail: { theme: '' } }));
+      return;
+    }
     const style = document.createElement('style');
     style.id = STYLE_ID;
     style.textContent = THEMES[name];
     document.head.appendChild(style);
+    document.dispatchEvent(new CustomEvent('tbw-theme-change', { detail: { theme: name } }));
   }
 
   // Apply the persisted theme immediately at module-evaluation time so grids

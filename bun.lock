@@ -73,7 +73,7 @@
     },
     "libs/grid": {
       "name": "@toolbox-web/grid",
-      "version": "1.23.2",
+      "version": "1.23.3",
     },
     "libs/grid-angular": {
       "name": "@toolbox-web/grid-angular",

@@ -4,17 +4,17 @@
  */
 ---
 
+<p class="grid-demo-description">
+  Multiple tool panels (Columns, Filter, Settings). Click toolbar icons to toggle each.
+</p>
 <div class="grid-demo">
-  <p class="grid-demo-description">
-    Multiple tool panels (Columns, Filter, Settings). Click toolbar icons to toggle each.
-  </p>
   <tbw-grid data-demo-id="shell-multi-panels" style="height: 420px; display: block;"></tbw-grid>
 </div>
 
 <script>
   import '@toolbox-web/grid';
-  import type { ColumnConfig, GridConfig, ToolPanelDefinition } from '@toolbox-web/grid';
-  import { VisibilityPlugin } from '@toolbox-web/grid/plugins/visibility';
+import type { ColumnConfig, GridConfig, ToolPanelDefinition } from '@toolbox-web/grid';
+import { VisibilityPlugin } from '@toolbox-web/grid/plugins/visibility';
 
   const grid = document.querySelector<HTMLElement & {
     columns: ColumnConfig[];
