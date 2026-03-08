@@ -366,7 +366,7 @@ export interface GeneratorOptions {
 /** Generate MDX for an interface */
 export function genInterface(node: TypeDocNode, title: string, options: GeneratorOptions = {}): string {
   const { regenerateCommand } = options;
-  let out = mdxHeader(title, regenerateCommand) + `# Interface: ${node.name}\n\n`;
+  let out = mdxHeader(title, regenerateCommand);
   const desc = getText(node.comment);
   if (desc) out += `${escape(desc)}\n\n`;
 
@@ -392,7 +392,7 @@ export function genInterface(node: TypeDocNode, title: string, options: Generato
 /** Generate MDX for a class */
 export function genClass(node: TypeDocNode, title: string, options: GeneratorOptions = {}): string {
   const { regenerateCommand } = options;
-  let out = mdxHeader(title, regenerateCommand) + `# Class: ${node.name}\n\n`;
+  let out = mdxHeader(title, regenerateCommand);
   const desc = getText(node.comment);
   if (desc) out += `${escape(desc)}\n\n`;
 
@@ -450,7 +450,7 @@ export function genFunction(node: TypeDocNode, title: string, options: Generator
   const sig = node.signatures?.[0];
   if (!sig) return '';
 
-  let out = mdxHeader(title, regenerateCommand) + `# Function: ${node.name}\n\n`;
+  let out = mdxHeader(title, regenerateCommand);
   const desc = getText(sig.comment);
   if (desc) out += `${escape(desc)}\n\n`;
 
@@ -481,7 +481,7 @@ export function genTypeAlias(node: TypeDocNode, title: string, options: Generato
   const deprecated = isDeprecated(node.comment);
   const deprecationNote = getTag(node.comment, '@deprecated');
 
-  let out = mdxHeader(title, regenerateCommand) + `# Type: ${node.name}\n\n`;
+  let out = mdxHeader(title, regenerateCommand);
 
   // Show deprecation warning if present
   if (deprecated) {
@@ -514,7 +514,7 @@ function linkifyDeprecationNote(note: string, _title: string): string {
 /** Generate MDX for an enum */
 export function genEnum(node: TypeDocNode, title: string, options: GeneratorOptions = {}): string {
   const { regenerateCommand } = options;
-  let out = mdxHeader(title, regenerateCommand) + `# Enum: ${node.name}\n\n`;
+  let out = mdxHeader(title, regenerateCommand);
   const desc = getText(node.comment);
   if (desc) out += `${escape(desc)}\n\n`;
 

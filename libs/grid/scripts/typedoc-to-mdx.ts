@@ -224,7 +224,7 @@ function genMethod(node: TypeDocNode, showOverride = false): string {
 }
 
 function genClass(node: TypeDocNode, title: string, filter?: (m: TypeDocNode) => boolean): string {
-  let out = mdxHeader(title) + `# Class: ${node.name}\n\n`;
+  let out = mdxHeader(title);
   const desc = getText(node.comment);
   if (desc) out += `${escape(desc)}\n\n`;
 
@@ -237,7 +237,7 @@ function genClass(node: TypeDocNode, title: string, filter?: (m: TypeDocNode) =>
  * and members marked @internal. Adds a note at the top linking to the base class documentation.
  */
 function genPluginClass(node: TypeDocNode, title: string): string {
-  let out = mdxHeader(title) + `# Class: ${node.name}\n\n`;
+  let out = mdxHeader(title);
   let desc = getText(node.comment);
   // Remove "Extends BaseGridPlugin" text that comes from @internal marker
   desc = desc.replace(/\s*Extends BaseGridPlugin\s*/g, '').trim();
@@ -396,7 +396,7 @@ function genClassBody(
 }
 
 function genInterface(node: TypeDocNode, title: string): string {
-  let out = mdxHeader(title) + `# Interface: ${node.name}\n\n`;
+  let out = mdxHeader(title);
   const desc = getText(node.comment);
   if (desc) out += `${escape(desc)}\n\n`;
 
@@ -413,7 +413,7 @@ function genInterface(node: TypeDocNode, title: string): string {
 }
 
 function genTypeAlias(node: TypeDocNode, title: string): string {
-  let out = mdxHeader(title) + `# Type: ${node.name}\n\n`;
+  let out = mdxHeader(title);
   const desc = getText(node.comment);
   if (desc) out += `${escape(desc)}\n\n`;
   out += `\`\`\`ts\ntype ${node.name} = ${formatType(node.type)}\n\`\`\`\n\n`;
@@ -432,7 +432,7 @@ function genFunction(node: TypeDocNode, title: string): string {
   const sig = node.signatures?.[0];
   if (!sig) return '';
 
-  let out = mdxHeader(title) + `# Function: ${node.name}\n\n`;
+  let out = mdxHeader(title);
   const desc = getText(sig.comment);
   if (desc) out += `${escape(desc)}\n\n`;
 
@@ -450,7 +450,7 @@ function genFunction(node: TypeDocNode, title: string): string {
 }
 
 function genEnum(node: TypeDocNode, title: string): string {
-  let out = mdxHeader(title) + `# Enum: ${node.name}\n\n`;
+  let out = mdxHeader(title);
   const desc = getText(node.comment);
   if (desc) out += `${escape(desc)}\n\n`;
 
@@ -650,8 +650,7 @@ const CORE_INTERNAL_EVENTS: { event: string; description: string }[] = [
 function genDataGridSplit(node: TypeDocNode, outDir: string): void {
   // Public API
   let publicMdx = mdxHeader('DataGridElement');
-  publicMdx += `# Class: DataGridElement
-
+  publicMdx += `
 High-performance data grid web component (\`<tbw-grid>\`).
 
 ## Instantiation
@@ -692,8 +691,7 @@ const grid = document.createElement('tbw-grid');
 
   // Plugin API - also uses @group tags for organization
   let pluginMdx = mdxHeader('DataGridElement (Plugin API)');
-  pluginMdx += `# Class: DataGridElement (Plugin API)
-
+  pluginMdx += `
 Internal API for plugin developers. Members marked with \`@internal Plugin API\`
 or using the \`_underscore\` prefix convention.
 
@@ -713,8 +711,7 @@ See the [public API documentation](/grid/api/core/classes/datagridelement/) for 
   const adapterMembers = (node.children ?? []).filter(isFrameworkAdapterMember);
   if (adapterMembers.length) {
     let adapterMdx = mdxHeader('DataGridElement (Framework Adapters)');
-    adapterMdx += `# Class: DataGridElement (Framework Adapters)
-
+    adapterMdx += `
 API for framework adapter developers (React, Angular, Vue, etc.).
 These methods are used by framework integration libraries to register adapters
 and manage column/renderer lifecycles.
