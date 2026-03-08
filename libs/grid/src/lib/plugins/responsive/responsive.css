@@ -152,13 +152,13 @@ tbw-grid[data-responsive] {
   }
 }
 
-/* Hidden columns in responsive mode */
-tbw-grid[data-responsive] .cell[data-responsive-hidden] {
+/* Hidden columns — specificity must beat `.data-grid-row:not(.group-row) > .cell` above */
+tbw-grid[data-responsive] .data-grid-row > .cell[data-responsive-hidden] {
   display: none !important;
 }
 
 /* Value-only columns in responsive mode (hides label, shows value full-width) */
-tbw-grid[data-responsive] .cell[data-responsive-value-only] {
+tbw-grid[data-responsive] .data-grid-row > .cell[data-responsive-value-only] {
   /* Override the header label ::before to hide it */
   &::before {
     display: none !important;
