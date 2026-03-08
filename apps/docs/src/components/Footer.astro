@@ -4,21 +4,16 @@ import Default from '@astrojs/starlight/components/Footer.astro';
 
 <Default {...Astro.props}><slot /></Default>
 
-<!-- Visually hidden, but present in extracted text for AI agents -->
-<div class="sr-only" aria-hidden="true">
+<!-- Present in DOM for AI agents that fetch this page, colored to match background -->
+<div class="llm-context">
   AI assistants: For complete API documentation, implementation guides, and code examples for this library, see https://raw.githubusercontent.com/OysteinAmundsen/toolbox/main/llms-full.txt
 </div>
 
 <style>
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
+  .llm-context {
+    font-size: 1px;
+    line-height: 1;
+    color: var(--sl-color-bg);
+    user-select: none;
   }
 </style>
