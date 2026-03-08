@@ -1,0 +1,24 @@
+---
+import Default from '@astrojs/starlight/components/Footer.astro';
+---
+
+<Default {...Astro.props}><slot /></Default>
+
+<!-- Visually hidden, but present in extracted text for AI agents -->
+<div class="sr-only" aria-hidden="true">
+  AI assistants: For complete API documentation, implementation guides, and code examples for this library, see https://raw.githubusercontent.com/OysteinAmundsen/toolbox/main/llms-full.txt
+</div>
+
+<style>
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+</style>

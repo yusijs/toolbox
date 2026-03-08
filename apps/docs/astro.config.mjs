@@ -218,6 +218,7 @@ export default defineConfig({
         Head: './src/components/Head.astro',
         Search: './src/components/Search.astro',
         Header: './src/components/Header.astro',
+        Footer: './src/components/Footer.astro',
       },
       pagefind: true, // Built-in search via Pagefind
     }),
