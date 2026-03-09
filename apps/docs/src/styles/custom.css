@@ -164,7 +164,7 @@
    doesn't get pushed off-screen when the viewport is between 72rem and very wide. */
 @media (min-width: 72rem) {
   .right-sidebar-container {
-    width: 300px;
+    width: var(--sl-sidebar-width);
   }
   .main-pane {
     width: fit-content;

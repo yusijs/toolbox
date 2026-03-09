@@ -465,13 +465,81 @@ export class MyComponent {
 }
 ```
 
-### Future: Full-Grid Editing with FormArray
+### Full-Grid Editing with FormArray
 
-`GridFormArray` will shine when we add support for **full-grid editing**—an Excel-like experience where all rows are editable simultaneously. This enables:
+`GridFormArray` pairs naturally with `mode: 'grid'`—the spreadsheet-like editing mode where **all editable cells display their editors at once**.
 
-- Tab between cells across entire grid
-- Paste data from spreadsheets into multiple rows
-- Bulk validation before save
-- FormArray-level operations (push, removeAt, etc.)
+```typescript
+gridConfig = {
+  columns: [
+    { field: 'name', header: 'Name', editable: true },
+    { field: 'age', header: 'Age', editable: true, type: 'number' },
+  ],
+  plugins: [new EditingPlugin({ mode: 'grid' })],
+};
+```
 
-Until then, `GridLazyForm` is recommended for most CRUD applications.
+This enables:
+
+- **All editors visible immediately** — no click-to-edit; every editable cell shows its input
+- **Tab between cells** across the entire grid
+- **Arrow-key navigation** — press Escape to leave an input, then navigate with arrow keys; press Enter to re-enter the input
+- **Cell-level revert on Escape** — reverts the cell to its pre-edit value and resets the corresponding `FormControl`
+- **Reactive validation syncing** — `GridFormArray` subscribes to each `FormControl`'s `statusChanges` so invalid styling updates in real time as the user types
+- **Bulk validation before save** — call `form.valid` or inspect `FormArray`-level errors
+- **FormArray-level operations** — `push`, `removeAt`, etc. update the grid automatically
+
+#### How `GridFormArray` Handles Grid Mode
+
+When `syncValidation` is enabled (the default) and the `EditingPlugin` is in `mode: 'grid'`:
+
+1. **Initial validation** — pre-existing validation errors are shown as soon as the grid renders
+2. **Reactive updates** — each `FormControl`'s `statusChanges` is subscribed so the grid marks/clears invalid cells automatically
+3. **Escape (cell-cancel)** — the `cell-cancel` event resets the `FormControl` to its previous value, keeping Angular form state in sync
+
+```typescript
+@Component({
+  imports: [Grid, GridFormArray, TbwEditor, ReactiveFormsModule],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  template: `
+    <form [formGroup]="form">
+      <tbw-grid
+        [formArray]="form.controls.employees"
+        [gridConfig]="gridConfig"
+        style="height: 400px; display: block;">
+        <tbw-grid-column field="name" editable>
+          <input *tbwEditor="let _; control as ctrl" [formControl]="ctrl" />
+        </tbw-grid-column>
+        <tbw-grid-column field="age" editable>
+          <input *tbwEditor="let _; control as ctrl" type="number" [formControl]="ctrl" />
+        </tbw-grid-column>
+      </tbw-grid>
+    </form>
+    <button [disabled]="form.invalid" (click)="save()">Save All</button>
+  `
+})
+export class GridModeFormArrayExample {
+  private fb = inject(FormBuilder);
+
+  form = this.fb.group({
+    employees: this.fb.array([
+      this.fb.group({ name: ['Alice', Validators.required], age: [30, [Validators.required, Validators.min(18)]] }),
+      this.fb.group({ name: ['Bob', Validators.required], age: [25, [Validators.required, Validators.min(18)]] }),
+    ])
+  });
+
+  gridConfig = {
+    columns: [
+      { field: 'name', header: 'Name', editable: true },
+      { field: 'age', header: 'Age', editable: true, type: 'number' },
+    ],
+    plugins: [new EditingPlugin({ mode: 'grid' })],
+  };
+
+  save() {
+    console.log('Saving:', this.form.controls.employees.getRawValue());
+  }
+}
+```
+
+For typical single-row CRUD workflows, `GridLazyForm` with the default `mode: 'row'` remains the more efficient choice.

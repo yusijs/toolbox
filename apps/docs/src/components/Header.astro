@@ -190,20 +190,18 @@ import vibrantCss from '@toolbox/themes/dg-theme-vibrant.css?raw';
       flex: 1;
       align-items: center;
       gap: 0.5rem;
-      justify-content: flex-start;
+      max-width: var(--sl-content-width);
+      width: 100%;
+      place-self: center;
     }
 
     .right-group,
     .social-icons {
       gap: 1rem;
       align-items: center;
+      justify-content: flex-end;
     }
 
-    .social-icons::after {
-      content: '';
-      height: 2rem;
-      border-inline-end: 1px solid var(--sl-color-gray-5);
-    }
 
     /* ----- Grid theme switcher select ----- */
     .theme-select-label {
@@ -290,7 +288,7 @@ import vibrantCss from '@toolbox/themes/dg-theme-vibrant.css?raw';
       padding-block: 0.625rem;
       padding-inline: calc(0.875rem + 0.5rem + 0.25rem) calc(1.25rem + 0.5rem + 0.25rem);
       margin-inline: -0.5rem;
-      width: calc(7em + 1rem);
+      width: calc(8em + 1rem);
       background-color: transparent;
       text-overflow: ellipsis;
       color: inherit;
@@ -315,26 +313,15 @@ import vibrantCss from '@toolbox/themes/dg-theme-vibrant.css?raw';
         --__toc-width: 0rem;
       }
       .header {
-        --__sidebar-width: max(0rem, var(--sl-content-inline-start, 0rem) - var(--sl-nav-pad-x));
-        --__main-column-fr: calc(
-          (
-              100% + var(--__sidebar-pad, 0rem) - var(--__toc-width, var(--sl-sidebar-width)) -
-                (2 * var(--__toc-width, var(--sl-nav-pad-x))) - var(--sl-content-inline-start, 0rem) -
-                var(--sl-content-width)
-            ) / 2
-        );
         display: grid;
         grid-template-columns:
           /* 1 (site title): aligns with sidebar */
-          minmax(
-            calc(var(--__sidebar-width) + max(0rem, var(--__main-column-fr) - var(--sl-nav-gap))),
-            auto
-          )
+          var(--sl-content-inline-start, 0rem)
           /* 2 (center: theme switcher + dark/light + search) */
           1fr
           /* 3 (right: social icons) */
-          auto;
-        align-content: center;
+          var(--sl-sidebar-width);
+          align-content: center;
       }
     }
   }
