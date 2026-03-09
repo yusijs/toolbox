@@ -142,6 +142,8 @@ export interface RowCommitEvent<TRow = unknown> {
  * - Registers it with the GridElement
  * - Injects custom styles into the grid
  * - Handles cleanup on destruction
+ *
+ * @category Directive
  */
 @Directive({ selector: 'tbw-grid' })
 export class Grid implements OnInit, AfterContentInit, OnDestroy {

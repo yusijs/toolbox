@@ -116,6 +116,8 @@ export interface GridDetailPanelProps<TRow = unknown> {
  * 2. The ReactGridAdapter detects this element and creates a detail renderer
  * 3. When a row is expanded, the adapter calls your render function
  * 4. The React component is rendered into the detail row container
+ *
+ * @category Component
  */
 export function GridDetailPanel<TRow = unknown>(props: GridDetailPanelProps<TRow>): ReactElement {
   const { children, showExpandColumn = true, animation = 'slide' } = props;

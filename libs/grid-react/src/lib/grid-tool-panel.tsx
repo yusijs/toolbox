@@ -132,6 +132,8 @@ export interface GridToolPanelProps {
  * 2. The ReactGridAdapter detects this element and creates a panel renderer
  * 3. When the shell plugin initializes, it finds these panels and renders them
  * 4. The React component is rendered into the accordion panel container
+ *
+ * @category Component
  */
 export function GridToolPanel(props: GridToolPanelProps): ReactElement {
   const { id, title, icon, tooltip, order = 100, children } = props;

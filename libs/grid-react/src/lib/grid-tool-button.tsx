@@ -28,6 +28,8 @@ export interface GridToolButtonsProps {
  *   </GridToolButtons>
  * </DataGrid>
  * ```
+ *
+ * @category Component
  */
 export function GridToolButtons({ children }: GridToolButtonsProps): ReactElement {
   return <tbw-grid-tool-buttons>{children}</tbw-grid-tool-buttons>;

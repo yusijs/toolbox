@@ -321,6 +321,7 @@ export { BaseGridPlugin, PLUGIN_QUERIES } from './lib/core/plugin';
 export type {
   AfterCellRenderContext,
   AfterRowRenderContext,
+  CellMouseEvent,
   EventDefinition,
   PluginManifest,
   PluginQuery,

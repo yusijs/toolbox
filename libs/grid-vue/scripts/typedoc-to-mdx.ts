@@ -5,19 +5,7 @@
 
 import { join } from 'node:path';
 
-import { generateAdapterDocs, KIND, type TypeDocNode } from '../../../tools/typedoc-mdx-shared';
-
-const COMPONENT_NAMES = [
-  'TbwGrid',
-  'TbwGridColumn',
-  'TbwGridDetailPanel',
-  'TbwGridResponsiveCard',
-  'TbwGridToolButtons',
-  'TbwGridToolPanel',
-  'GridTypeProvider',
-  'GridIconProvider',
-  'GridProvider',
-];
+import { generateAdapterDocs, getCategory, KIND, type TypeDocNode } from '../../../tools/typedoc-mdx-shared';
 
 generateAdapterDocs({
   name: 'grid-vue',
@@ -29,7 +17,7 @@ generateAdapterDocs({
     {
       name: 'Components',
       folder: 'components',
-      match: (n: TypeDocNode) => COMPONENT_NAMES.includes(n.name),
+      match: (n: TypeDocNode) => getCategory(n) === 'Component',
     },
     {
       name: 'Composables',

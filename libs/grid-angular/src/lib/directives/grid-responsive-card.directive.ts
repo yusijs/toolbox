@@ -86,6 +86,7 @@ export function getResponsiveCardTemplate(
  * - Template context provides `$implicit` (row), `row`, and `index`
  *
  * @see ResponsivePlugin
+ * @category Directive
  */
 @Directive({
   selector: 'tbw-grid-responsive-card',

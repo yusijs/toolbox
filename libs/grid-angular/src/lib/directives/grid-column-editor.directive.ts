@@ -120,6 +120,8 @@ export function getEditorTemplate(element: HTMLElement): TemplateRef<GridEditorC
  *   // ...
  * })
  * ```
+ *
+ * @category Directive
  */
 @Directive({ selector: 'tbw-grid-column-editor' })
 export class GridColumnEditor {

@@ -7,9 +7,7 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
-// ============================================================================
-// Types
-// ============================================================================
+// #region Types
 
 export interface TypeDocNode {
   id: number;
@@ -47,9 +45,9 @@ export interface TypeDocType {
   typeArguments?: TypeDocType[];
 }
 
-// ============================================================================
-// Constants
-// ============================================================================
+// #endregion
+
+// #region Constants
 
 /** TypeDoc kind values */
 export const KIND = {
@@ -74,21 +72,9 @@ export const KIND_FOLDER_MAP: Record<number, string> = {
   [KIND.Enum]: 'Enums',
 };
 
-// ============================================================================
-// Legacy Storybook Integration (no-op)
-// ============================================================================
+// #endregion
 
-/**
- * No-op. Previously touched Storybook main.ts for cache invalidation.
- * Kept for backward compatibility — callers don't need to update.
- */
-export function touchStorybookMain(): void {
-  // No-op: docs uses Astro/Starlight, no Storybook reindex needed.
-}
-
-// ============================================================================
-// MDX Header
-// ============================================================================
+// #region Helpers
 
 /**
  * Generate MDX header with Starlight frontmatter.
@@ -103,10 +89,6 @@ title: "${title}"
 {/* Regenerate with: ${regenerateCommand} */}
 
 `;
-
-// ============================================================================
-// Text Escaping
-// ============================================================================
 
 /**
  * Escape special MDX characters, but preserve content inside code blocks and inline code.
@@ -138,10 +120,6 @@ export const escape = (text: string): string => {
  */
 export const escapeCode = (text: string): string => text.replace(/\|/g, '\\|');
 
-// ============================================================================
-// Comment Extraction
-// ============================================================================
-
 /** Get summary text from a comment */
 export const getText = (comment?: TypeDocComment): string => comment?.summary?.map((s) => s.text).join('') ?? '';
 
@@ -167,9 +145,15 @@ export const isNodeInternal = (node: TypeDocNode): boolean =>
   isInternal(node.setSignature?.comment) ||
   false;
 
-// ============================================================================
-// Type Formatting
-// ============================================================================
+/** Get @category tag value from a node (checks signatures for functions) */
+export const getCategory = (node: TypeDocNode): string | undefined => {
+  const comment = node.signatures?.[0]?.comment ?? node.comment;
+  return getTag(comment, '@category') || undefined;
+};
+
+// #endregion
+
+// #region Type Formatting
 
 /** Format a TypeDoc type for display */
 export function formatType(t?: TypeDocType): string {
@@ -240,16 +224,20 @@ export function formatTypeWithLinks(type: TypeDocType | undefined, typeRegistry:
   }
 }
 
-// ============================================================================
-// Example Formatting
-// ============================================================================
+/** Format a type for MDX — uses links when a registry is available, otherwise inline code */
+const fmtType = (type: TypeDocType | undefined, reg?: Map<string, string>): string =>
+  reg ? formatTypeWithLinks(type, reg) : `\`${escapeCode(formatType(type))}\``;
+
+// #endregion
+
+// #region MDX Fragments
 
 /**
  * Get all @example tags from a comment.
  * Returns an array of example code blocks with optional titles.
  * TypeDoc 0.28+ puts the example title in a `name` property.
  */
-export function getAllExamples(comment?: TypeDocComment): { title?: string; code: string }[] {
+function getAllExamples(comment?: TypeDocComment): { title?: string; code: string }[] {
   if (!comment?.blockTags) return [];
   return comment.blockTags
     .filter((b) => b.tag === '@example')
@@ -298,10 +286,6 @@ export function formatExample(example: string, defaultLang = 'tsx'): string {
   return `#### Example\n\n\`\`\`${defaultLang}\n${trimmed}\n\`\`\`\n\n`;
 }
 
-// ============================================================================
-// Event Formatting (@fires)
-// ============================================================================
-
 /**
  * Get all @fires tags from a comment.
  * Format: @fires eventName - Description
@@ -339,10 +323,6 @@ export function formatFires(comment?: TypeDocComment): string {
   return out + '\n';
 }
 
-// ============================================================================
-// File Writing
-// ============================================================================
-
 /** Write MDX file with directory creation */
 export function writeMdx(outDir: string, relativePath: string, content: string, label?: string): void {
   const outPath = join(outDir, relativePath);
@@ -353,9 +333,9 @@ export function writeMdx(outDir: string, relativePath: string, content: string, 
   }
 }
 
-// ============================================================================
-// Basic Generators
-// ============================================================================
+// #endregion
+
+// #region MDX Generators
 
 export interface GeneratorOptions {
   /** Command shown in regenerate comment */
@@ -378,13 +358,10 @@ export function genInterface(node: TypeDocNode, title: string, options: Generato
   if (props.length) {
     out += `## Properties\n\n| Property | Type | Description |\n| -------- | ---- | ----------- |\n`;
     for (const p of props) {
-      const typeStr = typeRegistry
-        ? formatTypeWithLinks(p.type, typeRegistry)
-        : `\`${escapeCode(formatType(p.type))}\``;
       const propDesc = getText(p.comment).split('\n')[0];
       const opt = p.flags?.isOptional ? '?' : '';
       const dep = isDeprecated(p.comment) ? '⚠️ ' : '';
-      out += `| \`${p.name}${opt}\` | ${typeStr} | ${dep}${escape(propDesc)} |\n`;
+      out += `| \`${p.name}${opt}\` | ${fmtType(p.type, typeRegistry)} | ${dep}${escape(propDesc)} |\n`;
     }
     out += '\n';
   }
@@ -410,12 +387,9 @@ export function genClass(node: TypeDocNode, title: string, options: GeneratorOpt
   if (props.length) {
     out += `## Properties\n\n| Property | Type | Description |\n| -------- | ---- | ----------- |\n`;
     for (const p of props) {
-      const typeStr = typeRegistry
-        ? formatTypeWithLinks(p.type, typeRegistry)
-        : `\`${escapeCode(formatType(p.type))}\``;
       const propDesc = getText(p.comment).split('\n')[0];
       const opt = p.flags?.isOptional ? '?' : '';
-      out += `| \`${p.name}${opt}\` | ${typeStr} | ${escape(propDesc)} |\n`;
+      out += `| \`${p.name}${opt}\` | ${fmtType(p.type, typeRegistry)} | ${escape(propDesc)} |\n`;
     }
     out += '\n';
   }
@@ -436,15 +410,12 @@ export function genClass(node: TypeDocNode, title: string, options: GeneratorOpt
       if (sig.parameters?.length) {
         out += `#### Parameters\n\n| Name | Type | Description |\n| ---- | ---- | ----------- |\n`;
         for (const p of sig.parameters) {
-          const typeStr = typeRegistry
-            ? formatTypeWithLinks(p.type, typeRegistry)
-            : `\`${escapeCode(formatType(p.type))}\``;
-          out += `| \`${p.name}\` | ${typeStr} | ${escape(getText(p.comment))} |\n`;
+          out += `| \`${p.name}\` | ${fmtType(p.type, typeRegistry)} | ${escape(getText(p.comment))} |\n`;
         }
         out += '\n';
       }
       const returns = getTag(sig.comment, '@returns');
-      if (returns) out += `#### Returns\n\n\`${escapeCode(returnType)}\` - ${escape(returns)}\n\n`;
+      if (returns) out += `#### Returns\n\n\`${returnType}\` - ${escape(returns)}\n\n`;
       out += `***\n\n`;
     }
   }
@@ -469,16 +440,13 @@ export function genFunction(node: TypeDocNode, title: string, options: Generator
   if (sig.parameters?.length) {
     out += `## Parameters\n\n| Name | Type | Description |\n| ---- | ---- | ----------- |\n`;
     for (const p of sig.parameters) {
-      const typeStr = typeRegistry
-        ? formatTypeWithLinks(p.type, typeRegistry)
-        : `\`${escapeCode(formatType(p.type))}\``;
-      out += `| \`${p.name}\` | ${typeStr} | ${escape(getText(p.comment))} |\n`;
+      out += `| \`${p.name}\` | ${fmtType(p.type, typeRegistry)} | ${escape(getText(p.comment))} |\n`;
     }
     out += '\n';
   }
 
   const returns = getTag(sig.comment, '@returns');
-  if (returns) out += `## Returns\n\n\`${escapeCode(returnType)}\` - ${escape(returns)}\n\n`;
+  if (returns) out += `## Returns\n\n\`${returnType}\` - ${escape(returns)}\n\n`;
 
   const example = getTag(sig.comment, '@example');
   if (example) out += formatExample(example);
@@ -494,11 +462,8 @@ export function genTypeAlias(node: TypeDocNode, title: string, options: Generato
 
   let out = mdxHeader(title, regenerateCommand);
 
-  // Show deprecation warning if present
   if (deprecated) {
-    // Resolve inline code references in deprecation notes
-    const linkedNote = deprecationNote ? linkifyDeprecationNote(deprecationNote.trim(), title) : '';
-    out += `> ⚠️ **Deprecated**${linkedNote ? `: ${linkedNote}` : ''}\n\n`;
+    out += `> ⚠️ **Deprecated**${deprecationNote ? `: ${deprecationNote.trim()}` : ''}\n\n`;
   }
 
   const desc = getText(node.comment);
@@ -510,16 +475,6 @@ export function genTypeAlias(node: TypeDocNode, title: string, options: Generato
   if (example) out += formatExample(example);
 
   return out;
-}
-
-/**
- * Process inline code references in deprecation notes.
- * Currently a passthrough — deprecation notes render fine with inline code.
- */
-function linkifyDeprecationNote(note: string, _title: string): string {
-  // Return the note as-is — type links are resolved by the type registry,
-  // and deprecation notes typically use inline code which renders fine.
-  return note;
 }
 
 /** Generate MDX for an enum */
@@ -552,9 +507,9 @@ export const GENERATORS: Record<number, (n: TypeDocNode, t: string, o?: Generato
   [KIND.Enum]: genEnum,
 };
 
-// ============================================================================
-// Type Registry Helpers
-// ============================================================================
+// #endregion
+
+// #region Type Registry
 
 /**
  * Build a type registry from a TypeDoc JSON module by scanning all exported nodes.
@@ -579,9 +534,9 @@ export function buildTypeRegistryFromNodes(
   return registry;
 }
 
-// ============================================================================
-// Adapter Docs Generator
-// ============================================================================
+// #endregion
+
+// #region Adapter Docs Generator
 
 /** A category bin for classifying adapter nodes */
 export interface AdapterCategory {
@@ -692,6 +647,7 @@ export function generateAdapterDocs(config: AdapterConfig): void {
     }
   }
 
-  touchStorybookMain();
   console.log(`\n✅ Done! MDX files written to ${outputDir.replace(/.*apps/, 'apps')}`);
 }
+
+// #endregion

@@ -420,6 +420,8 @@ export interface DataGridRef<TRow = unknown> {
  *   return <DataGrid ref={gridRef} rows={rows} />;
  * }
  * ```
+ *
+ * @category Component
  */
 export const DataGrid = forwardRef<DataGridRef, DataGridProps>(function DataGrid<TRow = unknown>(
   props: DataGridProps<TRow>,

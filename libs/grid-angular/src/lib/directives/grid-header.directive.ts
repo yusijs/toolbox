@@ -24,6 +24,8 @@ import { Directive } from '@angular/core';
  * })
  * export class MyComponent { }
  * ```
+ *
+ * @category Directive
  */
 @Directive({
   selector: 'tbw-grid-header',

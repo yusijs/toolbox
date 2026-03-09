@@ -16,7 +16,6 @@ import { join } from 'node:path';
 
 import {
   escape,
-  escapeCode,
   formatAllExamples,
   formatExample,
   formatFires,
@@ -31,7 +30,6 @@ import {
   KIND,
   KIND_FOLDER_MAP,
   mdxHeader as mdxHeaderBase,
-  touchStorybookMain,
   writeMdx as writeMdxBase,
   type TypeDocComment,
   type TypeDocNode,
@@ -212,7 +210,7 @@ function genMethod(node: TypeDocNode, showOverride = false): string {
   }
 
   const returns = getTag(sig.comment, '@returns');
-  if (returns) out += `#### Returns\n\n\`${escapeCode(returnType)}\` - ${escape(returns)}\n\n`;
+  if (returns) out += `#### Returns\n\n\`${returnType}\` - ${escape(returns)}\n\n`;
 
   // Add @fires events section
   out += formatFires(sig.comment);
@@ -961,9 +959,6 @@ async function main(): Promise<void> {
     console.log('\nProcessing Plugins...');
     processPluginModules(pluginModules, OUTPUT_DIR);
   }
-
-  // Touch Storybook main.ts to trigger reindex
-  touchStorybookMain();
 
   console.log('\n✅ Done! MDX files written to apps/docs/src/content/docs/grid/api/');
 }

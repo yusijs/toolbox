@@ -82,6 +82,8 @@ export function getDetailConfig(
  *   // ...
  * })
  * ```
+ *
+ * @category Directive
  */
 @Directive({ selector: 'tbw-grid-detail' })
 export class GridDetailView {

@@ -124,6 +124,7 @@ export interface RowFormChangeEvent<TRow = unknown> {
  * | 1000 | 20,000 controls          | ~20 controls |
  *
  * @see GridFormArray For small datasets with full upfront validation
+ * @category Directive
  */
 @Directive({
   selector: 'tbw-grid[lazyForm]',

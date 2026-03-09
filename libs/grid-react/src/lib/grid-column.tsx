@@ -113,6 +113,8 @@ export interface GridColumnProps<TRow = unknown, TValue = unknown> {
  *   )}
  * />
  * ```
+ *
+ * @category Component
  */
 export function GridColumn<TRow = unknown, TValue = unknown>(props: GridColumnProps<TRow, TValue>): React.ReactElement {
   const {

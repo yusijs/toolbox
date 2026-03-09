@@ -115,6 +115,8 @@ export interface GridResponsiveCardProps<TRow = unknown> {
  * 2. The ReactGridAdapter detects this element and creates a card renderer
  * 3. When the grid enters responsive mode, the plugin calls your render function for each row
  * 4. The React component is rendered into the card container
+ *
+ * @category Component
  */
 export function GridResponsiveCard<TRow = unknown>(props: GridResponsiveCardProps<TRow>): ReactElement {
   const { children, cardRowHeight = 'auto' } = props;

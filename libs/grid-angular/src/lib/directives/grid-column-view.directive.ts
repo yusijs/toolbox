@@ -59,6 +59,8 @@ export function getViewTemplate(element: HTMLElement): TemplateRef<GridCellConte
  *   // ...
  * })
  * ```
+ *
+ * @category Directive
  */
 @Directive({ selector: 'tbw-grid-column-view' })
 export class GridColumnView {

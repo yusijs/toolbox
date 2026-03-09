@@ -75,6 +75,8 @@ export function getToolPanelElements(gridElement: HTMLElement): HTMLElement[] {
  *   // ...
  * })
  * ```
+ *
+ * @category Directive
  */
 @Directive({ selector: 'tbw-grid-tool-panel' })
 export class GridToolPanel {

@@ -139,6 +139,8 @@ export function getStructuralEditorTemplate(
  *   // ...
  * })
  * ```
+ *
+ * @category Directive
  */
 @Directive({ selector: '[tbwRenderer]' })
 export class TbwRenderer implements OnDestroy {
@@ -227,6 +229,8 @@ export class TbwRenderer implements OnDestroy {
  *   // ...
  * })
  * ```
+ *
+ * @category Directive
  */
 @Directive({ selector: '[tbwEditor]' })
 export class TbwEditor implements OnDestroy {

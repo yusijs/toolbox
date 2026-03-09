@@ -5,19 +5,7 @@
 
 import { join } from 'node:path';
 
-import { generateAdapterDocs, KIND, type TypeDocNode } from '../../../tools/typedoc-mdx-shared';
-
-const DIRECTIVE_NAMES = [
-  'Grid',
-  'GridFormArray',
-  'TbwRenderer',
-  'TbwEditor',
-  'GridColumnView',
-  'GridColumnEditor',
-  'GridDetailView',
-  'GridToolPanel',
-  'GridResponsiveCard',
-];
+import { generateAdapterDocs, getCategory, KIND, type TypeDocNode } from '../../../tools/typedoc-mdx-shared';
 
 generateAdapterDocs({
   name: 'grid-angular',
@@ -29,8 +17,7 @@ generateAdapterDocs({
     {
       name: 'Directives',
       folder: 'directives',
-      match: (n: TypeDocNode) =>
-        n.kind === KIND.Class && (DIRECTIVE_NAMES.includes(n.name) || n.name.endsWith('Directive')),
+      match: (n: TypeDocNode) => n.kind === KIND.Class && getCategory(n) === 'Directive',
     },
     {
       name: 'Adapters',

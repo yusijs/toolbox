@@ -5,16 +5,7 @@
 
 import { join } from 'node:path';
 
-import { generateAdapterDocs, KIND, type TypeDocNode } from '../../../tools/typedoc-mdx-shared';
-
-const COMPONENT_NAMES = [
-  'DataGrid',
-  'GridColumn',
-  'GridDetailPanel',
-  'GridToolPanel',
-  'GridToolButtons',
-  'GridResponsiveCard',
-];
+import { generateAdapterDocs, getCategory, KIND, type TypeDocNode } from '../../../tools/typedoc-mdx-shared';
 
 generateAdapterDocs({
   name: 'grid-react',
@@ -26,7 +17,7 @@ generateAdapterDocs({
     {
       name: 'Components',
       folder: 'components',
-      match: (n: TypeDocNode) => COMPONENT_NAMES.includes(n.name),
+      match: (n: TypeDocNode) => getCategory(n) === 'Component',
     },
     {
       name: 'Hooks',

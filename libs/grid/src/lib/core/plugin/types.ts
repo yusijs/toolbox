@@ -76,6 +76,7 @@ export interface ScrollEvent {
 
 /**
  * Cell mouse event (for drag operations, selection, etc.)
+ * @category Plugin Development
  */
 export interface CellMouseEvent {
   /** Event type: mousedown, mousemove, or mouseup */
