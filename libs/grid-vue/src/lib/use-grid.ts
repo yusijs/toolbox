@@ -20,6 +20,11 @@ export interface UseGridReturn {
   ready: () => Promise<void>;
   /** Get a plugin by its class */
   getPlugin: <T>(pluginClass: new (...args: unknown[]) => T) => T | undefined;
+  /**
+   * Get a plugin by its registered name (preferred).
+   * Uses the type-safe PluginNameMap for auto-completion and return type narrowing.
+   */
+  getPluginByName: DataGridElement['getPluginByName'];
 }
 
 /**
@@ -54,6 +59,9 @@ export function useGrid(): UseGridReturn {
     },
     getPlugin: <T>(pluginClass: new (...args: unknown[]) => T) => {
       return gridElement.value?.getPlugin(pluginClass);
+    },
+    getPluginByName: (name: string) => {
+      return gridElement.value?.getPluginByName(name);
     },
   };
 }

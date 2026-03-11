@@ -422,7 +422,7 @@ export class ClipboardPlugin extends BaseGridPlugin<ClipboardConfig> {
    *
    * @example Get text for specific columns
    * ```ts
-   * const clipboard = grid.getPlugin(ClipboardPlugin);
+   * const clipboard = grid.getPluginByName('clipboard');
    * const text = clipboard.getSelectionAsText({
    *   columns: ['name', 'email'],
    *   includeHeaders: true,
@@ -450,7 +450,7 @@ export class ClipboardPlugin extends BaseGridPlugin<ClipboardConfig> {
    *
    * @example Copy current selection (default)
    * ```ts
-   * const clipboard = grid.getPlugin(ClipboardPlugin);
+   * const clipboard = grid.getPluginByName('clipboard');
    * await clipboard.copy();
    * ```
    *
@@ -495,7 +495,7 @@ export class ClipboardPlugin extends BaseGridPlugin<ClipboardConfig> {
    *
    * @example
    * ```ts
-   * const clipboard = grid.getPlugin(ClipboardPlugin);
+   * const clipboard = grid.getPluginByName('clipboard');
    * // Copy only rows 0 and 5, including just name and email columns
    * await clipboard.copyRows([0, 5], { columns: ['name', 'email'] });
    * ```

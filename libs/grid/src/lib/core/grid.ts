@@ -902,8 +902,15 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
   /**
    * Get a plugin instance by its class constructor.
    *
+   * **Prefer {@link getPluginByName}** for most use cases — it avoids importing the plugin class
+   * and returns the actual instance registered in the grid.
+   *
    * @example
    * ```ts
+   * // Preferred: by name (no import needed)
+   * const selection = grid.getPluginByName('selection');
+   *
+   * // Alternative: by class (requires import)
    * import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
    * const selection = grid.getPlugin(SelectionPlugin);
    * selection?.selectAll();

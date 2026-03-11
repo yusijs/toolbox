@@ -43,7 +43,7 @@ grid.gridConfig = {
 };
 
 // Toggle visibility programmatically
-const plugin = grid.getPlugin(VisibilityPlugin);
+const plugin = grid.getPluginByName('visibility');
 plugin.showColumn('phone');
 plugin.hideColumn('email');
 ```
@@ -162,7 +162,7 @@ export class ConfigurableGridComponent {
 ## Programmatic API
 
 ```ts
-const plugin = grid.getPlugin(VisibilityPlugin);
+const plugin = grid.getPluginByName('visibility');
 
 plugin.hideColumn('email');
 plugin.showColumn('email');

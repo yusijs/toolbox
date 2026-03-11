@@ -142,10 +142,10 @@ grid.addEventListener('filter-change', (e) => {
 
 ## API Methods
 
-Access via `grid.getPlugin(FilteringPlugin)`:
+Access via `grid.getPluginByName('filtering')`:
 
 ```typescript
-const filtering = grid.getPlugin(FilteringPlugin);
+const filtering = grid.getPluginByName('filtering');
 
 // Get all active filters
 const filters = filtering.getFilters();

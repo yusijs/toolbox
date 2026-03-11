@@ -252,7 +252,7 @@ The ClipboardPlugin exposes methods for programmatic copy operations with fine-g
 ### Basic Copy
 
 ```ts
-const plugin = grid.getPlugin(ClipboardPlugin);
+const plugin = grid.getPluginByName('clipboard');
 
 // Copy current selection to clipboard
 await plugin.copy();
@@ -266,7 +266,7 @@ await plugin.copy({ includeHeaders: true });
 The `copy()` method accepts `CopyOptions` to precisely control what gets copied—independently of the current selection:
 
 ```ts
-const plugin = grid.getPlugin(ClipboardPlugin);
+const plugin = grid.getPluginByName('clipboard');
 
 // Copy specific columns from specific rows
 await plugin.copy({

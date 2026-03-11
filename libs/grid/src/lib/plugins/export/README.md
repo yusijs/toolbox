@@ -23,7 +23,7 @@ grid.gridConfig = {
 };
 
 // Export via API
-const exporter = grid.getPlugin(ExportPlugin);
+const exporter = grid.getPluginByName('export');
 exporter.exportCsv({ fileName: 'data' });
 ```
 
@@ -38,10 +38,10 @@ exporter.exportCsv({ fileName: 'data' });
 
 ## API Methods
 
-Access via `grid.getPlugin(ExportPlugin)`:
+Access via `grid.getPluginByName('export')`:
 
 ```typescript
-const exporter = grid.getPlugin(ExportPlugin);
+const exporter = grid.getPluginByName('export');
 
 // Export to CSV
 exporter.exportCsv({

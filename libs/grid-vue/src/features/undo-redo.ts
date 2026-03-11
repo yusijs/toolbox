@@ -135,7 +135,7 @@ export function useGridUndoRedo(): UndoRedoMethods {
 
   const getPlugin = (): UndoRedoPlugin | undefined => {
     const grid = gridElement.value as DataGridElement | null;
-    return grid?.getPlugin(UndoRedoPlugin);
+    return grid?.getPluginByName('undoRedo');
   };
 
   return {

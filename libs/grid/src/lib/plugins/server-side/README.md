@@ -68,10 +68,10 @@ interface GetRowsResult {
 
 ## API Methods
 
-Access via `grid.getPlugin(ServerSidePlugin)`:
+Access via `grid.getPluginByName('serverSide')`:
 
 ```typescript
-const serverSide = grid.getPlugin(ServerSidePlugin);
+const serverSide = grid.getPluginByName('serverSide');
 
 // Refresh data (clears cache and reloads)
 serverSide.refresh();

@@ -65,10 +65,10 @@ interface GroupHeaderRenderParams {
 
 ## API Methods
 
-Access via `grid.getPlugin(GroupingColumnsPlugin)`:
+Access via `grid.getPluginByName('groupingColumns')`:
 
 ```typescript
-const grouping = grid.getPlugin(GroupingColumnsPlugin);
+const grouping = grid.getPluginByName('groupingColumns');
 
 // Check if column groups are active
 grouping.isGroupingActive();

@@ -155,7 +155,7 @@ export function useGridFiltering(): FilteringMethods {
 
   const getPlugin = (): FilteringPlugin | undefined => {
     const grid = gridElement.value as DataGridElement | null;
-    return grid?.getPlugin(FilteringPlugin);
+    return grid?.getPluginByName('filtering');
   };
 
   return {

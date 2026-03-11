@@ -148,7 +148,7 @@ export function injectGridExport(): ExportMethods {
   };
 
   const getPlugin = (): ExportPlugin | undefined => {
-    return getGrid()?.getPlugin(ExportPlugin);
+    return getGrid()?.getPluginByName('export') as ExportPlugin | undefined;
   };
 
   // Eagerly discover the grid after the first render so isReady updates

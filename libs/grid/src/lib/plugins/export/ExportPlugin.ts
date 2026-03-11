@@ -74,7 +74,7 @@ interface SelectionPluginState {
  *
  * // Trigger export via button
  * document.getElementById('export-btn').addEventListener('click', () => {
- *   grid.getPlugin(ExportPlugin).exportToCSV();
+ *   grid.getPluginByName('export').exportToCSV();
  * });
  * ```
  *

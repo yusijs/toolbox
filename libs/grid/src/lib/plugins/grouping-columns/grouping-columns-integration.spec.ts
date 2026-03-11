@@ -41,7 +41,7 @@ describe('GroupingColumnsPlugin with gridConfig.columnGroups', () => {
     await grid.ready?.();
     await nextFrame();
 
-    const plugin = grid.getPlugin(GroupingColumnsPlugin);
+    const plugin = grid.getPluginByName('groupingColumns');
     expect(plugin).toBeDefined();
     expect(plugin!.isGroupingActive()).toBe(true);
 

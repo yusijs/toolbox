@@ -142,8 +142,15 @@ export interface PublicGrid<T = any> {
   /**
    * Get a plugin instance by its class.
    *
+   * **Prefer {@link getPluginByName}** — it avoids importing the plugin class
+   * and returns the actual registered instance with full type narrowing.
+   *
    * @example
    * ```typescript
+   * // Preferred: by name
+   * const selection = grid.getPluginByName('selection');
+   *
+   * // Alternative: by class
    * const selection = grid.getPlugin(SelectionPlugin);
    * if (selection) {
    *   selection.selectAll();
@@ -1859,8 +1866,8 @@ export type FitMode = (typeof FitModeEnum)[keyof typeof FitModeEnum]; // evaluat
  *   ],
  * };
  *
- * // Accessing plugin instance at runtime
- * const selection = grid.getPlugin(SelectionPlugin);
+ * // Accessing plugin instance at runtime (preferred)
+ * const selection = grid.getPluginByName('selection');
  * if (selection) {
  *   selection.selectAll();
  * }

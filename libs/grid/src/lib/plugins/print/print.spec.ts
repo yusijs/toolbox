@@ -49,7 +49,7 @@ describe('PrintPlugin', () => {
       const grid = await createGrid({
         plugins: [new PrintPlugin()],
       });
-      const plugin = grid.getPlugin(PrintPlugin);
+      const plugin = grid.getPluginByName('print');
       expect(plugin).toBeInstanceOf(PrintPlugin);
     });
 
@@ -70,7 +70,7 @@ describe('PrintPlugin', () => {
       const grid = await createGrid({
         plugins: [new PrintPlugin()],
       });
-      const plugin = grid.getPlugin(PrintPlugin);
+      const plugin = grid.getPluginByName('print');
       expect(plugin.isPrinting()).toBe(false);
     });
   });
@@ -83,7 +83,7 @@ describe('PrintPlugin', () => {
       const grid = await createGrid({
         plugins: [new PrintPlugin()],
       });
-      const plugin = grid.getPlugin(PrintPlugin);
+      const plugin = grid.getPluginByName('print');
       expect(typeof plugin.print).toBe('function');
     });
 
@@ -106,7 +106,7 @@ describe('PrintPlugin', () => {
       const grid = await createGrid({
         plugins: [new PrintPlugin()],
       });
-      const plugin = grid.getPlugin(PrintPlugin);
+      const plugin = grid.getPluginByName('print');
 
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
@@ -194,7 +194,7 @@ describe('PrintPlugin', () => {
       const grid = await createGrid({
         plugins: [new PrintPlugin({ warnThreshold: 10 })],
       });
-      const plugin = grid.getPlugin(PrintPlugin);
+      const plugin = grid.getPluginByName('print');
 
       await plugin.print();
 
@@ -227,7 +227,7 @@ describe('PrintPlugin', () => {
       const grid = await createGrid({
         plugins: [new PrintPlugin({ warnThreshold: 2 })],
       });
-      const plugin = grid.getPlugin(PrintPlugin);
+      const plugin = grid.getPluginByName('print');
 
       await plugin.print();
 
@@ -255,7 +255,7 @@ describe('PrintPlugin', () => {
       const grid = await createGrid({
         plugins: [new PrintPlugin({ warnThreshold: 2 })],
       });
-      const plugin = grid.getPlugin(PrintPlugin);
+      const plugin = grid.getPluginByName('print');
 
       await plugin.print();
 
@@ -284,7 +284,7 @@ describe('PrintPlugin', () => {
         eventDetail = (e as CustomEvent).detail;
       });
 
-      const plugin = grid.getPlugin(PrintPlugin);
+      const plugin = grid.getPluginByName('print');
       await plugin.print();
 
       // Should report limited rows
@@ -310,7 +310,7 @@ describe('PrintPlugin', () => {
       const grid = await createGrid({
         plugins: [new PrintPlugin()],
       });
-      const plugin = grid.getPlugin(PrintPlugin);
+      const plugin = grid.getPluginByName('print');
 
       const startHandler = vi.fn();
       grid.addEventListener('print-start', startHandler);
@@ -338,7 +338,7 @@ describe('PrintPlugin', () => {
       const grid = await createGrid({
         plugins: [new PrintPlugin()],
       });
-      const plugin = grid.getPlugin(PrintPlugin);
+      const plugin = grid.getPluginByName('print');
 
       const completeHandler = vi.fn();
       grid.addEventListener('print-complete', completeHandler);
@@ -387,7 +387,7 @@ describe('PrintPlugin', () => {
       expect(emailColBefore?.hidden).toBeFalsy();
 
       // Trigger print
-      const plugin = grid.getPlugin(PrintPlugin);
+      const plugin = grid.getPluginByName('print');
       await plugin.print();
 
       // After print completes, email column should be restored to visible
@@ -429,7 +429,7 @@ describe('PrintPlugin', () => {
       expect(grid.isColumnVisible('email')).toBe(false);
 
       // Trigger print (the column is both printHidden AND already hidden)
-      const plugin = grid.getPlugin(PrintPlugin);
+      const plugin = grid.getPluginByName('print');
       await plugin.print();
 
       // After print, email column should still be hidden (it was hidden before print)
@@ -469,7 +469,7 @@ describe('PrintPlugin', () => {
       expect(cols?.find((c: any) => c.field === 'email')?.hidden).toBeFalsy();
 
       // Trigger print
-      const plugin = grid.getPlugin(PrintPlugin);
+      const plugin = grid.getPluginByName('print');
       await plugin.print();
 
       // After print, all originally visible columns should still be visible

@@ -39,10 +39,10 @@ The plugin automatically enables when column count exceeds the threshold.
 
 ## API Methods
 
-Access via `grid.getPlugin(ColumnVirtualizationPlugin)`:
+Access via `grid.getPluginByName('columnVirtualization')`:
 
 ```typescript
-const colVirt = grid.getPlugin(ColumnVirtualizationPlugin);
+const colVirt = grid.getPluginByName('columnVirtualization');
 
 // Check if virtualization is active
 const isActive = colVirt.getIsVirtualized();

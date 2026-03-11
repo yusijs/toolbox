@@ -52,10 +52,10 @@ grid.gridConfig = {
 
 ## API Methods
 
-Access via `grid.getPlugin(ResponsivePlugin)`:
+Access via `grid.getPluginByName('responsive')`:
 
 ```typescript
-const responsive = grid.getPlugin(ResponsivePlugin);
+const responsive = grid.getPluginByName('responsive');
 
 // Check state
 responsive.isResponsive();

@@ -129,10 +129,10 @@ formatter: (value, field, column) => string;
 
 ## API Methods
 
-Access via `grid.getPlugin(PinnedRowsPlugin)`:
+Access via `grid.getPluginByName('pinnedRows')`:
 
 ```typescript
-const pinned = grid.getPlugin(PinnedRowsPlugin);
+const pinned = grid.getPluginByName('pinnedRows');
 
 // Refresh status bar and aggregations
 pinned.refresh();

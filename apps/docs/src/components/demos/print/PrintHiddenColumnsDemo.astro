@@ -65,7 +65,7 @@ if (container) {
   grid.rows = employeeData;
 
   btn?.addEventListener('click', () => {
-    const plugin = grid.getPlugin(PrintPlugin);
+    const plugin = grid.getPluginByName('print');
     plugin?.print({ isolate: true });
   });
 }

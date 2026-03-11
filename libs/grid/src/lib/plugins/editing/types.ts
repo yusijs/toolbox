@@ -101,7 +101,7 @@ export interface CellCommitDetail<TRow = unknown> {
  * @example
  * ```typescript
  * grid.addEventListener('row-commit', (e) => {
- *   const editingPlugin = grid.getPlugin(EditingPlugin);
+ *   const editingPlugin = grid.getPluginByName('editing');
  *   if (editingPlugin?.hasInvalidCells(e.detail.rowId)) {
  *     e.preventDefault(); // Revert row to original values
  *     alert('Please fix validation errors before leaving the row');

@@ -148,7 +148,7 @@ function buildSelectionEvent(
  *
  * @example Programmatic selection control
  * ```ts
- * const plugin = grid.getPlugin(SelectionPlugin);
+ * const plugin = grid.getPluginByName('selection');
  *
  * // Get current selection
  * const selection = plugin.getSelection();
@@ -1169,7 +1169,7 @@ export class SelectionPlugin extends BaseGridPlugin<SelectionConfig> {
    *
    * @example
    * ```ts
-   * const plugin = grid.getPlugin(SelectionPlugin);
+   * const plugin = grid.getPluginByName('selection');
    * plugin.selectAll(); // Selects everything in current mode
    * ```
    */
@@ -1216,7 +1216,7 @@ export class SelectionPlugin extends BaseGridPlugin<SelectionConfig> {
    *
    * @example
    * ```ts
-   * const plugin = grid.getPlugin(SelectionPlugin);
+   * const plugin = grid.getPluginByName('selection');
    * plugin.selectRows([0, 2, 4]); // Select rows 0, 2, and 4
    * ```
    */
@@ -1243,7 +1243,7 @@ export class SelectionPlugin extends BaseGridPlugin<SelectionConfig> {
    *
    * @example
    * ```ts
-   * const plugin = grid.getPlugin(SelectionPlugin);
+   * const plugin = grid.getPluginByName('selection');
    * const rows = plugin.getSelectedRowIndices(); // [0, 2, 4]
    * ```
    */
@@ -1264,7 +1264,7 @@ export class SelectionPlugin extends BaseGridPlugin<SelectionConfig> {
    *
    * @example
    * ```ts
-   * const plugin = grid.getPlugin(SelectionPlugin);
+   * const plugin = grid.getPluginByName('selection');
    * const selected = plugin.getSelectedRows(); // [{ id: 1, name: 'Alice' }, ...]
    * ```
    */

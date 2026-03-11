@@ -51,10 +51,10 @@ grid.addEventListener('sort-change', (e) => {
 
 ## API Methods
 
-Access via `grid.getPlugin(MultiSortPlugin)`:
+Access via `grid.getPluginByName('multiSort')`:
 
 ```typescript
-const multiSort = grid.getPlugin(MultiSortPlugin);
+const multiSort = grid.getPluginByName('multiSort');
 
 // Get current sort model
 const model = multiSort.getSortModel();

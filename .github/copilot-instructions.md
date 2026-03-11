@@ -510,8 +510,11 @@ const sel = grid.getPluginByName('selection');
 sel?.selectAll();
 
 // Alternative — access by class (requires import)
+import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
 const sel2 = grid.getPlugin(SelectionPlugin);
 ```
+
+**Always prefer `getPluginByName()` over `getPlugin()`.** It avoids importing the plugin class and returns the actual instance registered in the grid.
 
 ## Common Pitfalls
 

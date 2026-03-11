@@ -562,8 +562,14 @@ export abstract class BaseGridPlugin<TConfig = unknown> implements GridPlugin {
    * Get another plugin instance from the same grid.
    * Use for inter-plugin communication.
    *
+   * **Prefer {@link BaseGridPlugin.grid grid.getPluginByName()}** when you don't need the class import.
+   *
    * @example
    * ```ts
+   * // Preferred: by name
+   * const selection = this.grid?.getPluginByName('selection');
+   *
+   * // Alternative: by class
    * const selection = this.getPlugin(SelectionPlugin);
    * if (selection) {
    *   const selectedRows = selection.getSelectedRows();

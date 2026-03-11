@@ -713,7 +713,7 @@ import { injectGrid } from '@toolbox-web/grid-angular';
 import { ExportPlugin } from '@toolbox-web/grid/plugins/export';
 
 const grid = injectGrid();
-const plugin = grid.element()?.getPlugin(ExportPlugin);
+const plugin = grid.element()?.getPluginByName('export');
 plugin?.exportToCsv('data.csv');
 
 // ✅ Clean: Feature-scoped inject function

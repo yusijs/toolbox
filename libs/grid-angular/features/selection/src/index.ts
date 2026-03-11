@@ -251,7 +251,7 @@ export function injectGridSelection<TRow = unknown>(): SelectionMethods<TRow> {
   };
 
   const getPlugin = (): SelectionPlugin | undefined => {
-    return getGrid()?.getPlugin(SelectionPlugin);
+    return getGrid()?.getPluginByName('selection') as SelectionPlugin | undefined;
   };
 
   /**

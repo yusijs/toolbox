@@ -215,7 +215,7 @@ import { ExportPlugin } from '@toolbox-web/grid/plugins/export';
 
 const { ref } = useGrid();
 // Need to get plugin instance and call methods on it
-const plugin = ref.current?.getPlugin(ExportPlugin);
+const plugin = ref.current?.getPluginByName('export');
 plugin?.exportToCsv('data.csv');
 
 // ✅ Clean: Feature-scoped hook

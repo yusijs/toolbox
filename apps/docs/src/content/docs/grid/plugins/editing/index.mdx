@@ -943,7 +943,7 @@ loaded (or when `grid.rows` is reassigned). Baselines are keyed by row ID, so
 
 ### API Methods
 
-Access via `grid.getPlugin(EditingPlugin)`:
+Access via `grid.getPluginByName('editing')`:
 
 | Method / Property | Returns | Description |
 | --- | --- | --- |
@@ -974,7 +974,7 @@ grid.addEventListener('dirty-change', (e: CustomEvent<DirtyChangeDetail>) => {
 ### Example: Save Workflow
 
 ```ts
-const editing = grid.getPlugin(EditingPlugin);
+const editing = grid.getPluginByName('editing');
 
 // Check if there are unsaved changes
 if (editing.dirty) {

@@ -41,7 +41,7 @@ grid.gridConfig = {
 
 ## API Methods
 
-Access via `grid.getPlugin(UndoRedoPlugin)` or `grid.getPluginByName('undoRedo')`:
+Access via `grid.getPluginByName('undoRedo')`:
 
 ```typescript
 const history = grid.getPluginByName('undoRedo');

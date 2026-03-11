@@ -141,7 +141,7 @@ Use the **Column Count** slider to add up to 1000 columns, and toggle **Auto Ena
 ## Programmatic API
 
 ```ts
-const plugin = grid.getPlugin(ColumnVirtualizationPlugin);
+const plugin = grid.getPluginByName('columnVirtualization');
 
 const isEnabled = plugin.isEnabled();
 plugin.setEnabled(true);

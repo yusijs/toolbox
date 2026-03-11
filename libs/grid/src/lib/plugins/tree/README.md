@@ -68,10 +68,10 @@ grid.addEventListener('tree-expand', (e) => {
 
 ## API Methods
 
-Access via `grid.getPlugin(TreePlugin)`:
+Access via `grid.getPluginByName('tree')`:
 
 ```typescript
-const tree = grid.getPlugin(TreePlugin);
+const tree = grid.getPluginByName('tree');
 
 // Expand a node by key
 tree.expand(key);

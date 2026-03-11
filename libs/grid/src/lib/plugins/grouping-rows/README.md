@@ -84,10 +84,10 @@ grid.addEventListener('group-toggle', (e) => {
 
 ## API Methods
 
-Access via `grid.getPlugin(GroupingRowsPlugin)`:
+Access via `grid.getPluginByName('groupingRows')`:
 
 ```typescript
-const grouping = grid.getPlugin(GroupingRowsPlugin);
+const grouping = grid.getPluginByName('groupingRows');
 
 // Expand a group by key
 grouping.expand(key);

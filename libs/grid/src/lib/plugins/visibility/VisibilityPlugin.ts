@@ -109,7 +109,7 @@ function canMoveColumn(column: ColumnConfig): boolean {
  * };
  *
  * // Toggle programmatically
- * const plugin = grid.getPlugin(VisibilityPlugin);
+ * const plugin = grid.getPluginByName('visibility');
  * plugin.showColumn('phone');
  * ```
  *

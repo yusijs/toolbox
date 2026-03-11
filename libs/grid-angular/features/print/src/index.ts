@@ -120,7 +120,7 @@ export function injectGridPrint(): PrintMethods {
   };
 
   const getPlugin = (): PrintPlugin | undefined => {
-    return getGrid()?.getPlugin(PrintPlugin);
+    return getGrid()?.getPluginByName('print');
   };
 
   // Eagerly discover the grid after the first render so isReady updates

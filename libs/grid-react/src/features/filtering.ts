@@ -151,7 +151,7 @@ export function useGridFiltering(): FilteringMethods {
 
   const getPlugin = useCallback((): FilteringPlugin | undefined => {
     const grid = gridRef?.current as DataGridElement | null;
-    return grid?.getPlugin(FilteringPlugin);
+    return grid?.getPluginByName('filtering');
   }, [gridRef]);
 
   const setFilter = useCallback(

@@ -63,7 +63,7 @@ if (container) {
   }) as EventListener);
 
   btn?.addEventListener('click', () => {
-    const plugin = grid.getPlugin(PrintPlugin);
+    const plugin = grid.getPluginByName('print');
     plugin?.print({ isolate: true });
   });
 }

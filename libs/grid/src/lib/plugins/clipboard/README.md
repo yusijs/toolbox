@@ -69,7 +69,7 @@ grid.addEventListener('paste', (e) => {
 
 ## API Methods
 
-Access via `grid.getPlugin(ClipboardPlugin)`:
+Access via `grid.getPluginByName('clipboard')`:
 
 ### `copy(options?: CopyOptions): Promise<string>`
 
@@ -77,7 +77,7 @@ Copy data to the system clipboard. Without options, copies the current selection
 With options, copies exactly the specified columns and/or rows.
 
 ```typescript
-const clipboard = grid.getPlugin(ClipboardPlugin);
+const clipboard = grid.getPluginByName('clipboard');
 
 // Copy current selection
 await clipboard.copy();

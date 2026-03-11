@@ -228,7 +228,7 @@ import { ExportPlugin } from '@toolbox-web/grid/plugins/export';
 
 const { gridElement } = useGrid();
 // Need to get plugin instance and call methods on it
-const plugin = gridElement.value?.getPlugin(ExportPlugin);
+const plugin = gridElement.value?.getPluginByName('export');
 plugin?.exportToCsv('data.csv');
 
 // ✅ Clean: Feature-scoped composable

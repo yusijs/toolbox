@@ -83,7 +83,7 @@ const DEFAULT_CONFIG: Required<PrintConfig> = {
  * };
  *
  * // Trigger print
- * const printPlugin = grid.getPlugin(PrintPlugin);
+ * const printPlugin = grid.getPluginByName('print');
  * await printPlugin.print();
  * ```
  *

@@ -70,10 +70,10 @@ grid.addEventListener('selection-change', (e) => {
 
 ## API Methods
 
-Access via `grid.getPlugin(SelectionPlugin)`:
+Access via `grid.getPluginByName('selection')`:
 
 ```typescript
-const selection = grid.getPlugin(SelectionPlugin);
+const selection = grid.getPluginByName('selection');
 
 // Get current selection (all modes - returns { mode, ranges, anchor })
 const result = selection.getSelection();

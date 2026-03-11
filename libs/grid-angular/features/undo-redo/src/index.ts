@@ -218,7 +218,7 @@ export function injectGridUndoRedo(): UndoRedoMethods {
   };
 
   const getPlugin = (): UndoRedoPlugin | undefined => {
-    return getGrid()?.getPlugin(UndoRedoPlugin);
+    return getGrid()?.getPluginByName('undoRedo');
   };
 
   // Eagerly discover the grid after the first render so event listeners

@@ -167,25 +167,25 @@ Navigate to `http://localhost:4401/grid/plugins/<plugin-name>/` after running `b
 
 BaseGridPlugin provides these protected helpers — use them instead of type casting:
 
-| Helper                         | Description                                       |
-| ------------------------------ | ------------------------------------------------- |
-| `this.grid`                    | Typed `GridElementRef` with all plugin APIs       |
-| `this.gridElement`             | Grid as `HTMLElement` for DOM queries (preferred) |
-| `this.columns`                 | Current column configurations                     |
-| `this.visibleColumns`          | Only visible columns (for rendering)              |
-| `this.rows`                    | Processed rows (after filtering, grouping)        |
-| `this.sourceRows`              | Original unfiltered rows                          |
-| `this.disconnectSignal`        | AbortSignal for auto-cleanup of event listeners   |
-| `this.isAnimationEnabled`      | Whether grid animations are enabled               |
-| `this.animationDuration`       | Animation duration in ms (default: 200)           |
-| `this.gridIcons`               | Merged icon configuration                         |
-| `this.getPluginByName(name)`   | Get another plugin instance by name (preferred)   |
-| `this.getPlugin(PluginClass)`  | Get another plugin instance by class              |
-| `this.emit(eventName, detail)` | Dispatch custom event from grid                   |
-| `this.requestRender()`         | Request full re-render                            |
-| `this.requestAfterRender()`    | Request lightweight style update                  |
-| `this.resolveIcon(name)`       | Get icon value by name                            |
-| `this.setIcon(el, icon)`       | Set icon on element (string or SVG)               |
+| Helper                         | Description                                        |
+| ------------------------------ | -------------------------------------------------- |
+| `this.grid`                    | Typed `GridElementRef` with all plugin APIs        |
+| `this.gridElement`             | Grid as `HTMLElement` for DOM queries (preferred)  |
+| `this.columns`                 | Current column configurations                      |
+| `this.visibleColumns`          | Only visible columns (for rendering)               |
+| `this.rows`                    | Processed rows (after filtering, grouping)         |
+| `this.sourceRows`              | Original unfiltered rows                           |
+| `this.disconnectSignal`        | AbortSignal for auto-cleanup of event listeners    |
+| `this.isAnimationEnabled`      | Whether grid animations are enabled                |
+| `this.animationDuration`       | Animation duration in ms (default: 200)            |
+| `this.gridIcons`               | Merged icon configuration                          |
+| `this.getPluginByName(name)`   | Get another plugin instance by name (preferred)    |
+| `this.getPlugin(PluginClass)`  | Get another plugin instance by class (alternative) |
+| `this.emit(eventName, detail)` | Dispatch custom event from grid                    |
+| `this.requestRender()`         | Request full re-render                             |
+| `this.requestAfterRender()`    | Request lightweight style update                   |
+| `this.resolveIcon(name)`       | Get icon value by name                             |
+| `this.setIcon(el, icon)`       | Set icon on element (string or SVG)                |
 
 > **Note**: The grid uses light DOM. Use `this.gridElement` for all DOM queries.
 
@@ -338,6 +338,8 @@ sel?.selectAll();
 // Alternative — access by class (requires import)
 const sel2 = grid.getPlugin(SelectionPlugin);
 ```
+
+**Always prefer `getPluginByName()` over `getPlugin()`.** It avoids importing the plugin class and returns the actual instance registered in the grid.
 
 ## Key Rules
 

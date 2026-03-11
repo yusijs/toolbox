@@ -142,7 +142,7 @@ The plugin has no configuration options. It is activated when columns have `pinn
 ## Programmatic API
 
 ```ts
-const plugin = grid.getPlugin(PinnedColumnsPlugin);
+const plugin = grid.getPluginByName('pinnedColumns');
 
 // Get currently pinned columns
 const leftPinned = plugin.getLeftPinnedColumns();

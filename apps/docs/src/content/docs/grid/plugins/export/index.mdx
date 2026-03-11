@@ -43,7 +43,7 @@ grid.gridConfig = {
 
 // Trigger export via button click
 document.getElementById('export-btn').addEventListener('click', () => {
-  const plugin = grid.getPlugin(ExportPlugin);
+  const plugin = grid.getPluginByName('export');
   plugin.exportCsv();
 });
 ```
@@ -100,7 +100,7 @@ const exportPlugin = markRaw(new ExportPlugin({
 }));
 
 const handleExport = () => {
-  gridRef.value?.element?.getPlugin(ExportPlugin)?.exportCsv();
+  gridRef.value?.element?.getPluginByName('export')?.exportCsv();
 };
 </script>
 
@@ -151,7 +151,7 @@ export class DataGridComponent {
   ];
 
   handleExport() {
-    const plugin = this.gridRef()?.nativeElement.getPlugin(ExportPlugin);
+    const plugin = this.gridRef()?.nativeElement.getPluginByName('export');
     plugin?.exportCsv();
   }
 }
@@ -197,7 +197,7 @@ The ExportPlugin provides methods for exporting data with fine-grained control o
 ### Basic Export
 
 ```ts
-const exportPlugin = grid.getPlugin(ExportPlugin);
+const exportPlugin = grid.getPluginByName('export');
 
 // Export all visible data to CSV
 exportPlugin.exportCsv();
@@ -212,7 +212,7 @@ exportPlugin.exportJson();
 ### Export with Column/Row Control (`ExportParams`)
 
 ```ts
-const exportPlugin = grid.getPlugin(ExportPlugin);
+const exportPlugin = grid.getPluginByName('export');
 
 // Export specific columns
 exportPlugin.exportCsv({

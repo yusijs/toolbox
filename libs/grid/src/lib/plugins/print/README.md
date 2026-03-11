@@ -51,10 +51,10 @@ grid.gridConfig = {
 
 ## API Methods
 
-Access via `grid.getPlugin(PrintPlugin)`:
+Access via `grid.getPluginByName('print')`:
 
 ```typescript
-const printer = grid.getPlugin(PrintPlugin);
+const printer = grid.getPluginByName('print');
 
 // Print with default config
 await printer.print();

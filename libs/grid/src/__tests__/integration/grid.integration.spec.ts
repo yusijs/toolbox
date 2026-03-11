@@ -513,7 +513,7 @@ describe('tbw-grid integration: setPinPosition via context menu', () => {
     expect(grid.querySelector('.header-row .cell.sticky-left')).toBeFalsy();
 
     // Get the PinnedColumnsPlugin and pin 'email' left
-    const pinnedPlugin = grid.getPlugin(PinnedColumnsPlugin);
+    const pinnedPlugin = grid.getPluginByName('pinnedColumns');
     expect(pinnedPlugin).toBeTruthy();
     pinnedPlugin.setPinPosition('email', 'left');
 
@@ -529,7 +529,7 @@ describe('tbw-grid integration: setPinPosition via context menu', () => {
   });
 
   it('pins a column right via setPinPosition', async () => {
-    const pinnedPlugin = grid.getPlugin(PinnedColumnsPlugin);
+    const pinnedPlugin = grid.getPluginByName('pinnedColumns');
     pinnedPlugin.setPinPosition('dept', 'right');
 
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -541,7 +541,7 @@ describe('tbw-grid integration: setPinPosition via context menu', () => {
   });
 
   it('unpins a previously pinned column', async () => {
-    const pinnedPlugin = grid.getPlugin(PinnedColumnsPlugin);
+    const pinnedPlugin = grid.getPluginByName('pinnedColumns');
     // Pin first
     pinnedPlugin.setPinPosition('email', 'left');
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -595,7 +595,7 @@ describe('tbw-grid integration: setPinPosition with column groups', () => {
     // Verify no sticky classes initially
     expect(grid.querySelector('.header-row .cell.sticky-left')).toBeFalsy();
 
-    const pinnedPlugin = grid.getPlugin(PinnedColumnsPlugin);
+    const pinnedPlugin = grid.getPluginByName('pinnedColumns');
     pinnedPlugin.setPinPosition('email', 'left');
 
     // Wait for re-render + afterRender microtask
@@ -646,7 +646,7 @@ describe('tbw-grid integration: setPinPosition with ColumnVirtualizationPlugin',
   it('does not lose pinned property when ColumnVirtualizationPlugin is loaded', async () => {
     expect(grid.querySelector('.header-row .cell.sticky-left')).toBeFalsy();
 
-    const pinnedPlugin = grid.getPlugin(PinnedColumnsPlugin);
+    const pinnedPlugin = grid.getPluginByName('pinnedColumns');
     pinnedPlugin.setPinPosition('email', 'left');
 
     // Wait for re-render + afterRender microtask
@@ -1466,7 +1466,7 @@ describe('tbw-grid integration: async filtering state persistence', () => {
     expect(plugin.getFilters()).toHaveLength(1);
 
     // Get the plugin instance from the grid to ensure we're checking the right one
-    const attachedPlugin = grid.getPlugin(FilteringPlugin);
+    const attachedPlugin = grid.getPluginByName('filtering');
     expect(attachedPlugin).not.toBeNull();
     expect(attachedPlugin.isFieldFiltered('name')).toBe(true);
 
@@ -1611,7 +1611,7 @@ describe('tbw-grid integration: async filtering state persistence', () => {
     expect(grid._rows[0].status).toBe('Active');
 
     // Verify excludedValues is computed as the complement
-    const attachedPlugin = grid.getPlugin(FilteringPlugin);
+    const attachedPlugin = grid.getPluginByName('filtering');
     const excluded = (attachedPlugin as any).excludedValues.get('status') as Set<unknown>;
     expect(excluded).toBeDefined();
     expect(excluded.has('Inactive')).toBe(true);

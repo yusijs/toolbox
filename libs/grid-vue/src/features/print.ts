@@ -91,7 +91,7 @@ export function useGridPrint(): PrintMethods {
 
   const getPlugin = (): PrintPlugin | undefined => {
     const grid = gridElement.value as DataGridElement | null;
-    return grid?.getPlugin(PrintPlugin);
+    return grid?.getPluginByName('print');
   };
 
   return {

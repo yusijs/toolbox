@@ -82,10 +82,10 @@ Produces:
 
 ## API Methods
 
-Access via `grid.getPlugin(PivotPlugin)`:
+Access via `grid.getPluginByName('pivot')`:
 
 ```typescript
-const pivot = grid.getPlugin(PivotPlugin);
+const pivot = grid.getPluginByName('pivot');
 
 // Toggle pivot mode
 pivot.enablePivot();

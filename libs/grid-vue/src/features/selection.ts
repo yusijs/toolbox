@@ -117,7 +117,7 @@ export function useGridSelection<TRow = unknown>(): SelectionMethods<TRow> {
 
   const getPlugin = (): SelectionPlugin | undefined => {
     const grid = gridElement.value as DataGridElement<TRow> | null;
-    return grid?.getPlugin(SelectionPlugin);
+    return grid?.getPluginByName('selection');
   };
 
   return {

@@ -40,10 +40,10 @@ grid.columns = [
 
 ## API Methods
 
-Access via `grid.getPlugin(VisibilityPlugin)`:
+Access via `grid.getPluginByName('visibility')`:
 
 ```typescript
-const visibility = grid.getPlugin(VisibilityPlugin);
+const visibility = grid.getPluginByName('visibility');
 
 // Show/hide columns
 visibility.setColumnVisible('email', false);

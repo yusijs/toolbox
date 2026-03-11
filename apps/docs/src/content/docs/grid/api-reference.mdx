@@ -444,7 +444,7 @@ selection?.selectAll(); // ✅ SelectionPlugin methods are available
 
 // Alternative — get by class (requires import)
 import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
-const sel = grid.getPlugin(SelectionPlugin);
+const sel = grid.getPluginByName('selection');
 
 // Check if plugin is registered
 if (selection) {

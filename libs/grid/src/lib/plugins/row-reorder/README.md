@@ -103,7 +103,7 @@ new RowReorderPlugin({
 ## API Methods
 
 ```ts
-const plugin = grid.getPlugin(RowReorderPlugin);
+const plugin = grid.getPluginByName('rowReorder');
 
 // Move row programmatically
 plugin.moveRow(fromIndex, toIndex);

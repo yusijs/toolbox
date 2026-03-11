@@ -357,7 +357,7 @@ Control responsive mode programmatically via the plugin instance:
 
 ```ts
 // Get the plugin instance from the grid
-const plugin = grid.getPlugin(ResponsivePlugin);
+const plugin = grid.getPluginByName('responsive');
 
 // Check current mode
 const isCardMode = plugin.isResponsive();

@@ -97,7 +97,7 @@ function ServerSideGrid() {
   useEffect(() => {
     if (element) {
       element.ready().then(() => {
-        const plugin = element.getPlugin(ServerSidePlugin);
+        const plugin = element.getPluginByName('serverSide');
         plugin?.setDataSource(dataSource);
       });
     }
@@ -193,7 +193,7 @@ export class ServerSideGridComponent {
 
   ngAfterViewInit() {
     this.gridRef()?.nativeElement.ready().then(() => {
-      const plugin = this.gridRef()?.nativeElement.getPlugin(ServerSidePlugin);
+      const plugin = this.gridRef()?.nativeElement.getPluginByName('serverSide');
       plugin?.setDataSource(this.dataSource);
     });
   }
@@ -290,7 +290,7 @@ interface GetRowsResult {
 ## Programmatic API
 
 ```ts
-const plugin = grid.getPlugin(ServerSidePlugin);
+const plugin = grid.getPluginByName('serverSide');
 
 plugin.setDataSource(newDataSource);  // Set or replace the data source
 plugin.refresh();                      // Reload current viewport from server

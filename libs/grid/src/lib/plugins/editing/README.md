@@ -78,10 +78,10 @@ All editable cells always show editors (spreadsheet-like).
 
 ## API Methods
 
-Access via `grid.getPlugin(EditingPlugin)`:
+Access via `grid.getPluginByName('editing')`:
 
 ```typescript
-const editing = grid.getPlugin(EditingPlugin);
+const editing = grid.getPluginByName('editing');
 
 // Check state
 editing.isRowEditing(rowIndex);

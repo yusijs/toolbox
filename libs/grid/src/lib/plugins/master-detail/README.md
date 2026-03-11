@@ -57,10 +57,10 @@ grid.addEventListener('detail-expand', (e) => {
 
 ## API Methods
 
-Access via `grid.getPlugin(MasterDetailPlugin)`:
+Access via `grid.getPluginByName('masterDetail')`:
 
 ```typescript
-const masterDetail = grid.getPlugin(MasterDetailPlugin);
+const masterDetail = grid.getPluginByName('masterDetail');
 
 // Expand/collapse detail
 masterDetail.expand(rowIndex);

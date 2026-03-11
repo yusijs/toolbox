@@ -62,7 +62,7 @@ grid.gridConfig = {
 };
 
 // Programmatic print
-const plugin = grid.getPlugin(PrintPlugin);
+const plugin = grid.getPluginByName('print');
 await plugin.print();
 ```
   </TabItem>
@@ -122,7 +122,7 @@ const printPlugin = markRaw(new PrintPlugin({
 }));
 
 const handlePrint = async () => {
-  await gridRef.value?.element?.getPlugin(PrintPlugin)?.print();
+  await gridRef.value?.element?.getPluginByName('print')?.print();
 };
 </script>
 
@@ -173,7 +173,7 @@ export class EmployeeGridComponent {
   ];
 
   async handlePrint() {
-    const plugin = this.gridRef()?.nativeElement.getPlugin(PrintPlugin);
+    const plugin = this.gridRef()?.nativeElement.getPluginByName('print');
     await plugin?.print();
   }
 }
@@ -318,7 +318,7 @@ preparing the print dialog - it does NOT indicate the user's choice.
 Initiates the print process. Returns a Promise that resolves when printing completes.
 
 ```typescript
-const plugin = grid.getPlugin(PrintPlugin);
+const plugin = grid.getPluginByName('print');
 
 // Basic print (prints entire page)
 await plugin.print();

@@ -156,7 +156,7 @@ export function injectGridFiltering(): FilteringMethods {
   };
 
   const getPlugin = (): FilteringPlugin | undefined => {
-    return getGrid()?.getPlugin(FilteringPlugin);
+    return getGrid()?.getPluginByName('filtering') as FilteringPlugin | undefined;
   };
 
   // Eagerly discover the grid after the first render so isReady updates

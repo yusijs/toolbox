@@ -221,7 +221,7 @@ You can also use a simple string for the group (the string becomes both the id a
 The plugin provides these methods on the plugin instance:
 
 ```ts
-const plugin = grid.getPlugin(GroupingColumnsPlugin);
+const plugin = grid.getPluginByName('groupingColumns');
 
 // Check if grouping is active
 plugin.isGroupingActive(); // boolean

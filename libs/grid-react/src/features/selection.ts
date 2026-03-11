@@ -116,7 +116,7 @@ export function useGridSelection<TRow = unknown>(): SelectionMethods<TRow> {
 
   const getPlugin = useCallback((): SelectionPlugin | undefined => {
     const grid = gridRef?.current as DataGridElement<TRow> | null;
-    return grid?.getPlugin(SelectionPlugin);
+    return grid?.getPluginByName('selection');
   }, [gridRef]);
 
   const selectAll = useCallback(() => {

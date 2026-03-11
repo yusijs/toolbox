@@ -36,7 +36,7 @@ export type PasteHandler = (detail: PasteDetail, grid: GridElement) => boolean |
  *
  * @example Copy specific columns from selected rows
  * ```ts
- * const clipboard = grid.getPlugin(ClipboardPlugin);
+ * const clipboard = grid.getPluginByName('clipboard');
  * // User selected rows 0, 2, 4 via a dialog, chose columns to include
  * const text = await clipboard.copy({
  *   rowIndices: [0, 2, 4],

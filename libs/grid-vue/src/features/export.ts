@@ -109,7 +109,7 @@ export function useGridExport(): ExportMethods {
 
   const getPlugin = (): ExportPlugin | undefined => {
     const grid = gridElement.value as DataGridElement | null;
-    return grid?.getPlugin(ExportPlugin);
+    return grid?.getPluginByName('export');
   };
 
   return {

@@ -103,7 +103,7 @@ export function useGridExport(): ExportMethods {
 
   const getPlugin = useCallback((): ExportPlugin | undefined => {
     const grid = gridRef?.current as DataGridElement | null;
-    return grid?.getPlugin(ExportPlugin);
+    return grid?.getPluginByName('export');
   }, [gridRef]);
 
   const exportToCsv = useCallback(

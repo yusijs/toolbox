@@ -223,7 +223,7 @@ reduced motion (`'reduced-motion'` mode with system preference).
 ## Programmatic API
 
 ```ts
-const plugin = grid.getPlugin(PivotPlugin);
+const plugin = grid.getPluginByName('pivot');
 
 plugin.expandGroup(['North', 'Widget A']);
 plugin.collapseGroup(['North']);

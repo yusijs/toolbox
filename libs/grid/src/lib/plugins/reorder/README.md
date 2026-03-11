@@ -101,10 +101,10 @@ grid.addEventListener('column-move', (e) => {
 
 ## API Methods
 
-Access via `grid.getPlugin(ReorderPlugin)`:
+Access via `grid.getPluginByName('reorder')`:
 
 ```typescript
-const reorder = grid.getPlugin(ReorderPlugin);
+const reorder = grid.getPluginByName('reorder');
 
 // Move column programmatically
 reorder.moveColumn('email', 0); // Move to first position

@@ -56,10 +56,10 @@ grid.columns = [
 
 ## API Methods
 
-Access via `grid.getPlugin(PinnedColumnsPlugin)`:
+Access via `grid.getPluginByName('pinnedColumns')`:
 
 ```typescript
-const pinned = grid.getPlugin(PinnedColumnsPlugin);
+const pinned = grid.getPluginByName('pinnedColumns');
 
 // Pin or unpin a column programmatically
 pinned.setPinPosition('email', 'left');
