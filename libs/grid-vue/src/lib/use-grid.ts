@@ -60,8 +60,8 @@ export function useGrid(): UseGridReturn {
     getPlugin: <T>(pluginClass: new (...args: unknown[]) => T) => {
       return gridElement.value?.getPlugin(pluginClass);
     },
-    getPluginByName: (name: string) => {
+    getPluginByName: ((name: string) => {
       return gridElement.value?.getPluginByName(name);
-    },
+    }) as DataGridElement['getPluginByName'],
   };
 }
