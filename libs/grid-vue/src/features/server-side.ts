@@ -19,9 +19,5 @@
  * @packageDocumentation
  */
 
-import { ServerSidePlugin } from '@toolbox-web/grid/plugins/server-side';
-import { registerFeature } from '../lib/feature-registry';
-
-registerFeature('serverSide', (config) => {
-  return new ServerSidePlugin(config ?? undefined);
-});
+// Delegate to core feature registration
+import '@toolbox-web/grid/features/server-side';

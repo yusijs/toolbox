@@ -30,15 +30,8 @@
 
 import { afterNextRender, DestroyRef, ElementRef, inject, signal, type Signal } from '@angular/core';
 import type { DataGridElement } from '@toolbox-web/grid';
-import { registerFeature } from '@toolbox-web/grid-angular';
+import '@toolbox-web/grid/features/print';
 import { PrintPlugin, type PrintParams } from '@toolbox-web/grid/plugins/print';
-
-registerFeature('print', (config) => {
-  if (config === true) {
-    return new PrintPlugin();
-  }
-  return new PrintPlugin(config ?? undefined);
-});
 
 /**
  * Print methods returned from injectGridPrint.

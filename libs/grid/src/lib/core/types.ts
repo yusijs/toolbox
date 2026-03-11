@@ -1911,6 +1911,41 @@ export interface GridPlugin {
 export interface PluginNameMap {}
 // #endregion
 
+// #region Feature Config
+/**
+ * Declarative feature configuration interface.
+ *
+ * This interface is intentionally empty in core — it is populated via **module augmentation**
+ * by feature side-effect imports (`@toolbox-web/grid/features/selection`, etc.).
+ * Third-party plugins can also augment this interface to add their own features.
+ *
+ * @example
+ * ```ts
+ * // Each feature import augments this interface:
+ * import '@toolbox-web/grid/features/selection';
+ * import '@toolbox-web/grid/features/filtering';
+ *
+ * grid.gridConfig = {
+ *   features: {
+ *     selection: 'range',       // ← typed by selection feature module
+ *     filtering: { debounceMs: 200 }, // ← typed by filtering feature module
+ *   },
+ * };
+ * ```
+ *
+ * @example Third-party augmentation
+ * ```ts
+ * declare module '@toolbox-web/grid' {
+ *   interface FeatureConfig {
+ *     sparkline?: boolean | SparklineConfig;
+ *   }
+ * }
+ * ```
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
+export interface FeatureConfig<TRow = unknown> {}
+// #endregion
+
 // #region Grid Config
 /**
  * Grid configuration object - the **single source of truth** for grid behavior.
@@ -2061,6 +2096,34 @@ export interface GridConfig<TRow = any> {
    * ```
    */
   plugins?: GridPlugin[];
+
+  /**
+   * Declarative feature configuration.
+   * Alternative to manually creating plugin instances in `plugins`.
+   * Features are resolved using the core feature registry.
+   *
+   * Import feature modules as side effects to register them:
+   * ```ts
+   * import '@toolbox-web/grid/features/selection';
+   * import '@toolbox-web/grid/features/filtering';
+   * ```
+   *
+   * Then configure declaratively:
+   * ```ts
+   * gridConfig = {
+   *   features: {
+   *     selection: 'range',
+   *     filtering: { debounceMs: 200 },
+   *     editing: 'dblclick',
+   *   },
+   * };
+   * ```
+   *
+   * Both `features` and `plugins` can be used together — features-generated plugins
+   * are created first, then manual `plugins` are appended. Duplicates are skipped
+   * (manual `plugins` take precedence).
+   */
+  features?: Partial<FeatureConfig<TRow>>;
 
   /**
    * Saved column state to restore on initialization.

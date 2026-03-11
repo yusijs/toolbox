@@ -34,22 +34,13 @@
 
 import { afterNextRender, DestroyRef, ElementRef, inject, signal, type Signal } from '@angular/core';
 import type { DataGridElement } from '@toolbox-web/grid';
-import { registerFeature } from '@toolbox-web/grid-angular';
+import '@toolbox-web/grid/features/selection';
 import {
   SelectionPlugin,
   type CellRange,
   type SelectionChangeDetail,
   type SelectionResult,
 } from '@toolbox-web/grid/plugins/selection';
-
-registerFeature('selection', (config) => {
-  // Handle shorthand: 'cell', 'row', 'range'
-  if (config === 'cell' || config === 'row' || config === 'range') {
-    return new SelectionPlugin({ mode: config });
-  }
-  // Full config object
-  return new SelectionPlugin(config ?? undefined);
-});
 
 /**
  * Selection methods returned from injectGridSelection.

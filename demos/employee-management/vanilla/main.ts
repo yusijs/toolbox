@@ -20,7 +20,7 @@ import '@demo/shared/demo-styles.css';
 import '@toolbox-web/grid';
 
 // Import grid factory and plugins
-import { createGrid, ExportPlugin, type DataGridElement } from '@toolbox-web/grid/all';
+import { createGrid, type DataGridElement } from '@toolbox-web/grid/all';
 
 // Import shared data generators and types
 import { generateEmployees, type Employee } from '@demo/shared';
@@ -69,14 +69,14 @@ export function createEmployeeGrid(options: EmployeeGridOptions): DataGridElemen
   exportCsvBtn.setAttribute('title', 'Export CSV');
   exportCsvBtn.setAttribute('aria-label', 'Export CSV');
   exportCsvBtn.textContent = '📄';
-  exportCsvBtn.onclick = () => grid.getPlugin?.(ExportPlugin)?.exportCsv?.({ fileName: 'employees' });
+  exportCsvBtn.onclick = () => grid.getPluginByName?.('export')?.exportCsv?.({ fileName: 'employees' });
 
   const exportExcelBtn = document.createElement('button');
   exportExcelBtn.className = 'tbw-toolbar-btn';
   exportExcelBtn.setAttribute('title', 'Export Excel');
   exportExcelBtn.setAttribute('aria-label', 'Export Excel');
   exportExcelBtn.textContent = '📊';
-  exportExcelBtn.onclick = () => grid.getPlugin?.(ExportPlugin)?.exportExcel?.({ fileName: 'employees' });
+  exportExcelBtn.onclick = () => grid.getPluginByName?.('export')?.exportExcel?.({ fileName: 'employees' });
 
   toolButtons.appendChild(exportCsvBtn);
   toolButtons.appendChild(exportExcelBtn);

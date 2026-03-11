@@ -2,6 +2,7 @@ import { createAriaState, updateAriaCounts, updateAriaLabels, type AriaState } f
 import { autoSizeColumns, updateTemplate } from './internal/columns';
 import { ConfigManager } from './internal/config-manager';
 import { setupCellEventDelegation, setupRootEventDelegation } from './internal/event-delegation';
+import { resolveFeatures } from './internal/feature-hook';
 import { renderHeader } from './internal/header';
 import { cancelIdle, scheduleIdle } from './internal/idle-scheduler';
 import { ensureCellVisible } from './internal/keyboard';
@@ -279,6 +280,7 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
   // Plugin System
   #pluginManager!: PluginManager;
   #lastPluginsArray?: BaseGridPlugin[]; // Track last attached plugins to avoid unnecessary re-initialization
+  #lastFeaturesConfig?: Record<string, unknown>; // Track last features config for change detection
 
   /**
    * Exposes plugin manager for event bus operations (subscribe/unsubscribe/emit).
@@ -1003,6 +1005,8 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
   /**
    * Initialize plugin system with instances from config.
    * Plugins are class instances passed in gridConfig.plugins[].
+   * If gridConfig.features is set and the feature registry is loaded,
+   * feature-derived plugins are prepended before explicit plugins.
    */
   #initializePlugins(): void {
     // Create plugin manager for this grid
@@ -1010,10 +1014,20 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
 
     // Get plugin instances from config - ensure it's an array
     const pluginsConfig = this.#effectiveConfig?.plugins;
-    const plugins = Array.isArray(pluginsConfig) ? (pluginsConfig as BaseGridPlugin[]) : [];
+    const explicitPlugins = Array.isArray(pluginsConfig) ? (pluginsConfig as BaseGridPlugin[]) : [];
+
+    // Resolve feature-derived plugins (if feature registry is loaded)
+    const features = this.#effectiveConfig?.features;
+    let featurePlugins: BaseGridPlugin[] = [];
+    if (features && resolveFeatures) {
+      featurePlugins = resolveFeatures(features as Record<string, unknown>) as BaseGridPlugin[];
+    }
+
+    // Merge: feature-derived first (for dependency ordering), then explicit plugins
+    const allPlugins = featurePlugins.length > 0 ? [...featurePlugins, ...explicitPlugins] : explicitPlugins;
 
     // Attach all plugins
-    this.#pluginManager.attachAll(plugins);
+    this.#pluginManager.attachAll(allPlugins);
   }
 
   /**
@@ -1029,26 +1043,27 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
   /**
    * Update plugins when grid config changes.
    * With class-based plugins, we need to detach old and attach new.
-   * Skips re-initialization if the plugins array hasn't changed.
+   * Skips re-initialization if the plugins array and features config haven't changed.
    */
   #updatePluginConfigs(): void {
     // Get the new plugins array from config
     const pluginsConfig = this.#effectiveConfig?.plugins;
     const newPlugins = Array.isArray(pluginsConfig) ? (pluginsConfig as BaseGridPlugin[]) : [];
+    const newFeatures = (this.#effectiveConfig?.features as Record<string, unknown>) ?? undefined;
+
+    // Check if features config changed (by reference)
+    const featuresChanged = newFeatures !== this.#lastFeaturesConfig;
 
     // Check if plugins have actually changed (same array reference or same contents)
     // This avoids unnecessary detach/attach cycles on every render
-    if (this.#lastPluginsArray === newPlugins) {
-      return; // Same array reference - no change
-    }
+    const pluginsUnchanged =
+      this.#lastPluginsArray === newPlugins ||
+      (this.#lastPluginsArray !== undefined &&
+        this.#lastPluginsArray.length === newPlugins.length &&
+        this.#lastPluginsArray.every((p, i) => p === newPlugins[i]));
 
-    // Check if the arrays have the same plugin instances
-    if (
-      this.#lastPluginsArray &&
-      this.#lastPluginsArray.length === newPlugins.length &&
-      this.#lastPluginsArray.every((p, i) => p === newPlugins[i])
-    ) {
-      // Same plugins in same order - just update the reference tracking
+    if (pluginsUnchanged && !featuresChanged) {
+      // Nothing changed - just update reference tracking
       this.#lastPluginsArray = newPlugins;
       return;
     }
@@ -1091,8 +1106,9 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
     this.#initializePlugins();
     this.#injectAllPluginStyles();
 
-    // Track the new plugins array
+    // Track the new plugins array and features config
     this.#lastPluginsArray = newPlugins;
+    this.#lastFeaturesConfig = newFeatures;
 
     // Re-check variable heights mode: a plugin with getRowHeight() may have been added
     // after initial setup (e.g., Angular/React set gridConfig asynchronously via effects).
@@ -1220,9 +1236,10 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
     // Initialize plugin system (now plugins can access disconnectSignal)
     this.#initializePlugins();
 
-    // Track the initial plugins array to avoid unnecessary re-initialization
+    // Track the initial plugins array and features to avoid unnecessary re-initialization
     const pluginsConfig = this.#effectiveConfig?.plugins;
     this.#lastPluginsArray = Array.isArray(pluginsConfig) ? (pluginsConfig as BaseGridPlugin[]) : [];
+    this.#lastFeaturesConfig = (this.#effectiveConfig?.features as Record<string, unknown>) ?? undefined;
 
     // Collect tool panels and header content from plugins (must be before render)
     this.#collectPluginShellContributions();
@@ -1307,6 +1324,7 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
 
     // Clear plugin tracking to allow fresh initialization on reconnect
     this.#lastPluginsArray = undefined;
+    this.#lastFeaturesConfig = undefined;
 
     // Clear row pool - detach from DOM and release references
     for (const rowEl of this._rowPool) {
@@ -1833,6 +1851,37 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
     options?: boolean | EventListenerOptions,
   ): void {
     super.removeEventListener(type, listener as EventListener, options);
+  }
+
+  /**
+   * Subscribe to a typed grid event with automatic detail unwrapping.
+   * Returns an unsubscribe function for easy cleanup.
+   *
+   * The listener receives the event detail as the first argument and the
+   * raw `CustomEvent` as the second (useful for `preventDefault()`,
+   * `stopPropagation()`, etc.).
+   *
+   * @example
+   * ```typescript
+   * const off = grid.on('cell-click', (detail) => {
+   *   console.log(detail.row, detail.field);
+   * });
+   *
+   * // Later: clean up
+   * off();
+   * ```
+   *
+   * @category Events
+   */
+  on<K extends keyof DataGridEventMap<T>>(
+    type: K,
+    listener: (detail: DataGridEventMap<T>[K], event: CustomEvent<DataGridEventMap<T>[K]>) => void,
+  ): () => void {
+    const handler = ((e: CustomEvent<DataGridEventMap<T>[K]>) => {
+      listener(e.detail, e);
+    }) as EventListener;
+    this.addEventListener(type, handler);
+    return () => this.removeEventListener(type, handler);
   }
 
   #emit<D>(eventName: string, detail: D): void {

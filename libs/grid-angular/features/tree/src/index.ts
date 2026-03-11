@@ -13,12 +13,4 @@
  * @packageDocumentation
  */
 
-import { TreePlugin } from '@toolbox-web/grid/plugins/tree';
-import { registerFeature } from '@toolbox-web/grid-angular';
-
-registerFeature('tree', (config) => {
-  if (config === true) {
-    return new TreePlugin();
-  }
-  return new TreePlugin(config ?? undefined);
-});
+import '@toolbox-web/grid/features/tree';

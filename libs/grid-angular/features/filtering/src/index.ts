@@ -31,15 +31,8 @@
 
 import { afterNextRender, DestroyRef, ElementRef, inject, signal, type Signal } from '@angular/core';
 import type { DataGridElement } from '@toolbox-web/grid';
-import { registerFeature } from '@toolbox-web/grid-angular';
+import '@toolbox-web/grid/features/filtering';
 import { FilteringPlugin, type FilterModel } from '@toolbox-web/grid/plugins/filtering';
-
-registerFeature('filtering', (config) => {
-  if (config === true) {
-    return new FilteringPlugin();
-  }
-  return new FilteringPlugin(config ?? undefined);
-});
 
 /**
  * Filtering methods returned from injectGridFiltering.

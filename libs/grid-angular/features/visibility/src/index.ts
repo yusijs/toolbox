@@ -13,12 +13,4 @@
  * @packageDocumentation
  */
 
-import { VisibilityPlugin } from '@toolbox-web/grid/plugins/visibility';
-import { registerFeature } from '@toolbox-web/grid-angular';
-
-registerFeature('visibility', (config) => {
-  if (config === true) {
-    return new VisibilityPlugin();
-  }
-  return new VisibilityPlugin(config ?? undefined);
-});
+import '@toolbox-web/grid/features/visibility';

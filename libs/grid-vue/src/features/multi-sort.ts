@@ -17,26 +17,5 @@
  * @packageDocumentation
  */
 
-import { MultiSortPlugin } from '@toolbox-web/grid/plugins/multi-sort';
-import { registerFeature } from '../lib/feature-registry';
-
-registerFeature('multiSort', (config) => {
-  if (config === true || config === 'multi') {
-    return new MultiSortPlugin();
-  }
-  if (config === 'single') {
-    return new MultiSortPlugin({ maxSortColumns: 1 });
-  }
-  return new MultiSortPlugin(config ?? undefined);
-});
-
-// Alias for backwards compatibility
-registerFeature('sorting', (config) => {
-  if (config === true || config === 'multi') {
-    return new MultiSortPlugin();
-  }
-  if (config === 'single') {
-    return new MultiSortPlugin({ maxSortColumns: 1 });
-  }
-  return new MultiSortPlugin(config ?? undefined);
-});
+// Delegate to core feature registration
+import '@toolbox-web/grid/features/multi-sort';

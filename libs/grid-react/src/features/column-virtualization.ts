@@ -13,10 +13,5 @@
  * @packageDocumentation
  */
 
-import { ColumnVirtualizationPlugin } from '@toolbox-web/grid/plugins/column-virtualization';
-import { registerFeature } from '../lib/feature-registry';
-
-registerFeature('columnVirtualization', (config) => {
-  const options = typeof config === 'boolean' ? {} : ((config as any) ?? {});
-  return new ColumnVirtualizationPlugin(options);
-});
+// Delegate to core feature registration
+import '@toolbox-web/grid/features/column-virtualization';

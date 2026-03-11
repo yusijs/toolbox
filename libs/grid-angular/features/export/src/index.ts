@@ -31,15 +31,8 @@
 
 import { afterNextRender, DestroyRef, ElementRef, inject, signal, type Signal } from '@angular/core';
 import type { DataGridElement } from '@toolbox-web/grid';
-import { registerFeature } from '@toolbox-web/grid-angular';
+import '@toolbox-web/grid/features/export';
 import { ExportPlugin, type ExportFormat, type ExportParams } from '@toolbox-web/grid/plugins/export';
-
-registerFeature('export', (config) => {
-  if (config === true) {
-    return new ExportPlugin();
-  }
-  return new ExportPlugin(config ?? undefined);
-});
 
 /**
  * Export methods returned from injectGridExport.

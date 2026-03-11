@@ -8,6 +8,9 @@ import dts from 'vite-plugin-dts';
 
 const outDir = path.resolve(import.meta.dirname, '../../dist/libs/grid-vue');
 
+// Resolve @toolbox-web/grid paths for tests
+const gridDistPath = path.resolve(import.meta.dirname, '../../dist/libs/grid');
+
 /** Copy README.md to dist for npm publishing */
 function copyReadme(): Plugin {
   return {
@@ -109,5 +112,21 @@ export default defineConfig(() => ({
       reportsDirectory: '../../coverage/libs/grid-vue',
       provider: 'v8' as const,
     },
+    alias: [
+      // Resolve @toolbox-web/grid/features/* to dist
+      {
+        find: /^@toolbox-web\/grid\/features\/(.+)$/,
+        replacement: path.join(gridDistPath, 'lib/features/$1.js'),
+      },
+      // Resolve @toolbox-web/grid/plugins/* to dist
+      {
+        find: /^@toolbox-web\/grid\/plugins\/(.+)$/,
+        replacement: path.join(gridDistPath, 'lib/plugins/$1/index.js'),
+      },
+      // Resolve @toolbox-web/grid/all to dist
+      { find: '@toolbox-web/grid/all', replacement: path.join(gridDistPath, 'all.js') },
+      // Resolve @toolbox-web/grid to dist
+      { find: '@toolbox-web/grid', replacement: path.join(gridDistPath, 'index.js') },
+    ],
   },
 }));

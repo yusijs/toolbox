@@ -77,6 +77,15 @@ const toolboxAliasPlugin = {
             : path.join(libsRoot, 'grid', 'src', 'lib', 'plugins', pluginName, 'index.ts'),
         };
       }
+      // Handle features/* (flat .ts files, not directories)
+      if (subpath.startsWith('features/')) {
+        const featureName = subpath.replace('features/', '');
+        return {
+          path: useDist
+            ? path.join(distRoot, 'grid', 'lib', 'features', `${featureName}.js`)
+            : path.join(libsRoot, 'grid', 'src', 'lib', 'features', `${featureName}.ts`),
+        };
+      }
       return {
         path: useDist
           ? path.join(distRoot, 'grid', subpath, 'index.js')

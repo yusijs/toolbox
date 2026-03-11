@@ -20,9 +20,5 @@
  * @packageDocumentation
  */
 
-import { PinnedColumnsPlugin } from '@toolbox-web/grid/plugins/pinned-columns';
-import { registerFeature } from '../lib/feature-registry';
-
-registerFeature('pinnedColumns', () => {
-  return new PinnedColumnsPlugin();
-});
+// Delegate to core feature registration
+import '@toolbox-web/grid/features/pinned-columns';

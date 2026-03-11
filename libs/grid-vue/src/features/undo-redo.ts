@@ -33,17 +33,12 @@
  */
 
 import type { DataGridElement } from '@toolbox-web/grid';
-import { UndoRedoPlugin, type UndoRedoAction } from '@toolbox-web/grid/plugins/undo-redo';
+import { type UndoRedoPlugin, type UndoRedoAction } from '@toolbox-web/grid/plugins/undo-redo';
 import { inject, ref } from 'vue';
-import { registerFeature } from '../lib/feature-registry';
 import { GRID_ELEMENT_KEY } from '../lib/use-grid';
 
-registerFeature('undoRedo', (config) => {
-  if (config === true) {
-    return new UndoRedoPlugin();
-  }
-  return new UndoRedoPlugin(config ?? undefined);
-});
+// Delegate to core feature registration
+import '@toolbox-web/grid/features/undo-redo';
 
 /**
  * Undo/Redo methods returned from useGridUndoRedo.

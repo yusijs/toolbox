@@ -13,10 +13,5 @@
  * @packageDocumentation
  */
 
-import { ResponsivePlugin } from '@toolbox-web/grid/plugins/responsive';
-import { registerFeature } from '../lib/feature-registry';
-
-registerFeature('responsive', (config) => {
-  const options = typeof config === 'boolean' ? {} : ((config as any) ?? {});
-  return new ResponsivePlugin(options);
-});
+// Delegate to core feature registration
+import '@toolbox-web/grid/features/responsive';

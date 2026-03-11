@@ -32,17 +32,12 @@
  */
 
 import type { DataGridElement } from '@toolbox-web/grid';
-import { ExportPlugin, type ExportFormat, type ExportParams } from '@toolbox-web/grid/plugins/export';
+import { type ExportPlugin, type ExportFormat, type ExportParams } from '@toolbox-web/grid/plugins/export';
 import { inject, ref } from 'vue';
-import { registerFeature } from '../lib/feature-registry';
 import { GRID_ELEMENT_KEY } from '../lib/use-grid';
 
-registerFeature('export', (config) => {
-  if (config === true) {
-    return new ExportPlugin();
-  }
-  return new ExportPlugin(config ?? undefined);
-});
+// Delegate to core feature registration
+import '@toolbox-web/grid/features/export';
 
 /**
  * Export methods returned from useGridExport.

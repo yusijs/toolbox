@@ -13,10 +13,5 @@
  * @packageDocumentation
  */
 
-import { TreePlugin } from '@toolbox-web/grid/plugins/tree';
-import { registerFeature } from '../lib/feature-registry';
-
-registerFeature('tree', (config) => {
-  const options = typeof config === 'boolean' ? {} : ((config as any) ?? {});
-  return new TreePlugin(options);
-});
+// Delegate to core feature registration
+import '@toolbox-web/grid/features/tree';

@@ -13,9 +13,4 @@
  * @packageDocumentation
  */
 
-import { ServerSidePlugin } from '@toolbox-web/grid/plugins/server-side';
-import { registerFeature } from '@toolbox-web/grid-angular';
-
-registerFeature('serverSide', (config) => {
-  return new ServerSidePlugin(config ?? undefined);
-});
+import '@toolbox-web/grid/features/server-side';

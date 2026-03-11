@@ -13,10 +13,5 @@
  * @packageDocumentation
  */
 
-import { GroupingColumnsPlugin } from '@toolbox-web/grid/plugins/grouping-columns';
-import { registerFeature } from '../lib/feature-registry';
-
-registerFeature('groupingColumns', (config) => {
-  const options = typeof config === 'boolean' ? {} : ((config as any) ?? {});
-  return new GroupingColumnsPlugin(options);
-});
+// Delegate to core feature registration
+import '@toolbox-web/grid/features/grouping-columns';

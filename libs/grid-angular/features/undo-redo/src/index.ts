@@ -31,15 +31,8 @@
 
 import { afterNextRender, DestroyRef, ElementRef, inject, signal, type Signal } from '@angular/core';
 import type { DataGridElement } from '@toolbox-web/grid';
-import { registerFeature } from '@toolbox-web/grid-angular';
+import '@toolbox-web/grid/features/undo-redo';
 import { UndoRedoPlugin, type UndoRedoAction } from '@toolbox-web/grid/plugins/undo-redo';
-
-registerFeature('undoRedo', (config) => {
-  if (config === true) {
-    return new UndoRedoPlugin();
-  }
-  return new UndoRedoPlugin(config ?? undefined);
-});
 
 /**
  * Undo/Redo methods returned from injectGridUndoRedo.

@@ -13,9 +13,4 @@
  * @packageDocumentation
  */
 
-import { PivotPlugin } from '@toolbox-web/grid/plugins/pivot';
-import { registerFeature } from '@toolbox-web/grid-angular';
-
-registerFeature('pivot', (config) => {
-  return new PivotPlugin(config ?? undefined);
-});
+import '@toolbox-web/grid/features/pivot';

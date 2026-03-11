@@ -20,9 +20,5 @@
  * @packageDocumentation
  */
 
-import { GroupingRowsPlugin } from '@toolbox-web/grid/plugins/grouping-rows';
-import { registerFeature } from '../lib/feature-registry';
-
-registerFeature('groupingRows', (config) => {
-  return new GroupingRowsPlugin(config ?? undefined);
-});
+// Delegate to core feature registration
+import '@toolbox-web/grid/features/grouping-rows';

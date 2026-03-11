@@ -13,9 +13,5 @@
  * @packageDocumentation
  */
 
-import { PivotPlugin } from '@toolbox-web/grid/plugins/pivot';
-import { registerFeature } from '../lib/feature-registry';
-
-registerFeature('pivot', (config) => {
-  return new PivotPlugin(config ?? undefined);
-});
+// Delegate to core feature registration
+import '@toolbox-web/grid/features/pivot';

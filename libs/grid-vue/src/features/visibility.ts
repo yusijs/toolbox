@@ -17,12 +17,5 @@
  * @packageDocumentation
  */
 
-import { VisibilityPlugin } from '@toolbox-web/grid/plugins/visibility';
-import { registerFeature } from '../lib/feature-registry';
-
-registerFeature('visibility', (config) => {
-  if (config === true) {
-    return new VisibilityPlugin();
-  }
-  return new VisibilityPlugin(config ?? undefined);
-});
+// Delegate to core feature registration
+import '@toolbox-web/grid/features/visibility';

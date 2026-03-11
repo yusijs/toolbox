@@ -28,19 +28,12 @@
  */
 
 import type { DataGridElement } from '@toolbox-web/grid';
-import { SelectionPlugin, type CellRange, type SelectionResult } from '@toolbox-web/grid/plugins/selection';
+import { type SelectionPlugin, type CellRange, type SelectionResult } from '@toolbox-web/grid/plugins/selection';
 import { useCallback, useContext } from 'react';
 import { GridElementContext } from '../lib/data-grid';
-import { registerFeature } from '../lib/feature-registry';
 
-registerFeature('selection', (config) => {
-  // Handle shorthand: 'cell', 'row', 'range'
-  if (config === 'cell' || config === 'row' || config === 'range') {
-    return new SelectionPlugin({ mode: config });
-  }
-  // Full config object
-  return new SelectionPlugin(config ?? undefined);
-});
+// Delegate to core feature registration
+import '@toolbox-web/grid/features/selection';
 
 /**
  * Selection methods returned from useGridSelection.

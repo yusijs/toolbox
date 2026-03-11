@@ -19,18 +19,4 @@
  * @packageDocumentation
  */
 
-import { MultiSortPlugin } from '@toolbox-web/grid/plugins/multi-sort';
-import { registerFeature } from '@toolbox-web/grid-angular';
-
-registerFeature('multiSort', (config) => {
-  // Handle shorthand: true, 'single', 'multi'
-  if (config === true || config === 'multi') {
-    return new MultiSortPlugin();
-  }
-  if (config === 'single') {
-    return new MultiSortPlugin({ maxSortColumns: 1 });
-  }
-  // Full config object
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return new MultiSortPlugin(config as any);
-});
+import '@toolbox-web/grid/features/multi-sort';

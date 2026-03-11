@@ -1,8 +1,9 @@
 /**
- * Synchronous plugin creation from feature props using the feature registry.
+ * Synchronous plugin creation from feature props using the core feature registry.
  *
- * This module provides synchronous plugin creation based on feature props.
- * Features must be registered via side-effect imports before use.
+ * Delegates to `@toolbox-web/grid/features/registry` for plugin creation.
+ * Keeps local utilities (`getUnregisteredFeatures`, `validateFeatureDependencies`)
+ * for React-specific validation and debugging.
  *
  * @example
  * ```tsx
@@ -15,8 +16,9 @@
  * ```
  */
 
+import { createPluginsFromFeatures as coreCreatePlugins } from '@toolbox-web/grid/features/registry';
 import type { AllFeatureProps } from './feature-props';
-import { createPluginFromFeature, isFeatureRegistered, type FeatureName } from './feature-registry';
+import { isFeatureRegistered, type FeatureName } from './feature-registry';
 
 /**
  * Plugin dependency declarations.
@@ -51,61 +53,23 @@ export function validateFeatureDependencies(featureNames: FeatureName[]): void {
 
 /**
  * Creates plugin instances synchronously from feature props.
- * Returns an array of plugin instances for all registered features.
+ * Delegates to core registry's `createPluginsFromFeatures` for alias resolution,
+ * dependency ordering, and plugin instantiation.
  *
  * @param featureProps - The feature props from DataGrid
  * @returns Array of plugin instances
  */
 export function createPluginsFromFeatures<TRow = unknown>(featureProps: Partial<AllFeatureProps<TRow>>): unknown[] {
-  const plugins: unknown[] = [];
+  // Validate dependencies before delegating
   const enabledFeatures: FeatureName[] = [];
-
-  // Handle multiSort/sorting alias: multiSort takes precedence
-  const effectiveProps = { ...featureProps };
-  if (effectiveProps.multiSort !== undefined) {
-    // multiSort is set, ignore sorting
-    delete effectiveProps.sorting;
-  } else if (effectiveProps.sorting !== undefined) {
-    // sorting is set but multiSort isn't - use sorting value for multiSort
-    effectiveProps.multiSort = effectiveProps.sorting;
-    delete effectiveProps.sorting;
-  }
-
-  // Collect all enabled features
-  for (const [key, value] of Object.entries(effectiveProps)) {
+  for (const [key, value] of Object.entries(featureProps)) {
     if (value === undefined || value === false) continue;
-
-    const featureName = key as FeatureName;
-    enabledFeatures.push(featureName);
+    enabledFeatures.push(key as FeatureName);
   }
-
-  // Validate dependencies
   validateFeatureDependencies(enabledFeatures);
 
-  // Create plugins in dependency order
-  // First: plugins that others depend on
-  const dependencyOrder: FeatureName[] = [
-    'selection',
-    'editing',
-    // Then everything else in the order they were specified
-    ...enabledFeatures.filter((f) => f !== 'selection' && f !== 'editing'),
-  ];
-
-  // Remove duplicates while preserving order
-  const orderedFeatures = [...new Set(dependencyOrder)].filter((f) => enabledFeatures.includes(f));
-
-  for (const featureName of orderedFeatures) {
-    const config = featureProps[featureName];
-    if (config === undefined || config === false) continue;
-
-    // createPluginFromFeature handles unregistered features with a warning
-    const plugin = createPluginFromFeature(featureName, config);
-    if (plugin) {
-      plugins.push(plugin);
-    }
-  }
-
-  return plugins;
+  // Delegate to core registry (handles alias resolution, ordering, instantiation)
+  return coreCreatePlugins(featureProps as Record<string, unknown>);
 }
 
 /**

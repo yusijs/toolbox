@@ -20,9 +20,5 @@
  * @packageDocumentation
  */
 
-import { MasterDetailPlugin } from '@toolbox-web/grid/plugins/master-detail';
-import { registerFeature } from '../lib/feature-registry';
-
-registerFeature('masterDetail', (config) => {
-  return new MasterDetailPlugin(config ?? undefined);
-});
+// Delegate to core feature registration
+import '@toolbox-web/grid/features/master-detail';

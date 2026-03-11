@@ -17,12 +17,5 @@
  * @packageDocumentation
  */
 
-import { ClipboardPlugin } from '@toolbox-web/grid/plugins/clipboard';
-import { registerFeature } from '../lib/feature-registry';
-
-registerFeature('clipboard', (config) => {
-  if (config === true) {
-    return new ClipboardPlugin();
-  }
-  return new ClipboardPlugin(config ?? undefined);
-});
+// Delegate to core feature registration
+import '@toolbox-web/grid/features/clipboard';

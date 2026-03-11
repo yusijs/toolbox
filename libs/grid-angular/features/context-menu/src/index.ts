@@ -13,12 +13,4 @@
  * @packageDocumentation
  */
 
-import { ContextMenuPlugin } from '@toolbox-web/grid/plugins/context-menu';
-import { registerFeature } from '@toolbox-web/grid-angular';
-
-registerFeature('contextMenu', (config) => {
-  if (config === true) {
-    return new ContextMenuPlugin();
-  }
-  return new ContextMenuPlugin(config ?? undefined);
-});
+import '@toolbox-web/grid/features/context-menu';

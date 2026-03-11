@@ -17,12 +17,5 @@
  * @packageDocumentation
  */
 
-import { ContextMenuPlugin } from '@toolbox-web/grid/plugins/context-menu';
-import { registerFeature } from '../lib/feature-registry';
-
-registerFeature('contextMenu', (config) => {
-  if (config === true) {
-    return new ContextMenuPlugin();
-  }
-  return new ContextMenuPlugin(config ?? undefined);
-});
+// Delegate to core feature registration
+import '@toolbox-web/grid/features/context-menu';

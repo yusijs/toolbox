@@ -12,11 +12,17 @@ const gridVersion = pkg.version;
 
 const outDir = resolve(__dirname, '../../dist/libs/grid');
 const pluginsDir = resolve(__dirname, 'src/lib/plugins');
+const featuresDir = resolve(__dirname, 'src/lib/features');
 
 /** Auto-discover plugin names from filesystem */
 const pluginNames = readdirSync(pluginsDir, { withFileTypes: true })
   .filter((d) => d.isDirectory() && d.name !== 'all' && d.name !== 'shared')
   .map((d) => d.name);
+
+/** Auto-discover feature module names from filesystem (all .ts files except registry) */
+const featureNames = readdirSync(featuresDir)
+  .filter((f) => f.endsWith('.ts') && f !== 'registry.ts')
+  .map((f) => f.replace('.ts', ''));
 
 /** Convert plugin name to UMD global: "pinned-rows" -> "TbwGridPlugin_pinnedRows" */
 const toUmdGlobal = (name: string) =>
@@ -146,6 +152,103 @@ function buildPluginModules(): Plugin {
   };
 }
 
+/** Externalize core + plugin imports in feature builds */
+function externalizeForFeatures(): Plugin {
+  return {
+    name: 'externalize-for-features',
+    enforce: 'pre',
+    resolveId(source, importer) {
+      const norm = importer?.replace(/\\/g, '/');
+      if (!norm?.includes('/features/')) return null;
+
+      // Core imports → @toolbox-web/grid
+      if (source.includes('/core/') || source.startsWith('../../core/') || source.startsWith('../core/')) {
+        return { id: '@toolbox-web/grid', external: true };
+      }
+
+      // Plugin imports → @toolbox-web/grid/plugins/<name>
+      const pluginMatch = source.match(/\/plugins\/([\w-]+)/);
+      if (pluginMatch) {
+        return { id: `@toolbox-web/grid/plugins/${pluginMatch[1]}`, external: true };
+      }
+
+      // Registry import from feature modules → @toolbox-web/grid/features/registry
+      if (source === './registry' || source.endsWith('/features/registry')) {
+        return { id: '@toolbox-web/grid/features/registry', external: true };
+      }
+
+      return null;
+    },
+  };
+}
+
+/** Build feature registry + feature modules as separate ES entry points (parallel) */
+function buildFeatureModules(): Plugin {
+  return {
+    name: 'build-feature-modules',
+    async writeBundle() {
+      const featDir = resolve(outDir, 'lib/features');
+      mkdirSync(featDir, { recursive: true });
+
+      // Build registry first (features depend on it)
+      await build({
+        configFile: false,
+        logLevel: 'silent',
+        plugins: [externalizeForFeatures()],
+        build: {
+          outDir: featDir,
+          emptyOutDir: false,
+          sourcemap: true,
+          minify: 'terser',
+          lib: {
+            entry: resolve(featuresDir, 'registry.ts'),
+            formats: ['es'],
+            fileName: () => 'registry.js',
+          },
+        },
+      });
+
+      // Build all feature modules in parallel
+      await Promise.all(
+        featureNames.map((name) =>
+          build({
+            configFile: false,
+            logLevel: 'silent',
+            plugins: [externalizeForFeatures()],
+            build: {
+              outDir: featDir,
+              emptyOutDir: false,
+              sourcemap: true,
+              minify: 'terser',
+              lib: {
+                entry: resolve(featuresDir, `${name}.ts`),
+                formats: ['es'],
+                fileName: () => `${name}.js`,
+              },
+            },
+          }),
+        ),
+      );
+
+      // Print feature sizes summary
+      console.log('\n\x1b[36mFeature modules:\x1b[0m');
+      const registrySizes = getFileSizes(resolve(featDir, 'registry.js'));
+      if (registrySizes) {
+        console.log(
+          `  ${'registry'.padEnd(20)} ${formatSize(registrySizes.size).padStart(10)} │ gzip: ${formatSize(registrySizes.gzip)}`,
+        );
+      }
+      for (const name of featureNames.sort()) {
+        const sizes = getFileSizes(resolve(featDir, `${name}.js`));
+        if (sizes) {
+          const pad = name.padEnd(20);
+          console.log(`  ${pad} ${formatSize(sizes.size).padStart(10)} │ gzip: ${formatSize(sizes.gzip)}`);
+        }
+      }
+    },
+  };
+}
+
 /** Build UMD bundles for CDN usage */
 function buildUmdBundles(): Plugin {
   return {
@@ -248,7 +351,9 @@ export default defineConfig(({ command }) => ({
       skipDiagnostics: false, // Fail build on TypeScript errors
     }),
     // Only run build-specific plugins during actual build, not during tests
-    ...(command === 'build' ? [copyThemes(), copyReadme(), buildPluginModules(), buildUmdBundles()] : []),
+    ...(command === 'build'
+      ? [copyThemes(), copyReadme(), buildPluginModules(), buildFeatureModules(), buildUmdBundles()]
+      : []),
   ],
   build: {
     outDir,

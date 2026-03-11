@@ -19,12 +19,5 @@
  * @packageDocumentation
  */
 
-import { PinnedRowsPlugin } from '@toolbox-web/grid/plugins/pinned-rows';
-import { registerFeature } from '../lib/feature-registry';
-
-registerFeature('pinnedRows', (config) => {
-  if (config === true) {
-    return new PinnedRowsPlugin();
-  }
-  return new PinnedRowsPlugin(config ?? undefined);
-});
+// Delegate to core feature registration
+import '@toolbox-web/grid/features/pinned-rows';

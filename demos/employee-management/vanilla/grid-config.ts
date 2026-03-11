@@ -1,30 +1,34 @@
 /**
  * Grid Configuration for Employee Management Demo
  *
- * This file contains the grid column definitions, plugin setup, and configuration factory.
- * Separated from main.ts to make the configuration easy to find and copy.
+ * This file demonstrates the `features` configuration API for @toolbox-web/grid.
+ * Most plugins are configured declaratively via `features: { ... }` on the grid config.
+ * The PinnedRowsPlugin is configured manually via `plugins: [...]` to show both approaches.
  */
 
-import {
-  ClipboardPlugin,
-  ColumnVirtualizationPlugin,
-  ContextMenuPlugin,
-  EditingPlugin,
-  ExportPlugin,
-  FilteringPlugin,
-  GroupingColumnsPlugin,
-  GroupingRowsPlugin,
-  MasterDetailPlugin,
-  MultiSortPlugin,
-  PinnedColumnsPlugin,
-  PinnedRowsPlugin,
-  ReorderPlugin,
-  ResponsivePlugin,
-  SelectionPlugin,
-  UndoRedoPlugin,
-  VisibilityPlugin,
-  type GridConfig,
-} from '@toolbox-web/grid/all';
+// Feature side-effect imports — register feature factories in the core registry.
+// Each import is tiny (~200-300 bytes) and only includes the factory + type augmentation.
+import '@toolbox-web/grid/features/clipboard';
+import '@toolbox-web/grid/features/column-virtualization';
+import '@toolbox-web/grid/features/context-menu';
+import '@toolbox-web/grid/features/editing';
+import '@toolbox-web/grid/features/export';
+import '@toolbox-web/grid/features/filtering';
+import '@toolbox-web/grid/features/grouping-columns';
+import '@toolbox-web/grid/features/grouping-rows';
+import '@toolbox-web/grid/features/master-detail';
+import '@toolbox-web/grid/features/multi-sort';
+import '@toolbox-web/grid/features/pinned-columns';
+import '@toolbox-web/grid/features/pinned-rows';
+import '@toolbox-web/grid/features/reorder-columns';
+import '@toolbox-web/grid/features/responsive';
+import '@toolbox-web/grid/features/selection';
+import '@toolbox-web/grid/features/undo-redo';
+import '@toolbox-web/grid/features/visibility';
+
+// PinnedRowsPlugin is imported directly to demonstrate the manual plugins approach
+import type { GridConfig } from '@toolbox-web/grid';
+import { PinnedRowsPlugin } from '@toolbox-web/grid/plugins/pinned-rows';
 
 import { DEPARTMENTS, type Employee } from '@demo/shared';
 
@@ -230,73 +234,69 @@ export function createGridConfig(options: GridConfigOptions): GridConfig<Employe
     filterable: enableFiltering,
     selectable: enableSelection,
 
-    // Plugins - advanced features
-    plugins: [
-      // Core interaction plugins - always loaded, controlled via config flags above
-      new SelectionPlugin({ mode: 'range' }),
-      new MultiSortPlugin(),
-      new FilteringPlugin({ debounceMs: 200 }),
+    // Declarative feature configuration — the recommended approach.
+    // Each key corresponds to a feature side-effect import above.
+    // The grid creates plugin instances from these configs automatically.
+    features: {
+      selection: 'range',
+      multiSort: true,
+      filtering: { debounceMs: 200 },
       // EditingPlugin always loaded; toggle via editOn to avoid validation errors
-      new EditingPlugin({ editOn: enableEditing ? 'dblclick' : false }),
-
-      // Always-on utility plugins
-      new ClipboardPlugin(),
-      new ContextMenuPlugin(),
-      new ReorderPlugin(),
-      new GroupingColumnsPlugin({ lockGroupOrder: true }),
-      new PinnedColumnsPlugin(),
-      new ColumnVirtualizationPlugin(),
-      new VisibilityPlugin(),
-
+      // when columns have `editable: true`
+      editing: enableEditing ? 'dblclick' : { editOn: false },
+      clipboard: true,
+      contextMenu: true,
+      reorderColumns: true,
+      groupingColumns: { lockGroupOrder: true },
+      pinnedColumns: true,
+      columnVirtualization: true,
+      visibility: true,
       // Responsive plugin for mobile/narrow layouts
       // Disabled when row grouping is enabled (incompatible combination)
       ...(!enableRowGrouping
-        ? [
-            new ResponsivePlugin<Employee>({
+        ? {
+            responsive: {
               breakpoint: 700,
-              cardRenderer: (row) => createResponsiveCardRenderer(row),
+              cardRenderer: (row: Employee) => createResponsiveCardRenderer(row),
               cardRowHeight: 80,
               hiddenColumns: ['id', 'email', 'team', 'level', 'bonus', 'hireDate', 'isTopPerformer', 'location'],
-            }),
-          ]
-        : []),
-
+            },
+          }
+        : {}),
       // Row grouping (mutually exclusive with master-detail)
       ...(enableRowGrouping
-        ? [
-            new GroupingRowsPlugin({
+        ? {
+            groupingRows: {
               groupOn: (row: unknown) => (row as Employee).department,
               defaultExpanded: false,
               showRowCount: true,
               aggregators: {
                 salary: 'sum',
-                rating: (rows, field) => {
+                rating: (rows: Record<string, unknown>[], field: string) => {
                   const sum = rows.reduce((acc, row) => acc + (Number(row[field]) || 0), 0);
                   return rows.length ? (sum / rows.length).toFixed(1) : '';
                 },
               },
-            }),
-          ]
-        : []),
-
+            },
+          }
+        : {}),
       // Master-detail (mutually exclusive with row grouping)
       ...(!enableRowGrouping && enableMasterDetail
-        ? [
-            new MasterDetailPlugin({
+        ? {
+            masterDetail: {
               detailRenderer: (row: unknown) => createDetailRenderer(row as Employee),
               showExpandColumn: true,
-              animation: 'slide',
-            }),
-          ]
-        : []),
+              animation: 'slide' as const,
+            },
+          }
+        : {}),
+      undoRedo: { maxHistorySize: 100 },
+      export: true,
+    },
 
-      // Undo/redo for editing (always loaded since EditingPlugin is always loaded)
-      new UndoRedoPlugin({ maxHistorySize: 100 }),
-
-      // Export functionality
-      new ExportPlugin(),
-
-      // Footer row with aggregations
+    // Manual plugins array — PinnedRowsPlugin kept here to demonstrate
+    // that `features` and `plugins` can be mixed in the same config.
+    plugins: [
       new PinnedRowsPlugin({
         position: 'bottom',
         showRowCount: true,

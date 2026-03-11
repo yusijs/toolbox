@@ -13,12 +13,4 @@
  * @packageDocumentation
  */
 
-import { PinnedRowsPlugin } from '@toolbox-web/grid/plugins/pinned-rows';
-import { registerFeature } from '@toolbox-web/grid-angular';
-
-registerFeature('pinnedRows', (config) => {
-  if (config === true) {
-    return new PinnedRowsPlugin();
-  }
-  return new PinnedRowsPlugin(config ?? undefined);
-});
+import '@toolbox-web/grid/features/pinned-rows';

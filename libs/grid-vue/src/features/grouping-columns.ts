@@ -21,12 +21,5 @@
  * @packageDocumentation
  */
 
-import { GroupingColumnsPlugin } from '@toolbox-web/grid/plugins/grouping-columns';
-import { registerFeature } from '../lib/feature-registry';
-
-registerFeature('groupingColumns', (config) => {
-  if (config === true) {
-    return new GroupingColumnsPlugin();
-  }
-  return new GroupingColumnsPlugin(config ?? undefined);
-});
+// Delegate to core feature registration
+import '@toolbox-web/grid/features/grouping-columns';

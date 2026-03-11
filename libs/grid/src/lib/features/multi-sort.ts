@@ -1,0 +1,32 @@
+/**
+ * Multi-sort feature for @toolbox-web/grid
+ *
+ * @example
+ * ```typescript
+ * import '@toolbox-web/grid/features/multi-sort';
+ *
+ * grid.gridConfig = { features: { multiSort: true } };
+ * ```
+ */
+
+import { MultiSortPlugin, type MultiSortConfig } from '../plugins/multi-sort';
+import { registerFeature } from './registry';
+
+declare module '../core/types' {
+  interface FeatureConfig {
+    /** Enable multi-column sorting. */
+    multiSort?: boolean | 'single' | 'multi' | MultiSortConfig;
+    /** @deprecated Use `multiSort` instead. */
+    sorting?: boolean | 'single' | 'multi' | MultiSortConfig;
+  }
+}
+
+registerFeature('multiSort', (config) => {
+  if (config === true || config === 'multi') {
+    return new MultiSortPlugin();
+  }
+  if (config === 'single') {
+    return new MultiSortPlugin({ maxSortColumns: 1 });
+  }
+  return new MultiSortPlugin(config as MultiSortConfig);
+});

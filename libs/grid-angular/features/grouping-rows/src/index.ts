@@ -13,9 +13,4 @@
  * @packageDocumentation
  */
 
-import { GroupingRowsPlugin } from '@toolbox-web/grid/plugins/grouping-rows';
-import { registerFeature } from '@toolbox-web/grid-angular';
-
-registerFeature('groupingRows', (config) => {
-  return new GroupingRowsPlugin(config ?? undefined);
-});
+import '@toolbox-web/grid/features/grouping-rows';

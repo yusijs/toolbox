@@ -13,10 +13,5 @@
  * @packageDocumentation
  */
 
-import { VisibilityPlugin } from '@toolbox-web/grid/plugins/visibility';
-import { registerFeature } from '../lib/feature-registry';
-
-registerFeature('visibility', (config) => {
-  const options = typeof config === 'boolean' ? {} : ((config as any) ?? {});
-  return new VisibilityPlugin(options);
-});
+// Delegate to core feature registration
+import '@toolbox-web/grid/features/visibility';

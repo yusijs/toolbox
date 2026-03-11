@@ -30,15 +30,12 @@
  */
 
 import type { DataGridElement } from '@toolbox-web/grid';
-import { ExportPlugin, type ExportFormat, type ExportParams } from '@toolbox-web/grid/plugins/export';
+import { type ExportPlugin, type ExportFormat, type ExportParams } from '@toolbox-web/grid/plugins/export';
 import { useCallback, useContext } from 'react';
 import { GridElementContext } from '../lib/data-grid';
-import { registerFeature } from '../lib/feature-registry';
 
-registerFeature('export', (config) => {
-  const options = typeof config === 'boolean' ? {} : ((config as any) ?? {});
-  return new ExportPlugin(options);
-});
+// Delegate to core feature registration
+import '@toolbox-web/grid/features/export';
 
 /**
  * Export methods returned from useGridExport.

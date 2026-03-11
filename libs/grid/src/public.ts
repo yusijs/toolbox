@@ -259,6 +259,8 @@ export type {
   ExpandCollapseAnimation,
   ExternalMountEditorDetail,
   ExternalMountViewDetail,
+  // Feature configuration (augmentable by feature modules)
+  FeatureConfig,
   FitMode,
   // Framework adapter interface
   FrameworkAdapter,
@@ -305,7 +307,7 @@ export type {
   ToolPanelConfig,
   ToolPanelDefinition,
   TypeDefault,
-  UpdateSource,
+  UpdateSource
 } from './lib/core/types';
 
 // Re-export FitModeEnum for runtime usage
@@ -325,7 +327,7 @@ export type {
   EventDefinition,
   PluginManifest,
   PluginQuery,
-  QueryDefinition,
+  QueryDefinition
 } from './lib/core/plugin';
 
 // DOM constants - for querying grid elements and styling
@@ -465,4 +467,12 @@ export type AsInternalGrid<T = unknown> = import('./lib/core/types').InternalGri
  * @category Plugin Development
  */
 export { RenderPhase } from './lib/core/internal/render-scheduler';
+
+/**
+ * Hook used by `@toolbox-web/grid/features/registry` to wire the feature resolver
+ * into the grid core without adding registry code to the main bundle.
+ * Not for external use — call only from built feature-registry entry point.
+ * @internal
+ */
+export { setFeatureResolver } from './lib/core/internal/feature-hook';
 // #endregion

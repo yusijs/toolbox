@@ -16,9 +16,4 @@
  * @packageDocumentation
  */
 
-import { PinnedColumnsPlugin } from '@toolbox-web/grid/plugins/pinned-columns';
-import { registerFeature } from '@toolbox-web/grid-angular';
-
-registerFeature('pinnedColumns', () => {
-  return new PinnedColumnsPlugin();
-});
+import '@toolbox-web/grid/features/pinned-columns';

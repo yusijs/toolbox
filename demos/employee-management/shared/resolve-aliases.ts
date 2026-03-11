@@ -66,6 +66,12 @@ export function getResolveAliases(
       replacement: resolve(ROOT, 'dist/libs/grid/lib/plugins/$1/index.js'),
     });
 
+    // Grid feature imports (must be before base @toolbox-web/grid)
+    aliases.push({
+      find: /^@toolbox-web\/grid\/features\/(.+)$/,
+      replacement: resolve(ROOT, 'dist/libs/grid/lib/features/$1.js'),
+    });
+
     // Grid /all bundle
     aliases.push({
       find: '@toolbox-web/grid/all',
@@ -130,6 +136,12 @@ export function getResolveAliases(
     aliases.push({
       find: /^@toolbox-web\/grid\/plugins\/(.+)$/,
       replacement: resolve(ROOT, 'libs/grid/src/lib/plugins/$1/index.ts'),
+    });
+
+    // Grid feature imports (must be before base @toolbox-web/grid)
+    aliases.push({
+      find: /^@toolbox-web\/grid\/features\/(.+)$/,
+      replacement: resolve(ROOT, 'libs/grid/src/lib/features/$1.ts'),
     });
 
     // Grid /all bundle

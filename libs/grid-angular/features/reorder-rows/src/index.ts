@@ -13,17 +13,4 @@
  * @packageDocumentation
  */
 
-import { RowReorderPlugin } from '@toolbox-web/grid/plugins/reorder-rows';
-import { registerFeature } from '@toolbox-web/grid-angular';
-
-const factory = (config: unknown) => {
-  if (config === true) {
-    return new RowReorderPlugin();
-  }
-  return new RowReorderPlugin(config ?? undefined);
-};
-
-// Primary name
-registerFeature('reorderRows', factory);
-// Deprecated alias
-registerFeature('rowReorder', factory);
+import '@toolbox-web/grid/features/reorder-rows';

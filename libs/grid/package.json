@@ -13,6 +13,12 @@
       ],
       "plugins/*": [
         "lib/plugins/*/index.d.ts"
+      ],
+      "features/registry": [
+        "lib/features/registry.d.ts"
+      ],
+      "features/*": [
+        "lib/features/*.d.ts"
       ]
     }
   },
@@ -29,6 +35,14 @@
       "types": "./lib/plugins/*/index.d.ts",
       "import": "./lib/plugins/*/index.js"
     },
+    "./features/registry": {
+      "types": "./lib/features/registry.d.ts",
+      "import": "./lib/features/registry.js"
+    },
+    "./features/*": {
+      "types": "./lib/features/*.d.ts",
+      "import": "./lib/features/*.js"
+    },
     "./themes/*": "./themes/*",
     "./umd/*": "./umd/*"
   },
@@ -43,7 +57,8 @@
     "*.css",
     "./index.js",
     "./all.js",
-    "./lib/plugins/*/index.js"
+    "./lib/plugins/*/index.js",
+    "./lib/features/*.js"
   ],
   "keywords": [
     "data-grid",

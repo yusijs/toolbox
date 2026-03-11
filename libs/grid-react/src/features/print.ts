@@ -30,17 +30,12 @@
  */
 
 import type { DataGridElement } from '@toolbox-web/grid';
-import { PrintPlugin, type PrintParams } from '@toolbox-web/grid/plugins/print';
+import { type PrintPlugin, type PrintParams } from '@toolbox-web/grid/plugins/print';
 import { useCallback, useContext } from 'react';
 import { GridElementContext } from '../lib/data-grid';
-import { registerFeature } from '../lib/feature-registry';
 
-registerFeature('print', (config) => {
-  if (config === true) {
-    return new PrintPlugin();
-  }
-  return new PrintPlugin(config ?? undefined);
-});
+// Delegate to core feature registration
+import '@toolbox-web/grid/features/print';
 
 /**
  * Print methods returned from useGridPrint.

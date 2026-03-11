@@ -13,12 +13,4 @@
  * @packageDocumentation
  */
 
-import { ColumnVirtualizationPlugin } from '@toolbox-web/grid/plugins/column-virtualization';
-import { registerFeature } from '@toolbox-web/grid-angular';
-
-registerFeature('columnVirtualization', (config) => {
-  if (config === true) {
-    return new ColumnVirtualizationPlugin();
-  }
-  return new ColumnVirtualizationPlugin(config ?? undefined);
-});
+import '@toolbox-web/grid/features/column-virtualization';

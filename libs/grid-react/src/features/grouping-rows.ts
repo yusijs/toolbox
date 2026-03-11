@@ -13,10 +13,5 @@
  * @packageDocumentation
  */
 
-import { GroupingRowsPlugin } from '@toolbox-web/grid/plugins/grouping-rows';
-import { registerFeature } from '../lib/feature-registry';
-
-registerFeature('groupingRows', (config) => {
-  const options = typeof config === 'boolean' ? {} : ((config as any) ?? {});
-  return new GroupingRowsPlugin(options);
-});
+// Delegate to core feature registration
+import '@toolbox-web/grid/features/grouping-rows';

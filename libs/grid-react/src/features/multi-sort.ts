@@ -19,17 +19,5 @@
  * @packageDocumentation
  */
 
-import { MultiSortPlugin } from '@toolbox-web/grid/plugins/multi-sort';
-import { registerFeature } from '../lib/feature-registry';
-
-registerFeature('multiSort', (config) => {
-  // Handle shorthand: true, 'single', 'multi'
-  if (config === true || config === 'multi') {
-    return new MultiSortPlugin();
-  }
-  if (config === 'single') {
-    return new MultiSortPlugin({ maxSortColumns: 1 });
-  }
-  // Full config object
-  return new MultiSortPlugin(config as any);
-});
+// Delegate to core feature registration
+import '@toolbox-web/grid/features/multi-sort';

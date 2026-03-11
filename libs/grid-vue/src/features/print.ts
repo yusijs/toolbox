@@ -32,17 +32,12 @@
  */
 
 import type { DataGridElement } from '@toolbox-web/grid';
-import { PrintPlugin, type PrintParams } from '@toolbox-web/grid/plugins/print';
+import { type PrintPlugin, type PrintParams } from '@toolbox-web/grid/plugins/print';
 import { inject, ref } from 'vue';
-import { registerFeature } from '../lib/feature-registry';
 import { GRID_ELEMENT_KEY } from '../lib/use-grid';
 
-registerFeature('print', (config) => {
-  if (config === true) {
-    return new PrintPlugin();
-  }
-  return new PrintPlugin(config ?? undefined);
-});
+// Delegate to core feature registration
+import '@toolbox-web/grid/features/print';
 
 /**
  * Print methods returned from useGridPrint.

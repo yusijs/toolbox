@@ -15,10 +15,5 @@
  * @packageDocumentation
  */
 
-import { MasterDetailPlugin } from '@toolbox-web/grid/plugins/master-detail';
-import { registerFeature } from '../lib/feature-registry';
-
-registerFeature('masterDetail', (config) => {
-  const options = typeof config === 'boolean' ? {} : ((config as any) ?? {});
-  return new MasterDetailPlugin(options);
-});
+// Delegate to core feature registration
+import '@toolbox-web/grid/features/master-detail';

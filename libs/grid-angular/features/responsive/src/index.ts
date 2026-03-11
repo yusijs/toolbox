@@ -13,12 +13,4 @@
  * @packageDocumentation
  */
 
-import { ResponsivePlugin } from '@toolbox-web/grid/plugins/responsive';
-import { registerFeature } from '@toolbox-web/grid-angular';
-
-registerFeature('responsive', (config) => {
-  if (config === true) {
-    return new ResponsivePlugin({ breakpoint: 768 });
-  }
-  return new ResponsivePlugin(config ?? undefined);
-});
+import '@toolbox-web/grid/features/responsive';

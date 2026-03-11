@@ -13,9 +13,4 @@
  * @packageDocumentation
  */
 
-import { MasterDetailPlugin } from '@toolbox-web/grid/plugins/master-detail';
-import { registerFeature } from '@toolbox-web/grid-angular';
-
-registerFeature('masterDetail', (config) => {
-  return new MasterDetailPlugin(config ?? undefined);
-});
+import '@toolbox-web/grid/features/master-detail';

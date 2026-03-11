@@ -10,6 +10,7 @@
       "@toolbox-web/grid": ["../../../libs/grid/src/index.ts"],
       "@toolbox-web/grid/all": ["../../../libs/grid/src/all.ts"],
       "@toolbox-web/grid/plugins/*": ["../../../libs/grid/src/lib/plugins/*/index.ts"],
+      "@toolbox-web/grid/features/*": ["../../../libs/grid/src/lib/features/*.ts"],
       "@toolbox-web/grid/*": ["../../../libs/grid/src/*"],
       "@toolbox-web/grid-angular": ["../../../libs/grid-angular/src/index.ts"],
       "@toolbox-web/grid-angular/features/*": ["../../../libs/grid-angular/features/*/src/index.ts"]
