@@ -7,16 +7,54 @@
 
 import type { ColumnConfig } from '../../core/types';
 
-/** Position of the status bar relative to the grid */
+/**
+ * Position of the status bar (info bar) relative to the grid body.
+ *
+ * - `'top'` — Renders above the grid header. Useful for summary toolbars.
+ * - `'bottom'` — Renders below the grid body (default). Standard placement for status information.
+ */
 export type PinnedRowsPosition = 'top' | 'bottom';
 
-/** Aggregator function signature */
+/**
+ * Custom aggregation function signature.
+ *
+ * Receives all current rows, the target field name, and optionally the column config.
+ * Should return a single aggregated value (number, string, etc.) for display in the
+ * aggregation row cell.
+ *
+ * @example
+ * ```typescript
+ * const weightedAvg: AggregatorFn = (rows, field, column) => {
+ *   const total = rows.reduce((sum, r) => sum + (r[field] * r.weight), 0);
+ *   const weights = rows.reduce((sum, r) => sum + r.weight, 0);
+ *   return weights ? total / weights : 0;
+ * };
+ * ```
+ */
 export type AggregatorFn = (rows: unknown[], field: string, column?: ColumnConfig) => unknown;
 
-/** Aggregator formatter function - formats the computed value for display */
+/**
+ * Formats the computed aggregation value for display in the cell.
+ *
+ * Called after the aggregator function runs. Receives the raw computed value
+ * and should return a display string (e.g. currency formatting, unit suffixes).
+ *
+ * @example
+ * ```typescript
+ * const currencyFormatter: AggregatorFormatter = (value) =>
+ *   `$${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+ * ```
+ */
 export type AggregatorFormatter = (value: unknown, field: string, column?: ColumnConfig) => string;
 
-/** Simple aggregator reference - string key for built-in or custom function */
+/**
+ * Shorthand aggregator reference — either a built-in name or a custom function.
+ *
+ * Built-in names: `'sum'`, `'avg'`, `'min'`, `'max'`, `'count'`, `'first'`, `'last'`.
+ * Pass a custom {@link AggregatorFn} for non-standard aggregations.
+ *
+ * Use {@link AggregatorConfig} instead when you also need a custom formatter.
+ */
 export type AggregatorRef = string | AggregatorFn;
 
 /** Full aggregator config with optional formatter */

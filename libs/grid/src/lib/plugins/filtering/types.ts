@@ -147,10 +147,166 @@ export interface FilterParams {
 }
 // #endregion
 
-/** Supported filter types */
+/**
+ * The category of filter applied to a column, which determines the available
+ * {@link FilterOperator operators} and the filter panel UI rendered.
+ *
+ * | Type | Panel UI | Compatible operators |
+ * |------|----------|---------------------|
+ * | `'text'` | Text input with operator dropdown | `contains`, `notContains`, `equals`, `notEquals`, `startsWith`, `endsWith`, `blank`, `notBlank` |
+ * | `'number'` | Range slider with min/max inputs | `lessThan`, `lessThanOrEqual`, `greaterThan`, `greaterThanOrEqual`, `between`, `blank`, `notBlank` |
+ * | `'date'` | Date pickers (from/to) | Same as `'number'` |
+ * | `'set'` | Checkbox list of unique values | `in`, `notIn`, `blank`, `notBlank` |
+ * | `'boolean'` | Checkbox list (`true` / `false` / `(Blank)`) | `in`, `notIn`, `blank`, `notBlank` |
+ *
+ * The grid auto-detects the filter type from the column's `type` property.
+ * Override by setting `filter.type` explicitly in the {@link FilterModel}.
+ */
 export type FilterType = 'text' | 'number' | 'date' | 'set' | 'boolean';
 
-/** Filter operators for different filter types */
+/**
+ * Filter operators used in {@link FilterModel} to define how a cell value is compared
+ * against the filter value. Operators are grouped by the column types they apply to.
+ *
+ * **Multiple filters** on different columns use AND logic — a row must match all active filters.
+ *
+ * ---
+ *
+ * ## Text operators (`FilterType: 'text'`)
+ *
+ * Compare cell values as strings. **Case-insensitive by default** (controlled by `FilterConfig.caseSensitive`).
+ * Non-string cell values are coerced via `String()` before comparison.
+ *
+ * | Operator | Matches when | Example: filter = `"lic"` |
+ * |--|--|--|
+ * | `contains` | Cell value includes the filter as a substring | `"Alice"` ✓, `"Bob"` ✗ |
+ * | `notContains` | Cell value does **not** include the filter substring | `"Bob"` ✓, `"Alice"` ✗ |
+ * | `equals` | Cell value exactly equals the filter (after case normalization) | `"lic"` ✓, `"Alice"` ✗ |
+ * | `notEquals` | Cell value does **not** equal the filter | `"Alice"` ✓, `"lic"` ✗ |
+ * | `startsWith` | Cell value begins with the filter | filter `"Al"` → `"Alice"` ✓ |
+ * | `endsWith` | Cell value ends with the filter | filter `"ce"` → `"Alice"` ✓ |
+ *
+ * **When to use:**
+ * - `contains` — the default for free-text search fields; most intuitive for users
+ * - `equals` — when filtering on exact known values (e.g. status codes)
+ * - `startsWith` / `endsWith` — for prefix/suffix matching (e.g. file extensions, area codes)
+ * - `notContains` / `notEquals` — exclusion filters ("show everything except...")
+ *
+ * ---
+ *
+ * ## Blank operators (`FilterType: all`)
+ *
+ * These work universally across all filter types and check for **empty** values.
+ * They are evaluated first, before any type-specific logic.
+ *
+ * | Operator | Matches when | Does NOT match |
+ * |--|--|--|
+ * | `blank` | Cell is `null`, `undefined`, or `""` (empty string) | `0`, `false`, `NaN` |
+ * | `notBlank` | Cell has any non-null, non-empty value | `null`, `undefined`, `""` |
+ *
+ * **When to use:**
+ * - `blank` — find rows with missing data (e.g. "show incomplete records")
+ * - `notBlank` — exclude rows with missing data (e.g. "show only filled records")
+ *
+ * ---
+ *
+ * ## Numeric / date operators (`FilterType: 'number' | 'date'`)
+ *
+ * Compare values numerically. An internal `toNumeric()` conversion handles:
+ * - Numbers → used directly
+ * - `Date` objects → converted via `.getTime()` (milliseconds since epoch)
+ * - ISO date strings (e.g. `"2025-03-11"`) → parsed as `Date`, then `.getTime()`
+ * - Unparseable values → `NaN`, which fails all comparisons (row excluded)
+ *
+ * | Operator | Matches when (`cell` vs `filter.value`) |
+ * |--|--|
+ * | `lessThan` | `cell < value` |
+ * | `lessThanOrEqual` | `cell <= value` |
+ * | `greaterThan` | `cell > value` |
+ * | `greaterThanOrEqual` | `cell >= value` |
+ * | `between` | `value <= cell <= valueTo` (inclusive both ends) |
+ *
+ * The `between` operator requires both `filter.value` (min) and `filter.valueTo` (max).
+ * In the built-in UI:
+ * - **Number panels** render a dual-thumb range slider with min/max inputs
+ * - **Date panels** render "From" and "To" date pickers
+ *
+ * **When to use:**
+ * - `between` — range filters (age 25–35, dates in Q1, prices $10–$50)
+ * - `greaterThan` / `lessThan` — open-ended thresholds ("salary above 100k")
+ * - `greaterThanOrEqual` / `lessThanOrEqual` — inclusive thresholds
+ *
+ * ---
+ *
+ * ## Set operators (`FilterType: 'set' | 'boolean'`)
+ *
+ * Filter by inclusion/exclusion against a set of discrete values. The built-in filter panel
+ * shows a checkbox list of unique values; unchecked items form the excluded set.
+ *
+ * `filter.value` is an `unknown[]` array containing the set of values.
+ *
+ * | Operator | Matches when | Typical use |
+ * |--|--|--|
+ * | `notIn` | Cell value is **not** in the excluded array | Default for checkbox lists — unchecked items are excluded |
+ * | `in` | Cell value **is** in the included array | Explicit inclusion ("show only these") |
+ *
+ * **Blank handling:** Blank cells (`null`, `undefined`, `""`) are represented by the
+ * sentinel `BLANK_FILTER_VALUE` (`"(Blank)"`) in the values array. The panel renders a
+ * "(Blank)" checkbox; its checked/unchecked state controls whether blank rows are shown.
+ *
+ * **With `filterValue` extractor:** When a column defines `filterValue` to extract multiple
+ * values from a complex cell (e.g. an array of objects):
+ * - `notIn` — row is hidden if **any** extracted value is in the excluded set
+ * - `in` — row passes if **any** extracted value is in the included set
+ * - Empty extraction (no values) is treated as a blank cell
+ *
+ * **When to use:**
+ * - `notIn` — the default for set/boolean filters; maps naturally to "uncheck to hide"
+ * - `in` — when programmatically setting a filter to show only specific values
+ *
+ * ---
+ *
+ * ## Operator–type compatibility quick reference
+ *
+ * | Operator | text | number | date | set | boolean |
+ * |--|:--:|:--:|:--:|:--:|:--:|
+ * | `contains` | ✓ | | | | |
+ * | `notContains` | ✓ | | | | |
+ * | `equals` | ✓ | | | | |
+ * | `notEquals` | ✓ | | | | |
+ * | `startsWith` | ✓ | | | | |
+ * | `endsWith` | ✓ | | | | |
+ * | `blank` | ✓ | ✓ | ✓ | ✓ | ✓ |
+ * | `notBlank` | ✓ | ✓ | ✓ | ✓ | ✓ |
+ * | `lessThan` | | ✓ | ✓ | | |
+ * | `lessThanOrEqual` | | ✓ | ✓ | | |
+ * | `greaterThan` | | ✓ | ✓ | | |
+ * | `greaterThanOrEqual` | | ✓ | ✓ | | |
+ * | `between` | | ✓ | ✓ | | |
+ * | `in` | | | | ✓ | ✓ |
+ * | `notIn` | | | | ✓ | ✓ |
+ *
+ * @example
+ * ```typescript
+ * // Text: free-text search on name column
+ * { field: 'name', type: 'text', operator: 'contains', value: 'alice' }
+ *
+ * // Number: salary above 100k
+ * { field: 'salary', type: 'number', operator: 'greaterThan', value: 100000 }
+ *
+ * // Date: hired in Q1 2025
+ * { field: 'hireDate', type: 'date', operator: 'between', value: '2025-01-01', valueTo: '2025-03-31' }
+ *
+ * // Set: show only Engineering and Sales departments
+ * { field: 'department', type: 'set', operator: 'in', value: ['Engineering', 'Sales'] }
+ *
+ * // Set: hide specific statuses (checkbox-style exclusion)
+ * { field: 'status', type: 'set', operator: 'notIn', value: ['Inactive', 'Archived'] }
+ *
+ * // Blank: find rows missing an email
+ * { field: 'email', type: 'text', operator: 'blank', value: '' }
+ * ```
+ */
 export type FilterOperator =
   // Text operators
   | 'contains'
@@ -159,6 +315,7 @@ export type FilterOperator =
   | 'notEquals'
   | 'startsWith'
   | 'endsWith'
+  // Blank operators (work with all filter types)
   | 'blank'
   | 'notBlank'
   // Number/Date operators

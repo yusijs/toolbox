@@ -4,7 +4,18 @@
  * Type definitions for the column reordering feature.
  */
 
-/** Animation type for column reordering */
+/**
+ * Animation strategy used when a column is drag-reordered.
+ *
+ * - `false` — No animation; columns snap instantly to their new positions.
+ * - `'flip'` — FLIP technique (First-Last-Invert-Play): captures column positions before
+ *   and after the move, then smoothly slides them into place. Controlled by `animationDuration`.
+ * - `'fade'` — Uses the View Transitions API for a cross-fade effect. Duration is
+ *   browser-controlled; `animationDuration` has no effect. Falls back to instant
+ *   reorder in browsers without View Transitions support.
+ *
+ * @default 'flip'
+ */
 export type ReorderAnimation = false | 'flip' | 'fade';
 
 /** Configuration options for the reorder plugin */

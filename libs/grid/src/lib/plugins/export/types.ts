@@ -4,7 +4,15 @@
  * Type definitions for the data export feature.
  */
 
-/** Supported export formats */
+/**
+ * Supported export file formats.
+ *
+ * | Format   | Output | Notes |
+ * |----------|--------|-------|
+ * | `'csv'`  | Comma-separated values (`.csv`) | Plain text, universally supported. Large datasets export fast. |
+ * | `'excel'`| Excel workbook (`.xlsx`) | Preserves column types and headers. Requires a serializer that can produce OOXML. |
+ * | `'json'` | JSON array (`.json`) | Exports row objects as-is; useful for programmatic consumption or re-import. |
+ */
 export type ExportFormat = 'csv' | 'excel' | 'json';
 
 /** Configuration options for the export plugin */

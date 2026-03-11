@@ -4,9 +4,23 @@
  * Type definitions for the column visibility feature.
  */
 
-/** Configuration options for the visibility plugin */
+/**
+ * Configuration for the column visibility plugin.
+ *
+ * Controls the visibility sidebar panel that lets users show/hide individual columns.
+ * The sidebar is toggled via a button in the grid toolbar or programmatically.
+ *
+ * @example
+ * ```typescript
+ * new VisibilityPlugin({ allowHideAll: false })
+ * ```
+ */
 export interface VisibilityConfig {
-  /** Allow hiding all columns (default: false) */
+  /**
+   * Whether users are allowed to hide every column.
+   * When `false`, the last visible column's toggle is disabled to prevent an empty grid.
+   * @default false
+   */
   allowHideAll?: boolean;
 }
 

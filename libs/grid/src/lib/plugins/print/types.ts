@@ -36,7 +36,15 @@ declare module '../../core/types' {
   }
 }
 
-/** Page orientation */
+/**
+ * Page orientation for the print layout.
+ *
+ * - `'portrait'` — Taller than wide. Best for grids with few columns.
+ * - `'landscape'` — Wider than tall. Preferred when many columns need to fit on one page.
+ *
+ * Applied via a `@page { size }` CSS rule in the print stylesheet.
+ * @default 'portrait'
+ */
 export type PrintOrientation = 'portrait' | 'landscape';
 
 /** Configuration options for the print plugin */

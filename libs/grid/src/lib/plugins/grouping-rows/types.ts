@@ -116,24 +116,69 @@ export interface GroupingRowsState {
 export type RowGroupingConfig = GroupingRowsConfig;
 export type RowGroupingState = GroupingRowsState;
 
-/** Group row model item */
+/**
+ * A group header row in the flattened render model.
+ *
+ * Part of the {@link RenderRow} discriminated union (discriminant: `kind === 'group'`).
+ * Group rows represent collapsed/expanded group headers in the virtualized row list.
+ * They are produced by the grouping engine when `groupOn` categorizes rows into hierarchical groups.
+ *
+ * @example
+ * ```typescript
+ * function isGroup(row: RenderRow): row is GroupRowModelItem {
+ *   return row.kind === 'group';
+ * }
+ * ```
+ */
 export interface GroupRowModelItem {
+  /** Discriminant — always `'group'` for group header rows. */
   kind: 'group';
+  /** Composite group key (nested groups separated by `"||"`, e.g. `"Engineering||Frontend"`). */
   key: string;
+  /** Display value for this group level (the last segment of the group path). */
   value: any;
+  /** Nesting depth (0 = top-level group). */
   depth: number;
+  /** All data rows belonging to this group (including rows in nested sub-groups). */
   rows: any[];
+  /** Whether this group is currently expanded (children visible). */
   expanded: boolean;
 }
 
-/** Data row model item */
+/**
+ * A data (leaf) row in the flattened render model.
+ *
+ * Part of the {@link RenderRow} discriminated union (discriminant: `kind === 'data'`).
+ * Data rows represent actual row objects from the grid's data source.
+ * Only visible when their parent group(s) are expanded.
+ */
 export interface DataRowModelItem {
+  /** Discriminant — always `'data'` for leaf data rows. */
   kind: 'data';
+  /** The original row object from the data source. */
   row: any;
+  /** Index of this row in the grid's current (post-sort/filter) row array. */
   rowIndex: number;
 }
 
-/** Union type for render rows */
+/**
+ * Discriminated union of row types in the flattened render model.
+ *
+ * The grouping plugin transforms the grid's row array into a flat list of
+ * `RenderRow` items that the virtualization engine iterates over. Each item
+ * is either a {@link GroupRowModelItem} (group header) or a {@link DataRowModelItem}
+ * (leaf data row). Use the `kind` property to discriminate:
+ *
+ * ```typescript
+ * for (const row of flattenedRows) {
+ *   if (row.kind === 'group') {
+ *     renderGroupHeader(row);   // row is GroupRowModelItem
+ *   } else {
+ *     renderDataRow(row);       // row is DataRowModelItem
+ *   }
+ * }
+ * ```
+ */
 export type RenderRow = GroupRowModelItem | DataRowModelItem;
 
 /** Event detail for group toggle */

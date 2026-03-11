@@ -4,7 +4,24 @@
  * Type definitions for horizontal column virtualization feature.
  */
 
-/** Configuration options for the column virtualization plugin */
+/**
+ * Configuration for horizontal (column) virtualization.
+ *
+ * When enabled, only the columns visible in the viewport (plus an overscan buffer)
+ * are rendered to the DOM. This dramatically improves performance for grids with
+ * many columns (50+), as only a small subset of column cells exist at any time.
+ *
+ * By default, virtualization auto-enables when the column count exceeds `threshold`.
+ * Set `autoEnable: false` to control activation manually.
+ *
+ * @example
+ * ```typescript
+ * new ColumnVirtualizationPlugin({
+ *   threshold: 20,   // activate earlier than default
+ *   overscan: 5,     // render 5 extra columns on each side
+ * })
+ * ```
+ */
 export interface ColumnVirtualizationConfig {
   /** Auto-enable when column count exceeds threshold (default: true) */
   autoEnable?: boolean;
@@ -32,7 +49,12 @@ export interface ColumnVirtualizationState {
   columnOffsets: number[];
 }
 
-/** Viewport information for visible columns */
+/**
+ * Describes the currently visible column range.
+ *
+ * Returned by viewport queries; used internally to determine which column
+ * cells to render and which to skip during horizontal scroll updates.
+ */
 export interface ColumnVirtualizationViewport {
   /** Index of first visible column */
   startCol: number;
