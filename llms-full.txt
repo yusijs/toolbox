@@ -27,15 +27,19 @@ tbw-grid { height: 400px; display: block; }
 /* Or via inline style: style="height: 400px; display: block;" */
 ```
 
-### 3. Editing Is Opt-In via Plugin
+### 3. Editing Is Opt-In via Feature or Plugin
 
-Using `editable: true` on a column WITHOUT the `EditingPlugin` loaded throws an error:
+Using `editable: true` on a column WITHOUT loading the editing feature/plugin throws an error:
 
 ```typescript
 // ❌ WRONG — throws "Configuration error: EditingPlugin not loaded"
 gridConfig: { columns: [{ field: 'name', editable: true }] }
 
-// ✅ CORRECT
+// ✅ CORRECT (feature — recommended)
+import '@toolbox-web/grid/features/editing';
+gridConfig: { columns: [{ field: 'name', editable: true }], features: { editing: true } }
+
+// ✅ CORRECT (plugin — advanced)
 import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
 gridConfig: { columns: [{ field: 'name', editable: true }], plugins: [new EditingPlugin()] }
 ```
@@ -137,14 +141,18 @@ import { TbwGrid } from '@toolbox-web/grid-vue';
 
 Alternative: Use `gridConfig` prop, or `TbwGridColumn` with `#cell` / `#editor` slots for Vue template renderers.
 
-### Vanilla JS / Other Frameworks → Use `createGrid()` or direct DOM
+### Vanilla JS / Other Frameworks → Use Feature Props (Recommended)
 
 ```
 import '@toolbox-web/grid';
+import '@toolbox-web/grid/features/selection';
+import '@toolbox-web/grid/features/editing';
 import { createGrid } from '@toolbox-web/grid';
-const grid = createGrid({ columns: [...], plugins: [...] });
+const grid = createGrid({ columns: [...], features: { selection: 'row', editing: true } });
 grid.rows = data;
 ```
+
+Alternative: Use `plugins: [new SelectionPlugin({ ... })]` for full control over plugin instances.
 
 ---
 
@@ -309,15 +317,15 @@ function EmployeeGrid({ employees }) {
 }
 ```
 
-**Vanilla (plugin instances):**
+**Vanilla (feature props — recommended):**
 
 ```typescript
 import '@toolbox-web/grid';
+import '@toolbox-web/grid/features/selection';
+import '@toolbox-web/grid/features/editing';
+import '@toolbox-web/grid/features/filtering';
+import '@toolbox-web/grid/features/multi-sort';
 import { createGrid } from '@toolbox-web/grid';
-import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
-import { FilteringPlugin } from '@toolbox-web/grid/plugins/filtering';
-import { MultiSortPlugin } from '@toolbox-web/grid/plugins/multi-sort';
 
 const grid = createGrid({
   columns: [
@@ -326,12 +334,12 @@ const grid = createGrid({
     { field: 'email', header: 'Email', filterable: true },
     { field: 'salary', header: 'Salary', type: 'number', editable: true },
   ],
-  plugins: [
-    new SelectionPlugin({ mode: 'row' }),
-    new EditingPlugin({ editOn: 'dblclick' }),
-    new FilteringPlugin(),
-    new MultiSortPlugin(),
-  ],
+  features: {
+    selection: 'row',
+    editing: 'dblclick',
+    filtering: true,
+    sorting: 'multi',
+  },
 });
 grid.rows = employees;
 ```
@@ -478,7 +486,7 @@ const employees = [/* ... */];
 ### Recipe 4: Tree Data (Hierarchical)
 
 ```typescript
-import { TreePlugin } from '@toolbox-web/grid/plugins/tree';
+import '@toolbox-web/grid/features/tree';
 
 // Data structure: each row may have a `children` array
 const data = [
@@ -491,23 +499,23 @@ const data = [
 
 gridConfig: {
   columns: [{ field: 'name', header: 'Name' }, { field: 'type', header: 'Type' }],
-  plugins: [new TreePlugin({ childrenField: 'children', defaultExpanded: true })],
+  features: { tree: { childrenField: 'children', defaultExpanded: true } },
 }
 ```
 
-React feature prop: `<DataGrid tree={{ childrenField: 'children' }} />`
-Angular feature prop: `<tbw-grid [tree]="{ childrenField: 'children' }" />`
-Vue feature prop: `<TbwGrid :tree="{ childrenField: 'children' }" />`
+React: `<DataGrid tree={{ childrenField: 'children' }} />`
+Angular: `<tbw-grid [tree]="{ childrenField: 'children' }" />`
+Vue: `<TbwGrid :tree="{ childrenField: 'children' }" />`
 
 ### Recipe 5: Master-Detail (Expandable Rows)
 
 ```typescript
-import { MasterDetailPlugin } from '@toolbox-web/grid/plugins/master-detail';
+import '@toolbox-web/grid/features/master-detail';
 
 gridConfig: {
   columns: [{ field: 'name' }, { field: 'department' }],
-  plugins: [
-    new MasterDetailPlugin({
+  features: {
+    masterDetail: {
       renderer: (row, container) => {
         container.innerHTML = `<div style="padding: 16px;">
           <h4>${row.name}</h4>
@@ -515,45 +523,44 @@ gridConfig: {
           <p>Phone: ${row.phone}</p>
         </div>`;
       },
-    }),
-  ],
+    },
+  },
 }
 ```
 
-React feature prop: `<DataGrid masterDetail={{ renderer: (row, el) => { el.innerHTML = '...' } }} />`
+React: `<DataGrid masterDetail={{ renderer: (row, el) => { el.innerHTML = '...' } }} />`
 
 ### Recipe 6: Server-Side Data (Infinite Scroll)
 
 ```typescript
-import { ServerSidePlugin } from '@toolbox-web/grid/plugins/server-side';
-
-const serverSide = new ServerSidePlugin({ pageSize: 100, maxConcurrentRequests: 2 });
+import '@toolbox-web/grid/features/server-side';
 
 gridConfig: {
   columns: [...],
-  plugins: [serverSide],
-}
-
-// After grid is ready:
-grid.ready().then(() => {
-  serverSide.setDataSource({
-    async getRows(params) {
-      // params: { startRow, endRow, sortModel, filterModel }
-      const response = await fetch('/api/employees', {
-        method: 'POST',
-        body: JSON.stringify({ start: params.startRow, end: params.endRow }),
-      });
-      const { rows, total } = await response.json();
-      return { rows, totalRowCount: total };
+  features: {
+    serverSide: {
+      pageSize: 100,
+      maxConcurrentRequests: 2,
+      dataSource: {
+        async getRows(params) {
+          // params: { startRow, endRow, sortModel, filterModel }
+          const response = await fetch('/api/employees', {
+            method: 'POST',
+            body: JSON.stringify({ start: params.startRow, end: params.endRow }),
+          });
+          const { rows, total } = await response.json();
+          return { rows, totalRowCount: total };
+        },
+      },
     },
-  });
-});
+  },
+}
 ```
 
 ### Recipe 7: Row Grouping with Aggregations
 
 ```typescript
-import { GroupingRowsPlugin } from '@toolbox-web/grid/plugins/grouping-rows';
+import '@toolbox-web/grid/features/grouping-rows';
 
 gridConfig: {
   columns: [
@@ -561,7 +568,7 @@ gridConfig: {
     { field: 'name', header: 'Name' },
     { field: 'salary', header: 'Salary', type: 'number', aggregator: 'sum' },
   ],
-  plugins: [new GroupingRowsPlugin({ groupOn: (row) => [row.department], defaultExpanded: true })],
+  features: { groupingRows: { groupOn: (row) => [row.department], defaultExpanded: true } },
 }
 ```
 
@@ -570,44 +577,43 @@ React: `<DataGrid groupingRows={{ groupOn: (row) => [row.department] }} />`
 ### Recipe 8: Pivot Table
 
 ```typescript
-import { PivotPlugin } from '@toolbox-web/grid/plugins/pivot';
+import '@toolbox-web/grid/features/pivot';
 
 gridConfig: {
   columns: [
     { field: 'region' }, { field: 'product' }, { field: 'quarter' },
     { field: 'revenue', type: 'number' },
   ],
-  plugins: [
-    new PivotPlugin({
+  features: {
+    pivot: {
       rowFields: ['region'],
       columnFields: ['quarter'],
       valueFields: [{ field: 'revenue', aggFunc: 'sum', header: 'Total Revenue' }],
-    }),
-  ],
+    },
+  },
 }
 ```
 
 ### Recipe 9: Responsive Mobile Card Layout
 
 ```typescript
-import { ResponsivePlugin } from '@toolbox-web/grid/plugins/responsive';
+import '@toolbox-web/grid/features/responsive';
 
-// Switch to card layout below 600px
 gridConfig: {
-  plugins: [new ResponsivePlugin({ breakpoint: 600 })],
+  features: { responsive: { breakpoint: 600 } },
 }
 
 // Or progressive degradation with multiple breakpoints
 gridConfig: {
-  plugins: [
-    new ResponsivePlugin({
+  features: {
+    responsive: {
       breakpoints: [
         { maxWidth: 900, hiddenColumns: ['startDate'] },
         { maxWidth: 700, hiddenColumns: ['startDate', 'email'] },
         { maxWidth: 500, cardLayout: true },
       ],
-    }),
-  ],
+    },
+  },
 }
 ```
 
@@ -1247,11 +1253,12 @@ queueMicrotask(() => undoRedo.endTransaction()); // Push compound to stack
 
 ```typescript
 import { createGrid, queryGrid } from '@toolbox-web/grid';
+import '@toolbox-web/grid/features/selection';
 
 // Create a typed grid element
 const grid = createGrid<Employee>({
   columns: [{ field: 'name' }],
-  plugins: [new SelectionPlugin()],
+  features: { selection: 'row' },
 });
 grid.rows = employees; // ✓ Fully typed
 

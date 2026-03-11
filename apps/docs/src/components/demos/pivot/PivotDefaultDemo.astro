@@ -19,7 +19,7 @@ import DemoControls from '@components/DemoControls.astro';
 <script>
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { PivotPlugin } from '@toolbox-web/grid/plugins/pivot';
+import '@toolbox-web/grid/features/pivot';
 
 const container = document.getElementById('pivot-default-demo');
 if (container) {
@@ -49,8 +49,8 @@ if (container) {
   function rebuild(opts: Record<string, unknown>) {
     grid.gridConfig = {
       columns,
-      plugins: [
-        new PivotPlugin({
+      features: {
+        pivot: {
           animation: (opts.animation as string) ?? 'slide',
           rowGroupFields: ['region', 'product'],
           columnGroupFields: ['quarter'],
@@ -58,8 +58,8 @@ if (container) {
           showTotals: opts.showTotals as boolean ?? true,
           showGrandTotal: opts.showGrandTotal as boolean ?? true,
           showToolPanel: opts.showToolPanel as boolean ?? true,
-        } as any),
-      ],
+        } as any,
+      },
     };
     grid.rows = salesData;
   }

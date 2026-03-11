@@ -13,8 +13,8 @@ import DemoControls from '@components/DemoControls.astro';
 <script>
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
-import { UndoRedoPlugin } from '@toolbox-web/grid/plugins/undo-redo';
+import '@toolbox-web/grid/features/editing';
+import '@toolbox-web/grid/features/undo-redo';
 
 const container = document.getElementById('undo-redo-default-demo');
 if (container) {
@@ -35,7 +35,7 @@ if (container) {
   function rebuild(maxHistorySize = 100) {
     grid.gridConfig = {
       columns,
-      plugins: [new EditingPlugin(), new UndoRedoPlugin({ maxHistorySize })],
+      features: { editing: true, undoRedo: { maxHistorySize } },
     };
     grid.rows = [...sampleData];
   }

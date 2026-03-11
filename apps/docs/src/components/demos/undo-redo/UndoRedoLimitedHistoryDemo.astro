@@ -9,8 +9,8 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
-import { UndoRedoPlugin } from '@toolbox-web/grid/plugins/undo-redo';
+import '@toolbox-web/grid/features/editing';
+import '@toolbox-web/grid/features/undo-redo';
 
 const container = document.getElementById('undo-redo-limited-history-demo');
 if (container) {
@@ -27,15 +27,10 @@ if (container) {
   ];
 
   const grid = queryGrid('tbw-grid', container);
-      
+
       grid.gridConfig = {
         columns,
-        plugins: [
-          new EditingPlugin(),
-          new UndoRedoPlugin({
-            maxHistorySize: 20,
-          }),
-        ],
+        features: { editing: true, undoRedo: { maxHistorySize: 20 } },
       };
       grid.rows = [...sampleData];
 }

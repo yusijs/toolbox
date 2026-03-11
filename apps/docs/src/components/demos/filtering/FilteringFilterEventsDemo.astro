@@ -50,7 +50,7 @@
 <script>
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { FilteringPlugin } from '@toolbox-web/grid/plugins/filtering';
+import '@toolbox-web/grid/features/filtering';
 
 const container = document.getElementById('filtering-filter-events-demo');
 if (container) {
@@ -75,7 +75,7 @@ if (container) {
       { field: 'department', header: 'Department' },
       { field: 'status', header: 'Status' },
     ],
-    plugins: [new FilteringPlugin({ debounceMs: 300 })],
+    features: { filtering: { debounceMs: 300 } },
   };
 
   grid.rows = sampleData;

@@ -50,7 +50,7 @@
 <script>
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
+import '@toolbox-web/grid/features/editing';
 
 const container = document.getElementById('editing-editing-events-demo');
 if (container) {
@@ -62,7 +62,7 @@ if (container) {
       { field: 'department', header: 'Department', editable: true },
       { field: 'salary', header: 'Salary', type: 'number', editable: true },
     ],
-    plugins: [new EditingPlugin({ editOn: 'dblclick' })],
+    features: { editing: 'dblclick' },
   };
 
   grid.rows = [

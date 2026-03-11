@@ -36,7 +36,7 @@
 <script>
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { ResponsivePlugin } from '@toolbox-web/grid/plugins/responsive';
+import '@toolbox-web/grid/features/responsive';
 
 const container = document.getElementById('responsive-fixed-card-height-demo');
 if (container) {
@@ -59,11 +59,11 @@ if (container) {
       { field: 'department', header: 'Department', width: 120 },
       { field: 'salary', header: 'Salary', type: 'number', width: 100 },
     ],
-    plugins: [
-      new ResponsivePlugin<Employee>({
+    features: {
+      responsive: {
         breakpoint: 500,
         cardRowHeight: 60,
-        cardRenderer: (row) => {
+        cardRenderer: (row: Employee) => {
           const card = document.createElement('div');
           card.className = 'simple-card';
           card.innerHTML = `
@@ -75,8 +75,8 @@ if (container) {
           `;
           return card;
         },
-      }),
-    ],
+      },
+    },
   };
 
   grid.rows = [

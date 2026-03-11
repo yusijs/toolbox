@@ -9,7 +9,7 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { FilteringPlugin } from '@toolbox-web/grid/plugins/filtering';
+import '@toolbox-web/grid/features/filtering';
 
 const container = document.getElementById('filtering-async-filtering-demo');
 if (container) {
@@ -84,12 +84,12 @@ if (container) {
 
       grid.gridConfig = {
         columns,
-        plugins: [
-          new FilteringPlugin({
+        features: {
+          filtering: {
             valuesHandler: getUniqueValues,
             filterHandler: applyServerFilters,
-          }),
-        ],
+          },
+        },
       };
 
       grid.rows = serverData;

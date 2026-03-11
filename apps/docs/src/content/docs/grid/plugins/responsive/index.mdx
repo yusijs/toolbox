@@ -22,7 +22,7 @@ The Responsive plugin transforms the grid from a tabular layout to a card/list l
 ## Installation
 
 ```ts
-import { ResponsivePlugin } from '@toolbox-web/grid/plugins/responsive';
+import '@toolbox-web/grid/features/responsive';
 ```
 
 ## Basic Usage
@@ -32,7 +32,7 @@ import { ResponsivePlugin } from '@toolbox-web/grid/plugins/responsive';
 
 ```ts
 import '@toolbox-web/grid';
-import { ResponsivePlugin } from '@toolbox-web/grid/plugins/responsive';
+import '@toolbox-web/grid/features/responsive';
 
 const grid = document.querySelector('tbw-grid');
 grid.gridConfig = {
@@ -41,9 +41,9 @@ grid.gridConfig = {
     { field: 'name', header: 'Name' },
     { field: 'email', header: 'Email' },
   ],
-  plugins: [
-    new ResponsivePlugin({ breakpoint: 500 }),
-  ],
+  features: {
+    responsive: { breakpoint: 500 },
+  },
 };
 grid.rows = data;
 ```
@@ -465,43 +465,51 @@ When using `cardRenderer` (Phase 2), the grid's built-in keyboard navigation is 
 
 ```ts
 // Grid in a resizable panel
-new ResponsivePlugin({
-  breakpoint: 400,
-  hiddenColumns: ['createdAt', 'updatedAt'], // Hide dates in card mode
-})
+features: {
+  responsive: {
+    breakpoint: 400,
+    hiddenColumns: ['createdAt', 'updatedAt'], // Hide dates in card mode
+  },
+},
 ```
 
 ### Mobile-First Design
 
 ```ts
 // Responsive grid for mobile/tablet
-new ResponsivePlugin({
-  breakpoint: 768,
-  hideHeader: true,
-})
+features: {
+  responsive: {
+    breakpoint: 768,
+    hideHeader: true,
+  },
+},
 ```
 
 ### Dashboard Widget
 
 ```ts
 // Small widget in dashboard
-new ResponsivePlugin({
-  breakpoint: 300,
-  hiddenColumns: ['email', 'phone', 'address'],
-})
+features: {
+  responsive: {
+    breakpoint: 300,
+    hiddenColumns: ['email', 'phone', 'address'],
+  },
+},
 ```
 
 ### Progressive Degradation
 
 ```ts
 // Gracefully degrade as container shrinks
-new ResponsivePlugin({
-  breakpoints: [
-    { maxWidth: 900, hiddenColumns: ['startDate'] },
-    { maxWidth: 700, hiddenColumns: ['startDate', 'email'] },
-    { maxWidth: 500, cardLayout: true },
-  ],
-})
+features: {
+  responsive: {
+    breakpoints: [
+      { maxWidth: 900, hiddenColumns: ['startDate'] },
+      { maxWidth: 700, hiddenColumns: ['startDate', 'email'] },
+      { maxWidth: 500, cardLayout: true },
+    ],
+  },
+},
 ```
 
 ## Custom Card Renderer
@@ -509,22 +517,24 @@ new ResponsivePlugin({
 For advanced card layouts with avatars, badges, or custom grouped fields, use the `cardRenderer` option:
 
 ```ts
-const responsivePlugin = new ResponsivePlugin({
-  breakpoint: 600,
-  cardRenderer: (row, rowIndex) => {
-    const card = document.createElement('div');
-    card.className = 'employee-card';
-    card.innerHTML = `
-      <div class="avatar">${row.name[0]}</div>
-      <div class="info">
-        <div class="name">${row.name}</div>
-        <div class="meta">${row.department} · $${row.salary.toLocaleString()}</div>
-        <div class="email">${row.email}</div>
-      </div>
-    `;
-    return card;
+features: {
+  responsive: {
+    breakpoint: 600,
+    cardRenderer: (row, rowIndex) => {
+      const card = document.createElement('div');
+      card.className = 'employee-card';
+      card.innerHTML = `
+        <div class="avatar">${row.name[0]}</div>
+        <div class="info">
+          <div class="name">${row.name}</div>
+          <div class="meta">${row.department} · $${row.salary.toLocaleString()}</div>
+          <div class="email">${row.email}</div>
+        </div>
+      `;
+      return card;
+    },
   },
-});
+},
 ```
 
 ### cardRenderer Signature
@@ -545,18 +555,22 @@ When using `cardRenderer`, you can control card height:
 
 ```ts
 // Fixed height (better for virtualization with large datasets)
-new ResponsivePlugin({
-  breakpoint: 600,
-  cardRowHeight: 80,  // 80px per card
-  cardRenderer: (row) => { /* ... */ },
-});
+features: {
+  responsive: {
+    breakpoint: 600,
+    cardRowHeight: 80,  // 80px per card
+    cardRenderer: (row) => { /* ... */ },
+  },
+},
 
 // Auto height (default - cards size to content)
-new ResponsivePlugin({
-  breakpoint: 600,
-  cardRowHeight: 'auto',
-  cardRenderer: (row) => { /* ... */ },
-});
+features: {
+  responsive: {
+    breakpoint: 600,
+    cardRowHeight: 'auto',
+    cardRenderer: (row) => { /* ... */ },
+  },
+},
 ```
 
 ### Keyboard Navigation with cardRenderer

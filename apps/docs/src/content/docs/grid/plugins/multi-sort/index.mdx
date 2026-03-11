@@ -17,12 +17,12 @@ The Multi-Sort plugin enables sorting by multiple columns at once—hold Shift a
 ## Installation
 
 ```ts
-import { MultiSortPlugin } from '@toolbox-web/grid/plugins/multi-sort';
+import '@toolbox-web/grid/features/multi-sort';
 ```
 
 ## Basic Usage
 
-Mark columns as `sortable: true` and add the plugin. Users Shift+click to add columns to the sort stack, and regular click to reset to single-column sort.
+Mark columns as `sortable: true` and enable the feature. Users Shift+click to add columns to the sort stack, and regular click to reset to single-column sort.
 
 <Tabs syncKey="framework">
   <TabItem label="Vanilla JS">
@@ -35,12 +35,12 @@ grid.gridConfig = {
     { field: 'salary', header: 'Salary', type: 'number', sortable: true },
     { field: 'startDate', header: 'Start Date', type: 'date', sortable: true },
   ],
-  plugins: [
-    new MultiSortPlugin({
+  features: {
+    multiSort: {
       maxSortColumns: 3,
       showSortIndex: true,
-    }),
-  ],
+    },
+  },
 };
 
 // Listen for sort changes
@@ -194,12 +194,14 @@ Restrict sorting to one column at a time with `maxSortColumns: 1`. Clicking any 
 ## Initial Sort Configuration
 
 ```ts
-new MultiSortPlugin({
-  initialSort: [
-    { field: 'department', direction: 'asc' },
-    { field: 'salary', direction: 'desc' },
-  ],
-});
+features: {
+  multiSort: {
+    initialSort: [
+      { field: 'department', direction: 'asc' },
+      { field: 'salary', direction: 'desc' },
+    ],
+  },
+},
 ```
 
 ## Events

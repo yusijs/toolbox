@@ -10,7 +10,7 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { ResponsivePlugin } from '@toolbox-web/grid/plugins/responsive';
+import '@toolbox-web/grid/features/responsive';
 
 const container = document.getElementById('responsive-manual-control-demo');
 if (container) {
@@ -70,32 +70,29 @@ if (container) {
   // Controls
       const controls = container.querySelector('[data-controls-id="responsive-manual-control-demo"]');
       controls.style.cssText = 'margin-bottom: 12px; display: flex; gap: 8px;';
-  
+
       const tableBtn = document.createElement('button');
       tableBtn.textContent = '📊 Table Mode';
       tableBtn.style.cssText = 'padding: 8px 16px; cursor: pointer;';
-  
+
       const cardBtn = document.createElement('button');
       cardBtn.textContent = '📱 Card Mode';
       cardBtn.style.cssText = 'padding: 8px 16px; cursor: pointer;';
-  
+
       controls.appendChild(tableBtn);
       controls.appendChild(cardBtn);
-      
-  
+
+
       const grid = queryGrid('tbw-grid', container);
-      
-      const responsivePlugin = new ResponsivePlugin({
-        breakpoint: 0, // Disabled - using manual control
-      });
-  
+
       grid.gridConfig = {
         columns: columns.slice(0, 4), // Fewer columns
-        plugins: [responsivePlugin],
+        features: { responsive: { breakpoint: 0 } },
       };
       grid.rows = sampleData;
-  
-      tableBtn.addEventListener('click', () => responsivePlugin.setResponsive(false));
-      cardBtn.addEventListener('click', () => responsivePlugin.setResponsive(true));
+
+      const plugin = grid.getPluginByName('responsive');
+      tableBtn.addEventListener('click', () => plugin?.setResponsive(false));
+      cardBtn.addEventListener('click', () => plugin?.setResponsive(true));
 }
 </script>

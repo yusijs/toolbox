@@ -9,7 +9,7 @@
 <script>
   import '@toolbox-web/grid';
 import type { DataGridElement } from '@toolbox-web/grid';
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
+import '@toolbox-web/grid/features/editing';
 
   const grid = document.querySelector<DataGridElement>('[data-demo-id="editor-parameters"]');
   if (grid) {
@@ -47,7 +47,7 @@ import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
           editorParams: { includeEmpty: true, emptyLabel: '-- Select --' },
         },
       ],
-      plugins: [new EditingPlugin({ editOn: 'dblclick' })],
+      features: { editing: 'dblclick' },
     };
 
     grid.rows = [

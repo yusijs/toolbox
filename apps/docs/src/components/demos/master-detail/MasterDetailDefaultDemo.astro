@@ -17,7 +17,7 @@ import DemoControls from '@components/DemoControls.astro';
 <script>
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { MasterDetailPlugin } from '@toolbox-web/grid/plugins/master-detail';
+import '@toolbox-web/grid/features/master-detail';
 
 const container = document.getElementById('master-detail-default-demo');
 if (container) {
@@ -67,14 +67,14 @@ if (container) {
     const heightVal = opts.detailHeight as string ?? 'auto';
     grid.gridConfig = {
       columns,
-      plugins: [
-        new MasterDetailPlugin({
+      features: {
+        masterDetail: {
           animation: (opts.animation as string) ?? 'slide',
           detailHeight: heightVal === 'auto' ? 'auto' : Number(heightVal),
           expandOnRowClick: opts.expandOnRowClick as boolean ?? false,
           detailRenderer,
-        } as any),
-      ],
+        } as any,
+      },
     };
     grid.rows = orderData;
   }

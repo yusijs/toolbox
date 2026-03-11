@@ -18,7 +18,7 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { PrintPlugin } from '@toolbox-web/grid/plugins/print';
+import '@toolbox-web/grid/features/print';
 
 const container = document.getElementById('print-events-demo');
 if (container) {
@@ -34,17 +34,17 @@ if (container) {
     { id: 5, name: 'Emma Davis', department: 'HR' },
   ];
 
-  const printPlugin = new PrintPlugin({
-    title: 'Event Demo',
-    warnThreshold: 0,
-  });
-
   grid.gridConfig = {
     columns: [
       { field: 'name', header: 'Name' },
       { field: 'department', header: 'Department' },
     ],
-    plugins: [printPlugin],
+    features: {
+      print: {
+        title: 'Event Demo',
+        warnThreshold: 0,
+      },
+    },
   };
   grid.rows = employeeData;
 

@@ -14,7 +14,7 @@ The Pinned Columns plugin freezes columns to the left or right edge of the gridâ
 ## Installation
 
 ```ts
-import { PinnedColumnsPlugin } from '@toolbox-web/grid/plugins/pinned-columns';
+import '@toolbox-web/grid/features/pinned-columns';
 ```
 
 ## Basic Usage
@@ -34,7 +34,7 @@ grid.gridConfig = {
     { field: 'salary', header: 'Salary', type: 'currency' },
     { field: 'actions', header: 'Actions', pinned: 'right', width: 120 },
   ],
-  plugins: [new PinnedColumnsPlugin()],
+  features: { pinnedColumns: true },
 };
 ```
   </TabItem>

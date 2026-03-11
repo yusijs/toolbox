@@ -30,18 +30,18 @@ Editing is delivered as a plugin rather than built into the core grid for severa
 ## Installation
 
 ```ts
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
+import '@toolbox-web/grid/features/editing';
 ```
 
 ## Basic Usage
 
-Add the plugin to enable `editable` and `editor` column properties:
+Enable the editing feature to use `editable` and `editor` column properties:
 
 <Tabs syncKey="framework">
   <TabItem label="Vanilla JS">
 ```ts
 import '@toolbox-web/grid';
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
+import '@toolbox-web/grid/features/editing';
 
 const grid = document.querySelector('tbw-grid');
 grid.gridConfig = {
@@ -51,7 +51,7 @@ grid.gridConfig = {
     { field: 'price', header: 'Price', type: 'number', editable: true },
     { field: 'active', header: 'Active', type: 'boolean', editable: true },
   ],
-  plugins: [new EditingPlugin({ editOn: 'dblclick' })], // or 'click'
+  features: { editing: 'dblclick' }, // or 'click'
 };
 
 // Listen for commits
@@ -62,24 +62,22 @@ grid.addEventListener('cell-commit', (e) => {
   </TabItem>
   <TabItem label="React">
 ```tsx
-import { DataGrid, type ReactGridConfig } from '@toolbox-web/grid-react';
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
+import '@toolbox-web/grid-react/features/editing';
+import { DataGrid, useGridEvent } from '@toolbox-web/grid-react';
 
-const config: ReactGridConfig = {
-  columns: [
-    { field: 'id', header: 'ID' },
-    { field: 'name', header: 'Name', editable: true },
-    { field: 'price', header: 'Price', type: 'number', editable: true },
-    { field: 'active', header: 'Active', type: 'boolean', editable: true },
-  ],
-  plugins: [new EditingPlugin({ editOn: 'dblclick' })],
-};
+const columns = [
+  { field: 'id', header: 'ID' },
+  { field: 'name', header: 'Name', editable: true },
+  { field: 'price', header: 'Price', type: 'number', editable: true },
+  { field: 'active', header: 'Active', type: 'boolean', editable: true },
+];
 
 function MyGrid({ data }) {
   return (
     <DataGrid
       rows={data}
-      gridConfig={config}
+      columns={columns}
+      editing="dblclick"
       onCellCommit={(e) => console.log('Edited:', e.detail)}
     />
   );
@@ -195,10 +193,10 @@ See the [API Reference](..//grid/api/#row-update-api) for full documentation.
 
 ## Edit Triggers
 
-Configure how editing is triggered with the `editOn` option in the EditingPlugin:
+Configure how editing is triggered with the `editOn` option:
 
 ```ts
-new EditingPlugin({ editOn: 'dblclick' }) // or 'click', 'manual'
+features: { editing: 'dblclick' } // or 'click', 'manual'
 ```
 
 | Value       | Behavior                                      |
@@ -233,7 +231,7 @@ Use **F2** when you only need to edit one cell without activating editors on the
 For data entry forms or spreadsheet-like interfaces, use `mode: 'grid'` to make all editable cells show their editors at all times:
 
 ```ts
-new EditingPlugin({ mode: 'grid' })
+features: { editing: { mode: 'grid' } }
 ```
 
 | Mode    | Behavior                                                    |
@@ -436,7 +434,7 @@ Define type defaults in your grid configuration:
   <TabItem label="Vanilla JS">
 ```ts
 import '@toolbox-web/grid';
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
+import '@toolbox-web/grid/features/editing';
 
 const grid = document.querySelector('tbw-grid');
 
@@ -477,29 +475,29 @@ grid.gridConfig = {
       },
     },
   },
-  plugins: [new EditingPlugin()],
+  features: { editing: true },
 };
 ```
   </TabItem>
   <TabItem label="React">
 ```tsx
-import { DataGrid, type ReactGridConfig } from '@toolbox-web/grid-react';
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
+import '@toolbox-web/grid-react/features/editing';
+import { DataGrid } from '@toolbox-web/grid-react';
 
 // Type defaults with React components
-const config: ReactGridConfig = {
-  columns: [
-    { field: 'name', header: 'Name', editable: true },
-    { field: 'country', header: 'Country', type: 'country', editable: true },
-    { field: 'priority', header: 'Priority', type: 'priority' },
-  ],
-  typeDefaults: {
-    country: {
-      renderer: (ctx) => <span>🌍 {ctx.value}</span>,
-      editor: (ctx) => (
-        <select
-          defaultValue={ctx.value}
-          onChange={(e) => ctx.commit(e.target.value)}
+const columns = [
+  { field: 'name', header: 'Name', editable: true },
+  { field: 'country', header: 'Country', type: 'country', editable: true },
+  { field: 'priority', header: 'Priority', type: 'priority' },
+];
+
+const typeDefaults = {
+  country: {
+    renderer: (ctx) => <span>🌍 {ctx.value}</span>,
+    editor: (ctx) => (
+      <select
+        defaultValue={ctx.value}
+        onChange={(e) => ctx.commit(e.target.value)}
         >
           <option value="USA">USA</option>
           <option value="UK">UK</option>
@@ -513,11 +511,17 @@ const config: ReactGridConfig = {
       ),
     },
   },
-  plugins: [new EditingPlugin()],
 };
 
 function MyGrid({ data }) {
-  return <DataGrid rows={data} gridConfig={config} />;
+  return (
+    <DataGrid
+      rows={data}
+      columns={columns}
+      typeDefaults={typeDefaults}
+      editing={true}
+    />
+  );
 }
 ```
   </TabItem>
@@ -592,14 +596,12 @@ function Dashboard() {
   return (
     <DataGrid
       rows={employees}
-      gridConfig={{
-        columns: [
-          { field: 'name', header: 'Name' },
-          { field: 'country', type: 'country', editable: true }, // Uses CountryBadge/Editor
-          { field: 'salary', type: 'currency' }, // Uses currency renderer
-        ],
-        plugins: [new EditingPlugin()],
-      }}
+      columns={[
+        { field: 'name', header: 'Name' },
+        { field: 'country', type: 'country', editable: true },
+        { field: 'salary', type: 'currency' },
+      ]}
+      editing={true}
     />
   );
 }
@@ -865,15 +867,15 @@ tbw-grid {
 
 ## Configuration Validation
 
-If you use `editable: true` or `editor` without registering the `EditingPlugin`, the grid throws a helpful error:
+If you use `editable: true` or `editor` without enabling the editing feature, the grid throws a helpful error:
 
 ```
 [tbw-grid] Configuration error:
 
 Column(s) [name, price] use the "editable" column property, but the required plugin is not loaded.
-  → Add the plugin to your gridConfig.plugins array:
-    import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
-    plugins: [new EditingPlugin(), ...]
+  → Enable the feature:
+    import '@toolbox-web/grid/features/editing';
+    features: { editing: true }
 ```
 
 This runtime validation helps catch misconfigurations early during development.
@@ -886,10 +888,12 @@ Enable `focusTrap` to prevent accidental focus loss during editing. When focus l
 the grid during an active edit, it is automatically returned to the editing cell:
 
 ```ts
-new EditingPlugin({
-  editOn: 'dblclick',
-  focusTrap: true,
-})
+features: {
+  editing: {
+    editOn: 'dblclick',
+    focusTrap: true,
+  },
+}
 ```
 
 Elements registered via `grid.registerExternalFocusContainer()` are excluded from the
@@ -932,9 +936,11 @@ and revert changes — useful for "save changes" workflows.
 ### Configuration
 
 ```ts
-new EditingPlugin({
-  dirtyTracking: true,
-})
+features: {
+  editing: {
+    dirtyTracking: true,
+  },
+}
 ```
 
 When enabled, the plugin captures a deep-clone baseline of each row when data is first

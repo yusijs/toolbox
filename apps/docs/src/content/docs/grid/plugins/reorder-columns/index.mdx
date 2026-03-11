@@ -14,12 +14,12 @@ The Reorder plugin lets users rearrange columns by dragging and dropping column 
 ## Installation
 
 ```ts
-import { ReorderPlugin } from '@toolbox-web/grid/plugins/reorder-columns';
+import '@toolbox-web/grid/features/reorder-columns';
 ```
 
 ## Basic Usage
 
-Just add the plugin and columns become draggable. Users can grab any column header and drop it in a new position. The plugin handles visual feedback and smooth animations automatically.
+Just enable the feature and columns become draggable. Users can grab any column header and drop it in a new position. Visual feedback and smooth animations are handled automatically.
 
 <Tabs syncKey="framework">
   <TabItem label="Vanilla JS">
@@ -32,12 +32,12 @@ grid.gridConfig = {
     { field: 'email', header: 'Email' },
     { field: 'department', header: 'Department' },
   ],
-  plugins: [
-    new ReorderPlugin({
+  features: {
+    reorderColumns: {
       animation: 'flip',
       animationDuration: 200,
-    }),
-  ],
+    },
+  },
 };
 
 // Listen for column moves
@@ -158,13 +158,13 @@ Drag column headers to reorder them. Use the controls below to experiment with d
 
 ```ts
 // No animation - instant reorder
-new ReorderPlugin({ animation: false });
+features: { reorderColumns: { animation: false } }
 
 // FLIP animation with custom duration
-new ReorderPlugin({ animation: 'flip', animationDuration: 300 });
+features: { reorderColumns: { animation: 'flip', animationDuration: 300 } }
 
 // View Transitions API fade effect
-new ReorderPlugin({ animation: 'fade' });
+features: { reorderColumns: { animation: 'fade' } }
 ```
 
 ## Events

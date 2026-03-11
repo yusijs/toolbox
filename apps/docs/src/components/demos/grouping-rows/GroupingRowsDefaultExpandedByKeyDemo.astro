@@ -9,7 +9,7 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { GroupingRowsPlugin } from '@toolbox-web/grid/plugins/grouping-rows';
+import '@toolbox-web/grid/features/grouping-rows';
 
 const container = document.getElementById('grouping-expanded-by-key-demo');
 if (container) {
@@ -35,13 +35,13 @@ if (container) {
       { field: 'department', header: 'Department' },
       { field: 'salary', header: 'Salary', type: 'number', align: 'right' },
     ],
-    plugins: [
-      new GroupingRowsPlugin({
+    features: {
+      groupingRows: {
         groupOn: (row: { department: string }) => row.department,
         defaultExpanded: 'Engineering',
         showRowCount: true,
-      }),
-    ],
+      } as any,
+    },
   };
   grid.rows = sampleData;
 }

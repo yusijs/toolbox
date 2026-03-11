@@ -14,7 +14,7 @@
 <script>
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { ResponsivePlugin } from '@toolbox-web/grid/plugins/responsive';
+import '@toolbox-web/grid/features/responsive';
 
 const container = document.getElementById('responsive-animated-transitions-demo');
 if (container) {
@@ -29,13 +29,13 @@ if (container) {
       { field: 'department', header: 'Department', width: 120 },
       { field: 'salary', header: 'Salary', type: 'number', width: 100 },
     ],
-    plugins: [
-      new ResponsivePlugin({
+    features: {
+      responsive: {
         breakpoint: 500,
         animate: true,
         animationDuration: 300,
-      }),
-    ],
+      },
+    },
   };
 
   grid.rows = [

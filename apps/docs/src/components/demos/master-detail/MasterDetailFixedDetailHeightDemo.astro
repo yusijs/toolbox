@@ -9,7 +9,7 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { MasterDetailPlugin } from '@toolbox-web/grid/plugins/master-detail';
+import '@toolbox-web/grid/features/master-detail';
 
 const container = document.getElementById('master-detail-fixed-detail-height-demo');
 if (container) {
@@ -104,13 +104,13 @@ if (container) {
 
       grid.gridConfig = {
         columns,
-        plugins: [
-          new MasterDetailPlugin({
+        features: {
+          masterDetail: {
             detailHeight: 150,
             expandOnRowClick: false,
             detailRenderer,
-          }),
-        ],
+          },
+        },
       };
       grid.rows = generateOrderData(50);
 }

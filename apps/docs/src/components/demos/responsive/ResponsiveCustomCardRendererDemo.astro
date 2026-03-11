@@ -66,7 +66,7 @@
 <script>
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { ResponsivePlugin } from '@toolbox-web/grid/plugins/responsive';
+import '@toolbox-web/grid/features/responsive';
 
 const container = document.getElementById('responsive-custom-card-renderer-demo');
 if (container) {
@@ -83,27 +83,6 @@ if (container) {
     startDate: string;
   }
 
-  const responsivePlugin = new ResponsivePlugin<Employee>({
-    breakpoint: 600,
-    cardRenderer: (row) => {
-      const card = document.createElement('div');
-      card.className = 'employee-card';
-      const deptClass = row.department.toLowerCase().replace(/\s+/g, '-');
-      card.innerHTML = `
-        <div class="avatar">${row.name[0]}</div>
-        <div class="info">
-          <div class="name">
-            ${row.name}
-            <span class="badge ${deptClass}">${row.department}</span>
-          </div>
-          <div class="meta">$${row.salary.toLocaleString()} · Started ${row.startDate}</div>
-          <div class="email">${row.email}</div>
-        </div>
-      `;
-      return card;
-    },
-  });
-
   grid.gridConfig = {
     columns: [
       { field: 'id', header: 'ID', type: 'number', width: 60 },
@@ -113,7 +92,28 @@ if (container) {
       { field: 'email', header: 'Email', width: 200 },
       { field: 'startDate', header: 'Start Date', width: 120 },
     ],
-    plugins: [responsivePlugin],
+    features: {
+      responsive: {
+        breakpoint: 600,
+        cardRenderer: (row: Employee) => {
+          const card = document.createElement('div');
+          card.className = 'employee-card';
+          const deptClass = row.department.toLowerCase().replace(/\s+/g, '-');
+          card.innerHTML = `
+            <div class="avatar">${row.name[0]}</div>
+            <div class="info">
+              <div class="name">
+                ${row.name}
+                <span class="badge ${deptClass}">${row.department}</span>
+              </div>
+              <div class="meta">$${row.salary.toLocaleString()} · Started ${row.startDate}</div>
+              <div class="email">${row.email}</div>
+            </div>
+          `;
+          return card;
+        },
+      },
+    },
   };
 
   grid.rows = [

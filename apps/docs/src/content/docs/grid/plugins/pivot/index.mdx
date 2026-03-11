@@ -16,7 +16,7 @@ The Pivot plugin transforms flat data into a pivot table view.
 ## Installation
 
 ```ts
-import { PivotPlugin } from '@toolbox-web/grid/plugins/pivot';
+import '@toolbox-web/grid/features/pivot';
 ```
 
 ## Basic Usage
@@ -25,8 +25,8 @@ import { PivotPlugin } from '@toolbox-web/grid/plugins/pivot';
   <TabItem label="Vanilla JS">
 ```ts
 import '@toolbox-web/grid';
+import '@toolbox-web/grid/features/pivot';
 import { queryGrid } from '@toolbox-web/grid';
-import { PivotPlugin } from '@toolbox-web/grid/plugins/pivot';
 
 const grid = queryGrid('tbw-grid');
 grid.gridConfig = {
@@ -36,13 +36,13 @@ grid.gridConfig = {
     { field: 'quarter', header: 'Quarter' },
     { field: 'sales', header: 'Sales', type: 'number' },
   ],
-  plugins: [
-    new PivotPlugin({
+  features: {
+    pivot: {
       rowGroupFields: ['region', 'product'],
       columnGroupFields: ['quarter'],
       valueFields: [{ field: 'sales', aggFunc: 'sum', header: 'Total' }],
-    }),
-  ],
+    },
+  },
 };
 grid.rows = salesData;
 ```
@@ -194,12 +194,14 @@ export class SalesPivotComponent {
 To use pivot transformation without exposing the tool panel UI to users:
 
 ```ts
-new PivotPlugin({
-  showToolPanel: false,
-  rowGroupFields: ['region'],
-  columnGroupFields: ['quarter'],
-  valueFields: [{ field: 'sales', aggFunc: 'sum' }],
-});
+features: {
+  pivot: {
+    showToolPanel: false,
+    rowGroupFields: ['region'],
+    columnGroupFields: ['quarter'],
+    valueFields: [{ field: 'sales', aggFunc: 'sum' }],
+  },
+},
 ```
 
 The pivot API methods remain available for programmatic control.
@@ -210,11 +212,13 @@ The plugin supports animated expand/collapse transitions. Animation respects the
 `animation.mode` setting and can be customized per-plugin:
 
 ```ts
-new PivotPlugin({
-  rowGroupFields: ['region'],
-  valueFields: [{ field: 'sales', aggFunc: 'sum' }],
-  animation: 'slide', // 'slide' | 'fade' | false
-});
+features: {
+  pivot: {
+    rowGroupFields: ['region'],
+    valueFields: [{ field: 'sales', aggFunc: 'sum' }],
+    animation: 'slide', // 'slide' | 'fade' | false
+  },
+},
 ```
 
 Animation is automatically disabled when `animation.mode` is `'off'` or when the user prefers

@@ -10,14 +10,14 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
+import '@toolbox-web/grid/features/editing';
 
 const container = document.getElementById('editing-add-remove-rows-demo');
 if (container) {
   // Toolbar with Add Row button
       const toolbar = container.querySelector('[data-controls-id="editing-add-remove-rows-demo"]');
       toolbar.style.cssText = 'padding: 8px; border-bottom: 1px solid #e5e7eb; display: flex; gap: 8px;';
-  
+
       const addBtn = document.createElement('button');
       addBtn.textContent = '+ Add Row';
       addBtn.style.cssText = `
@@ -30,14 +30,14 @@ if (container) {
         font-size: 14px;
       `;
       toolbar.appendChild(addBtn);
-      
-  
+
+
       // Grid
       const grid = queryGrid('tbw-grid', container);
       grid.style.cssText = 'flex: 1;';
-  
+
       let idCounter = 4;
-  
+
       grid.gridConfig = {
         columns: [
           { field: 'id', header: 'ID' },
@@ -66,15 +66,15 @@ if (container) {
             },
           },
         ],
-        plugins: [new EditingPlugin({ editOn: 'dblclick' })],
+        features: { editing: 'dblclick' },
       };
-  
+
       grid.rows = [
         { id: 1, name: 'Alice', email: 'alice@example.com' },
         { id: 2, name: 'Bob', email: 'bob@example.com' },
         { id: 3, name: 'Carol', email: 'carol@example.com' },
       ];
-  
+
       addBtn.addEventListener('click', () => {
         grid.insertRow(grid.rows.length, { id: idCounter++, name: '', email: '' });
       });

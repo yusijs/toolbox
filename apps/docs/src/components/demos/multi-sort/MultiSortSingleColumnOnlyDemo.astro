@@ -9,7 +9,7 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { MultiSortPlugin } from '@toolbox-web/grid/plugins/multi-sort';
+import '@toolbox-web/grid/features/multi-sort';
 
 const container = document.getElementById('multi-sort-single-column-demo');
 if (container) {
@@ -35,12 +35,12 @@ if (container) {
       { field: 'department', header: 'Department' },
       { field: 'salary', header: 'Salary', type: 'number', align: 'right' },
     ],
-    plugins: [
-      new MultiSortPlugin({
+    features: {
+      multiSort: {
         maxSortColumns: 1,
         showSortIndex: false,
-      }),
-    ],
+      },
+    },
   };
   grid.rows = sampleData;
 }

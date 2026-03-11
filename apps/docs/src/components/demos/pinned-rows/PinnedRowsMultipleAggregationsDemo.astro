@@ -9,7 +9,7 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { PinnedRowsPlugin } from '@toolbox-web/grid/plugins/pinned-rows';
+import '@toolbox-web/grid/features/pinned-rows';
 
 const container = document.getElementById('pinned-rows-multiple-aggregations-demo');
 if (container) {
@@ -33,11 +33,11 @@ if (container) {
   const formatCurrency = (value: unknown) => `$${(value as number).toFixed(2)}`;
 
   const grid = queryGrid('tbw-grid', container);
-      
+
       grid.gridConfig = {
         columns,
-        plugins: [
-          new PinnedRowsPlugin({
+        features: {
+          pinnedRows: {
             position: "bottom",
             showRowCount: true,
             aggregationRows: [
@@ -69,8 +69,8 @@ if (container) {
                 cells: { id: 'Min/Max:', name: '' },
               },
             ],
-          }),
-        ],
+          },
+        },
       };
       grid.rows = generateData(50);
 }

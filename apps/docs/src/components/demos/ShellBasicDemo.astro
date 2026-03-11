@@ -20,7 +20,7 @@ import DemoControls from '@components/DemoControls.astro';
 <script>
   import '@toolbox-web/grid';
 import type { ColumnConfig, GridConfig, HeaderContentDefinition, ShellConfig, ToolPanelDefinition } from '@toolbox-web/grid';
-import { VisibilityPlugin } from '@toolbox-web/grid/plugins/visibility';
+import '@toolbox-web/grid/features/visibility';
 
   const container = document.getElementById('shell-basic-demo-container');
   const grid = document.querySelector<HTMLElement & {
@@ -69,13 +69,12 @@ import { VisibilityPlugin } from '@toolbox-web/grid/plugins/visibility';
         header: v.showTitle ? { title: 'Employee Data' } : {},
         toolPanel: { position: v.panelPosition as 'left' | 'right' },
       };
-      const plugins: any[] = [];
-      if (v.showVisibilityPlugin) plugins.push(new VisibilityPlugin());
-
       grid.gridConfig = {
         shell: shellConfig,
         columns: shellColumns,
-        plugins,
+        features: {
+          ...(v.showVisibilityPlugin ? { visibility: true } : {}),
+        },
       };
       grid.rows = sampleData;
 

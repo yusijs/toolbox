@@ -17,7 +17,7 @@ The Context Menu plugin adds a customizable right-click menu to your grid cells.
 ## Installation
 
 ```ts
-import { ContextMenuPlugin } from '@toolbox-web/grid/plugins/context-menu';
+import '@toolbox-web/grid/features/context-menu';
 ```
 
 ## Basic Usage
@@ -34,16 +34,16 @@ grid.gridConfig = {
     { field: 'email', header: 'Email' },
     { field: 'status', header: 'Status' }
   ],
-  plugins: [
-    new ContextMenuPlugin({
+  features: {
+    contextMenu: {
       items: [
         { id: 'copy', name: 'Copy Cell', action: (ctx) => navigator.clipboard.writeText(ctx.value) },
         { id: 'edit', name: 'Edit Row', action: (ctx) => grid.startEditing(ctx.rowIndex, ctx.colIndex) },
         { id: 'sep1', name: '', separator: true },
         { id: 'delete', name: 'Delete Row', action: (ctx) => removeRow(ctx.rowIndex) },
       ],
-    }),
-  ],
+    },
+  },
 };
 ```
   </TabItem>
@@ -83,9 +83,9 @@ function MyGrid({ data, onDelete }) {
   <TabItem label="Vue">
 ```html
 <script setup>
+import '@toolbox-web/grid-vue/features/context-menu';
 import { TbwGrid, TbwGridColumn } from '@toolbox-web/grid-vue';
-import { ContextMenuPlugin } from '@toolbox-web/grid/plugins/context-menu';
-import { ref, markRaw } from 'vue';
+import { ref } from 'vue';
 
 const data = [
   { name: 'Alice', email: 'alice@example.com', status: 'active' },
@@ -94,18 +94,18 @@ const data = [
 
 const gridRef = ref(null);
 
-const contextMenuPlugin = markRaw(new ContextMenuPlugin({
+const contextMenuConfig = {
   items: [
     { id: 'copy', name: 'Copy Cell', action: (ctx) => navigator.clipboard.writeText(String(ctx.value)) },
     { id: 'edit', name: 'Edit Row', action: (ctx) => gridRef.value?.element?.startEditing(ctx.rowIndex, ctx.colIndex) },
     { id: 'sep1', name: '', separator: true },
     { id: 'delete', name: 'Delete Row', action: (ctx) => console.log('Delete row:', ctx.rowIndex) },
   ],
-}));
+};
 </script>
 
 <template>
-  <TbwGrid ref="gridRef" :rows="data" :plugins="[contextMenuPlugin]">
+  <TbwGrid ref="gridRef" :rows="data" :context-menu="contextMenuConfig">
     <TbwGridColumn field="name" header="Name" />
     <TbwGridColumn field="email" header="Email" />
     <TbwGridColumn field="status" header="Status" />
@@ -260,20 +260,22 @@ This uses the **plugin query system** for loose coupling — no hard dependency 
 ## Conditional Items
 
 ```ts
-new ContextMenuPlugin({
-  items: [
-    {
-      id: 'edit',
-      name: 'Edit',
-      hidden: (params) => params.column.editable !== true,
-    },
-    {
-      id: 'delete',
-      name: 'Delete',
-      disabled: (params) => params.row.locked === true,
-    },
-  ],
-});
+features: {
+  contextMenu: {
+    items: [
+      {
+        id: 'edit',
+        name: 'Edit',
+        hidden: (params) => params.column.editable !== true,
+      },
+      {
+        id: 'delete',
+        name: 'Delete',
+        disabled: (params) => params.row.locked === true,
+      },
+    ],
+  },
+},
 ```
 
 ## Events

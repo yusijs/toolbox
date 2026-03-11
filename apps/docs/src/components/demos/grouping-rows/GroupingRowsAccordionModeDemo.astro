@@ -9,7 +9,7 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { GroupingRowsPlugin } from '@toolbox-web/grid/plugins/grouping-rows';
+import '@toolbox-web/grid/features/grouping-rows';
 
 const container = document.getElementById('grouping-rows-accordion-mode-demo');
 if (container) {
@@ -31,18 +31,18 @@ if (container) {
   ];
 
   const grid = queryGrid('tbw-grid', container);
-      
+
       grid.gridConfig = {
         columns,
-        plugins: [
-          new GroupingRowsPlugin({
+        features: {
+          groupingRows: {
             groupOn: (row: { department: string }) => row.department,
             accordion: true,
             defaultExpanded: false,
             showRowCount: true,
             indentWidth: 20,
-          }),
-        ],
+          },
+        },
       };
       grid.rows = sampleData;
 }

@@ -18,12 +18,12 @@ The Visibility plugin gives users control over which columns are displayed. Hide
 ## Installation
 
 ```ts
-import { VisibilityPlugin } from '@toolbox-web/grid/plugins/visibility';
+import '@toolbox-web/grid/features/visibility';
 ```
 
 ## Basic Usage
 
-Set `visible: false` on columns you want hidden by default. The plugin provides a UI and API for toggling column visibility at runtime.
+Set `visible: false` on columns you want hidden by default. The feature provides a UI and API for toggling column visibility at runtime.
 
 <Tabs syncKey="framework">
   <TabItem label="Vanilla JS">
@@ -39,7 +39,7 @@ grid.gridConfig = {
     { field: 'phone', header: 'Phone', visible: false }, // Hidden by default
     { field: 'address', header: 'Address', visible: false },
   ],
-  plugins: [new VisibilityPlugin()],
+  features: { visibility: true },
 };
 
 // Toggle visibility programmatically

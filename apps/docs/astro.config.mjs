@@ -20,12 +20,25 @@ function gridAliases() {
     .filter((d) => d.isDirectory() && existsSync(join(pluginsDir, d.name, 'index.ts')))
     .map((d) => d.name);
 
+  const featuresDir = resolve(rootDir, 'libs/grid/src/lib/features');
+  const featureNames = readdirSync(featuresDir)
+    .filter((f) => f.endsWith('.ts') && !f.endsWith('.spec.ts') && f !== 'registry.ts')
+    .map((f) => f.replace('.ts', ''));
+
   const aliases = {};
   for (const name of pluginNames) {
     aliases[`@toolbox-web/grid/plugins/${name}`] = isProductionBuild
       ? resolve(rootDir, `dist/libs/grid/lib/plugins/${name}/index.js`)
       : resolve(rootDir, `libs/grid/src/lib/plugins/${name}/index.ts`);
   }
+  for (const name of featureNames) {
+    aliases[`@toolbox-web/grid/features/${name}`] = isProductionBuild
+      ? resolve(rootDir, `dist/libs/grid/lib/features/${name}.js`)
+      : resolve(rootDir, `libs/grid/src/lib/features/${name}.ts`);
+  }
+  aliases['@toolbox-web/grid/features/registry'] = isProductionBuild
+    ? resolve(rootDir, 'dist/libs/grid/lib/features/registry.js')
+    : resolve(rootDir, 'libs/grid/src/lib/features/registry.ts');
   aliases['@toolbox-web/grid/all'] = isProductionBuild
     ? resolve(rootDir, 'dist/libs/grid/all.js')
     : resolve(rootDir, 'libs/grid/src/all.ts');

@@ -22,8 +22,8 @@ import DemoControls from '@components/DemoControls.astro';
 <script>
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { ExportPlugin } from '@toolbox-web/grid/plugins/export';
-import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
+import '@toolbox-web/grid/features/export';
+import '@toolbox-web/grid/features/selection';
 
 const container = document.getElementById('export-default-demo');
 if (container) {
@@ -42,13 +42,10 @@ if (container) {
   ];
 
   const grid = queryGrid('tbw-grid', container)!;
-  let plugin: InstanceType<typeof ExportPlugin>;
-
   function rebuild(includeHeaders = true, onlyVisible = true, onlySelected = false) {
-    plugin = new ExportPlugin({ includeHeaders, onlyVisible, onlySelected, fileName: 'grid-export' });
     grid.gridConfig = {
       columns,
-      plugins: [new SelectionPlugin({ mode: 'range' }), plugin],
+      features: { selection: 'range', export: { includeHeaders, onlyVisible, onlySelected, fileName: 'grid-export' } },
     };
     grid.rows = sampleData;
   }
@@ -60,8 +57,8 @@ if (container) {
     rebuild(v.includeHeaders as boolean, v.onlyVisible as boolean, v.onlySelected as boolean);
   }) as EventListener);
 
-  container.querySelector('.export-csv')?.addEventListener('click', () => plugin?.exportCsv());
-  container.querySelector('.export-excel')?.addEventListener('click', () => plugin?.exportExcel());
-  container.querySelector('.export-json')?.addEventListener('click', () => plugin?.exportJson());
+  container.querySelector('.export-csv')?.addEventListener('click', () => grid.getPluginByName('export')?.exportCsv());
+  container.querySelector('.export-excel')?.addEventListener('click', () => grid.getPluginByName('export')?.exportExcel());
+  container.querySelector('.export-json')?.addEventListener('click', () => grid.getPluginByName('export')?.exportJson());
 }
 </script>

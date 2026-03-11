@@ -75,6 +75,132 @@ export class MyGridComponent {
 }
 ```
 
+## Enabling Features
+
+Features are enabled using **declarative inputs** with **side-effect imports**. This gives you the best of both worlds: clean Angular templates and tree-shakeable bundles.
+
+### How It Works
+
+1. **Import the feature** — A side-effect import registers the feature factory
+2. **Use the input** — The `Grid` directive detects the input and creates the plugin instance
+
+```typescript
+// 1. Import features you need (once, typically in the component file)
+import '@toolbox-web/grid-angular/features/selection';
+import '@toolbox-web/grid-angular/features/sorting';
+import '@toolbox-web/grid-angular/features/filtering';
+
+// 2. Use declarative inputs — no manual plugin instantiation!
+@Component({
+  imports: [Grid],
+  template: `
+    <tbw-grid
+      [rows]="rows"
+      [columns]="columns"
+      [selection]="'range'"
+      [sorting]="'multi'"
+      [filtering]="true"
+      style="height: 400px; display: block;">
+    </tbw-grid>
+  `,
+})
+```
+
+### Why Side-Effect Imports?
+
+- **Tree-shakeable** — Only the features you import are bundled
+- **Synchronous** — No loading states, no HTTP requests, no spinners
+- **Type-safe** — Full TypeScript support for feature inputs
+- **Clean templates** — No `plugins: [new SelectionPlugin({ mode: 'range' })]` boilerplate
+
+### Available Features
+
+Import from `@toolbox-web/grid-angular/features/<name>`:
+
+| Feature                 | Input                  | Example                                                                  |
+| ----------------------- | ---------------------- | ------------------------------------------------------------------------ |
+| `selection`             | `[selection]`          | `[selection]="'range'"` or `[selection]="{ mode: 'row', checkbox: true }"` |
+| `sorting`               | `[sorting]`            | `[sorting]="'multi'"` or `[sorting]="{ maxSortLevels: 3 }"`              |
+| `filtering`             | `[filtering]`          | `[filtering]="true"` or `[filtering]="{ debounceMs: 200 }"`              |
+| `editing`               | `[editing]`            | `[editing]="true"` or `[editing]="'dblclick'"`                           |
+| `clipboard`             | `[clipboard]`          | `[clipboard]="true"` (requires selection)                                 |
+| `undo-redo`             | `[undoRedo]`           | `[undoRedo]="true"` (requires editing)                                    |
+| `context-menu`          | `[contextMenu]`        | `[contextMenu]="true"`                                                    |
+| `reorder`               | `[reorder]`            | `[reorder]="true"` (column drag-to-reorder)                              |
+| `row-reorder`           | `[rowReorder]`         | `[rowReorder]="true"` (row drag-to-reorder)                              |
+| `visibility`            | `[visibility]`         | `[visibility]="true"` (column visibility panel)                           |
+| `pinned-columns`        | `[pinnedColumns]`      | `[pinnedColumns]="true"`                                                  |
+| `pinned-rows`           | `[pinnedRows]`         | `[pinnedRows]="true"`                                                     |
+| `grouping-columns`      | `[groupingColumns]`    | `[groupingColumns]="true"`                                                |
+| `grouping-rows`         | `[groupingRows]`       | `[groupingRows]="{ groupBy: 'department' }"`                              |
+| `tree`                  | `[tree]`               | `[tree]="{ childrenField: 'children' }"`                                  |
+| `column-virtualization` | `[columnVirtualization]` | `[columnVirtualization]="true"`                                          |
+| `export`                | `[export]`             | `[export]="true"`                                                         |
+| `print`                 | `[print]`              | `[print]="true"`                                                          |
+| `responsive`            | `[responsive]`         | `[responsive]="true"` (card layout on mobile)                             |
+| `master-detail`         | `[masterDetail]`       | `[masterDetail]="true"` (use with `<tbw-grid-detail>`)                    |
+| `pivot`                 | `[pivot]`              | `[pivot]="{ rowFields: [...], columnFields: [...] }"`                     |
+| `server-side`           | `[serverSide]`         | `[serverSide]="{ ... }"`                                                  |
+
+### Import All Features
+
+For prototyping or when bundle size isn't critical, import all features at once:
+
+```typescript
+// Import all features (larger bundle)
+import '@toolbox-web/grid-angular/features';
+```
+
+### Full Example
+
+```typescript
+import '@toolbox-web/grid-angular/features/selection';
+import '@toolbox-web/grid-angular/features/editing';
+import '@toolbox-web/grid-angular/features/filtering';
+import '@toolbox-web/grid-angular/features/sorting';
+import '@toolbox-web/grid-angular/features/clipboard';
+
+import { Component } from '@angular/core';
+import { Grid } from '@toolbox-web/grid-angular';
+import type { ColumnConfig } from '@toolbox-web/grid';
+
+interface Employee {
+  id: number;
+  name: string;
+  department: string;
+  salary: number;
+}
+
+@Component({
+  imports: [Grid],
+  template: `
+    <tbw-grid
+      [rows]="employees"
+      [columns]="columns"
+      [selection]="'range'"
+      [sorting]="'multi'"
+      [editing]="'dblclick'"
+      [filtering]="true"
+      [clipboard]="true"
+      style="height: 400px; display: block;">
+    </tbw-grid>
+  `,
+})
+export class EmployeeGridComponent {
+  employees: Employee[] = [
+    { id: 1, name: 'Alice', department: 'Engineering', salary: 95000 },
+    { id: 2, name: 'Bob', department: 'Marketing', salary: 75000 },
+  ];
+
+  columns: ColumnConfig<Employee>[] = [
+    { field: 'id', header: 'ID', width: 60 },
+    { field: 'name', header: 'Name', editable: true },
+    { field: 'department', header: 'Department', editable: true },
+    { field: 'salary', header: 'Salary', type: 'number' },
+  ];
+}
+```
+
 ## Structural Directives (Recommended)
 
 The cleanest way to define custom renderers and editors is with structural directives. These provide a concise syntax without the boilerplate of nested `<ng-template>` elements.
@@ -511,9 +637,9 @@ The `gridConfig` input accepts `GridConfig` (Angular-augmented) which allows bot
 
 Both interfaces also support an optional `column()` input for accessing the column configuration.
 
-## Using Plugins
+## Using Plugins (Advanced)
 
-Import plugins individually for smaller bundles:
+For full control (e.g., custom plugin subclasses or mixed feature+plugin setups), you can bypass feature props and import plugins directly:
 
 ```typescript
 import { Component } from '@angular/core';
@@ -535,6 +661,8 @@ export class MyGridComponent {
   };
 }
 ```
+
+> **Tip:** Prefer feature props (see [Enabling Features](#enabling-features) above) for simpler code and tree-shaking.
 
 Or import all plugins at once (larger bundle, but convenient):
 

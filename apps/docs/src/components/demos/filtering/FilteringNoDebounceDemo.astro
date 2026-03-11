@@ -9,7 +9,7 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { FilteringPlugin } from '@toolbox-web/grid/plugins/filtering';
+import '@toolbox-web/grid/features/filtering';
 
 const container = document.getElementById('filtering-no-debounce-demo');
 if (container) {
@@ -36,11 +36,11 @@ if (container) {
       { field: 'salary', header: 'Salary', type: 'number' },
       { field: 'status', header: 'Status' },
     ],
-    plugins: [
-      new FilteringPlugin({
+    features: {
+      filtering: {
         debounceMs: 0,
-      }),
-    ],
+      },
+    },
   };
   grid.rows = sampleData;
 }

@@ -12,7 +12,7 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { ClipboardPlugin } from '@toolbox-web/grid/plugins/clipboard';
+import '@toolbox-web/grid/features/clipboard';
 
 const container = document.getElementById('clipboard-single-cell-demo');
 if (container) {
@@ -26,7 +26,7 @@ if (container) {
       { field: 'email', header: 'Email' },
       { field: 'salary', header: 'Salary', type: 'number', align: 'right' },
     ],
-    plugins: [new ClipboardPlugin()],
+    features: { clipboard: true },
   };
 
   grid.rows = [

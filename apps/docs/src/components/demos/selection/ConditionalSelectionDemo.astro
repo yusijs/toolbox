@@ -9,7 +9,7 @@
 <script>
   import '@toolbox-web/grid';
 import type { DataGridElement } from '@toolbox-web/grid';
-import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
+import '@toolbox-web/grid/features/selection';
 
   const grid = document.querySelector<DataGridElement>('[data-demo-id="conditional-selection"]');
   if (grid) {
@@ -20,12 +20,12 @@ import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
         { field: 'department', header: 'Department' },
         { field: 'status', header: 'Status' },
       ],
-      plugins: [
-        new SelectionPlugin({
+      features: {
+        selection: {
           mode: 'row',
           isSelectable: (row: { status: string }) => row.status !== 'locked',
-        }),
-      ],
+        },
+      },
     };
 
     grid.rows = [

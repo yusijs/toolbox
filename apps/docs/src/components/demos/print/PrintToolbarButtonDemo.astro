@@ -9,7 +9,7 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { PrintPlugin } from '@toolbox-web/grid/plugins/print';
+import '@toolbox-web/grid/features/print';
 
 const container = document.getElementById('print-toolbar-button-demo');
 if (container) {
@@ -38,13 +38,13 @@ if (container) {
       { field: 'department', header: 'Department', width: 120 },
       { field: 'salary', header: 'Salary', width: 100 },
     ],
-    plugins: [
-      new PrintPlugin({
+    features: {
+      print: {
         button: true,
         title: 'Employee Directory',
         isolate: true,
-      }),
-    ],
+      },
+    },
   };
   grid.rows = employeeData;
 }

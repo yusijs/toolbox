@@ -16,12 +16,12 @@ The Tree plugin transforms your flat grid into a hierarchical tree view with exp
 ## Installation
 
 ```ts
-import { TreePlugin } from '@toolbox-web/grid/plugins/tree';
+import '@toolbox-web/grid/features/tree';
 ```
 
 ## Basic Usage
 
-Just point the plugin at the field containing child items (defaults to `children`) and the grid handles all the expand/collapse behavior, indentation, and icons automatically.
+Just point the feature at the field containing child items (defaults to `children`) and the grid handles all the expand/collapse behavior, indentation, and icons automatically.
 
 <Tabs syncKey="framework">
   <TabItem label="Vanilla JS">
@@ -35,12 +35,12 @@ grid.gridConfig = {
     { field: 'type', header: 'Type' },
     { field: 'size', header: 'Size' }
   ],
-  plugins: [
-    new TreePlugin({
+  features: {
+    tree: {
       childrenField: 'children',
       indentWidth: 24,
-    }),
-  ],
+    },
+  },
 };
 
 grid.rows = [
@@ -184,13 +184,13 @@ The `animation` option controls how child nodes appear/disappear:
 
 ```ts
 // Slide animation (default)
-new TreePlugin({ animation: 'slide', ... });
+features: { tree: { animation: 'slide', ... } }
 
 // Fade animation
-new TreePlugin({ animation: 'fade', ... });
+features: { tree: { animation: 'fade', ... } }
 
 // No animation
-new TreePlugin({ animation: false, ... });
+features: { tree: { animation: false, ... } }
 ```
 
 :::note

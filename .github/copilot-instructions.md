@@ -37,7 +37,7 @@ Task-specific workflows are documented in dedicated skill files (loaded on deman
 ### 2. Bundle Size
 
 - **Core budget**: `index.js` must stay ≤170 kB (≤45 kB gzipped)
-- **Tree-shakeable**: Plugins are separate entry points, not bundled in core
+- **Tree-shakeable**: Features and plugins are separate entry points, not bundled in core
 - **No dead code**: Remove unused functions, imports, and types immediately
 - **Minimize abstraction overhead**: Prefer inline code over creating classes/wrappers for simple operations
 - **Audit before adding**: New features must justify their byte cost
@@ -479,6 +479,73 @@ const indices = selection.getSelectedRowIndices();
 const employees = indices.map((i) => myLocalData[i]); // May be wrong after sort/filter!
 ```
 
+## Feature System (Recommended)
+
+The **features API** is the recommended way to enable grid capabilities. Features use declarative configuration with side-effect imports for tree-shaking:
+
+```typescript
+// 1. Import features you need (side-effect imports, tree-shakeable)
+import '@toolbox-web/grid/features/selection';
+import '@toolbox-web/grid/features/filtering';
+import '@toolbox-web/grid/features/editing';
+
+// 2. Configure declaratively via gridConfig.features
+grid.gridConfig = {
+  columns: [{ field: 'name' }, { field: 'age' }],
+  features: {
+    selection: 'row',                       // shorthand or full config
+    filtering: { debounceMs: 200 },         // full config object
+    editing: 'dblclick',                    // shorthand
+  },
+};
+
+// 3. Access plugin instances at runtime (same as before)
+const sel = grid.getPluginByName('selection');
+sel?.selectAll();
+```
+
+**Framework adapters** expose features as component props — no manual imports needed:
+
+```tsx
+// React
+import '@toolbox-web/grid-react/features/selection';
+<DataGrid rows={rows} columns={cols} selection="row" />
+
+// Vue
+import '@toolbox-web/grid-vue/features/selection';
+<DataGrid :rows="rows" :columns="cols" selection="row" />
+
+// Angular
+import '@toolbox-web/grid-angular/features/selection';
+<tbw-grid [rows]="rows" [columns]="cols" [selection]="'row'" />
+```
+
+There are **22 features** available — one for each plugin. Each feature module is ~200-300 bytes and auto-resolves plugin dependencies.
+
+### Features vs Plugins
+
+| Aspect | Features (recommended) | Plugins (advanced) |
+|--------|----------------------|--------------------|
+| API | `features: { selection: 'row' }` | `plugins: [new SelectionPlugin({ mode: 'row' })]` |
+| Import | `import '@toolbox-web/grid/features/selection'` | `import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection'` |
+| Dependencies | Auto-resolved | Manual ordering |
+| Use when | Configuring grid capabilities | Building custom plugins, extending BaseGridPlugin |
+
+### Plugin API (Advanced)
+
+Use the plugin API directly when building custom plugins or when features don't cover your use case:
+
+```typescript
+import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
+import { FilteringPlugin } from '@toolbox-web/grid/plugins/filtering';
+
+grid.gridConfig = {
+  plugins: [new SelectionPlugin({ mode: 'row' }), new FilteringPlugin({ debounceMs: 200 })],
+};
+```
+
+**Always prefer `getPluginByName()` over `getPlugin()`.** It avoids importing the plugin class and returns the actual instance registered in the grid.
+
 ## Plugin Development Pattern
 
 See the `new-plugin` skill for the complete plugin development guide including:
@@ -490,31 +557,6 @@ See the `new-plugin` skill for the complete plugin development guide including:
 - Manifest system (validation, owned properties, config rules)
 - Dependencies and incompatibilities
 - Runtime configuration validation
-
-### Quick Plugin Reference
-
-```typescript
-// Import individual plugins (smaller bundles)
-import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
-
-// All-in-one bundle
-import { SelectionPlugin, FilteringPlugin } from '@toolbox-web/grid/all';
-
-// Configuration
-grid.gridConfig = {
-  plugins: [new SelectionPlugin({ mode: 'row' }), new FilteringPlugin({ debounceMs: 200 })],
-};
-
-// Access at runtime — preferred (type-safe, no import needed)
-const sel = grid.getPluginByName('selection');
-sel?.selectAll();
-
-// Alternative — access by class (requires import)
-import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
-const sel2 = grid.getPlugin(SelectionPlugin);
-```
-
-**Always prefer `getPluginByName()` over `getPlugin()`.** It avoids importing the plugin class and returns the actual instance registered in the grid.
 
 ## Common Pitfalls
 
@@ -528,12 +570,12 @@ const sel2 = grid.getPlugin(SelectionPlugin);
 8. **Plugin container access** - Use `this.gridElement.children[0]`, not hardcoded selectors like `.data-grid-container`
 9. **Don't call RAF directly for rendering** - Use `this.#scheduler.requestPhase()` to batch work; exception: scroll hot path
 10. **Don't create `<style>` elements** - Use `registerStyles()` which uses `adoptedStyleSheets` (survives DOM rebuilds)
-11. **Editing is opt-in** - Using `editable: true` or `editor` requires `EditingPlugin`; the grid validates and throws helpful errors
+11. **Editing is opt-in** - Using `editable: true` or `editor` requires the editing feature (`features: { editing: true }`) or `EditingPlugin`; the grid validates and throws helpful errors
 12. **Prefer row objects over indices** - When exposing selection or row references to consumers, provide actual row data objects (e.g., `getSelectedRows()`) rather than forcing users to resolve indices manually. Row indices refer to positions in the grid's _current_ (sorted/filtered/grouped) row array, which may differ from the user's original data source. Indices are still useful as positional coordinates (e.g., `CellRange`), but always offer a row-object alternative for data access.
 13. **Use `insertRow()`/`removeRow()` for manual row mutations** - When inserting or deleting rows by hand, use `grid.insertRow(index, row)` or `grid.removeRow(index)` instead of splicing an array and reassigning `grid.rows`. These methods operate directly on the current sorted/filtered view without re-running the pipeline, and auto-animate by default (pass `false` as the last argument to skip animation). Both return `Promise`s — `await grid.removeRow(idx)` ensures the fade-out animation completes before removal. The source data is updated automatically, so the next full `grid.rows = freshData` assignment re-sorts/re-filters normally. Do **not** use them for data refreshes (API responses, WebSocket updates) — let sort/filter re-apply by assigning `grid.rows` directly.
 14. **Register external focus containers for overlays** - Custom editors that append elements to `<body>` (datepickers, dropdowns, color pickers) must call `grid.registerExternalFocusContainer(panel)` so the grid treats focus inside those elements as "still in the grid." Without registration, the grid will close the editor when focus moves to the overlay. Call `grid.unregisterExternalFocusContainer(panel)` when the overlay is destroyed. Angular's `BaseOverlayEditor` does this automatically.
 15. **Use `focusCell()` and `scrollToRow()` for programmatic navigation** - `grid.focusCell(rowIndex, column)` accepts a column index or field name. `grid.scrollToRow(rowIndex, { align, behavior })` scrolls a row into view. `grid.scrollToRowById(rowId, options)` does the same by ID. Read `grid.focusedCell` for the current focus position.
-16. **Dirty tracking is opt-in** - Enable via `new EditingPlugin({ dirtyTracking: true })`. Requires `getRowId` (or `id`/`_id` on rows). Provides `isDirty()`, `getDirtyRows()`, `markAsPristine()`, `revertRow()`, and the `dirty-change` event. Auto-applies `tbw-row-dirty` / `tbw-row-new` CSS classes to rows.
+16. **Dirty tracking is opt-in** - Enable via `features: { editing: { dirtyTracking: true } }` or `new EditingPlugin({ dirtyTracking: true })`. Requires `getRowId` (or `id`/`_id` on rows). Provides `isDirty()`, `getDirtyRows()`, `markAsPristine()`, `revertRow()`, and the `dirty-change` event. Auto-applies `tbw-row-dirty` / `tbw-row-new` CSS classes to rows.
 17. **Silent filter updates for batching** - `setFilter()`, `setFilterModel()`, `clearAllFilters()`, and `clearFieldFilter()` accept `{ silent: true }` to update filter state without triggering a re-render. Call the last filter method without `silent` to apply all pending changes at once.
 18. **Filter state and column state persistence** - By default, `FilteringPlugin` does **not** include filter state in `column-state-change` events or `getColumnState()` snapshots. Set `trackColumnState: true` in the plugin config to opt in. When enabled, filter changes fire `column-state-change` (debounced) and `getColumnState()`/`applyColumnState()` include filter data.
 
@@ -563,6 +605,8 @@ The grid validates plugin-owned properties at runtime. See the `new-plugin` skil
 - **`libs/grid/src/lib/core/internal/config-manager.ts`** - Centralized configuration management (single source of truth)
 - **`libs/grid/src/lib/core/internal/validate-config.ts`** - Runtime validation for plugin-owned properties
 - **`libs/grid/src/lib/core/internal/header.ts`** - Header row rendering with custom header renderers
+- **`libs/grid/src/lib/features/`** - Feature registry and 22 feature modules (recommended API for enabling capabilities)
+- **`libs/grid/src/lib/features/registry.ts`** - Core feature registry (registerFeature, createPluginsFromFeatures)
 - **`libs/grid/src/lib/core/plugin/`** - Plugin system (registry, hooks, state management)
 - **`libs/grid/src/lib/plugins/`** - Individual plugin implementations
 - **`libs/grid/src/lib/plugins/editing/`** - EditingPlugin (opt-in inline editing)

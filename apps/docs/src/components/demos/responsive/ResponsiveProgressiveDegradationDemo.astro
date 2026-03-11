@@ -14,22 +14,13 @@
 <script>
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { ResponsivePlugin } from '@toolbox-web/grid/plugins/responsive';
+import '@toolbox-web/grid/features/responsive';
 
 const container = document.getElementById('responsive-progressive-degradation-demo');
 if (container) {
   const grid = queryGrid('tbw-grid', container);
   const status = container.querySelector('.responsive-status');
   if (!grid) throw new Error('Grid not found');
-
-  const responsivePlugin = new ResponsivePlugin({
-    breakpoints: [
-      { maxWidth: 900, hiddenColumns: ['startDate'] },
-      { maxWidth: 700, hiddenColumns: ['startDate', 'email'] },
-      { maxWidth: 500, hiddenColumns: ['startDate', 'email', 'salary'] },
-      { maxWidth: 400, cardLayout: true },
-    ],
-  });
 
   grid.gridConfig = {
     columns: [
@@ -40,7 +31,16 @@ if (container) {
       { field: 'email', header: 'Email', width: 200 },
       { field: 'startDate', header: 'Start Date', width: 120 },
     ],
-    plugins: [responsivePlugin],
+    features: {
+      responsive: {
+        breakpoints: [
+          { maxWidth: 900, hiddenColumns: ['startDate'] },
+          { maxWidth: 700, hiddenColumns: ['startDate', 'email'] },
+          { maxWidth: 500, hiddenColumns: ['startDate', 'email', 'salary'] },
+          { maxWidth: 400, cardLayout: true },
+        ],
+      },
+    },
   };
 
   grid.rows = [
@@ -54,8 +54,9 @@ if (container) {
 
   const updateStatus = () => {
     if (!status) return;
-    const bp = responsivePlugin.getActiveBreakpoint();
-    const isCard = responsivePlugin.isResponsive();
+    const plugin = grid.getPluginByName('responsive');
+    const bp = plugin?.getActiveBreakpoint();
+    const isCard = plugin?.isResponsive();
     if (!bp) {
       status.textContent = '📊 Full Table (no columns hidden)';
     } else if (isCard) {

@@ -15,7 +15,7 @@ The Column Grouping plugin enables visual grouping of columns under shared heade
 ## Installation
 
 ```ts
-import { GroupingColumnsPlugin } from '@toolbox-web/grid/plugins/grouping-columns';
+import '@toolbox-web/grid/features/grouping-columns';
 ```
 
 ## Basic Usage
@@ -30,7 +30,7 @@ Define groups once at the grid level, referencing columns by field name:
   <TabItem label="Vanilla JS">
 ```ts
 import '@toolbox-web/grid';
-import { GroupingColumnsPlugin } from '@toolbox-web/grid/plugins/grouping-columns';
+import '@toolbox-web/grid/features/grouping-columns';
 
 const grid = document.querySelector('tbw-grid');
 grid.gridConfig = {
@@ -46,7 +46,7 @@ grid.gridConfig = {
     { field: 'title', header: 'Title' },
     { field: 'salary', header: 'Salary' },
   ],
-  plugins: [new GroupingColumnsPlugin()],
+  features: { groupingColumns: true },
 };
 ```
   </TabItem>
@@ -163,7 +163,7 @@ grid.gridConfig = {
     { field: 'lastName', header: 'Last Name', group: { id: 'personal', label: 'Personal Info' } },
     { field: 'department', header: 'Department', group: { id: 'work', label: 'Work Info' } },
   ],
-  plugins: [new GroupingColumnsPlugin()],
+  features: { groupingColumns: true },
 };
 ```
 

@@ -21,7 +21,7 @@ import DemoControls from '@components/DemoControls.astro';
 <script>
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { GroupingRowsPlugin } from '@toolbox-web/grid/plugins/grouping-rows';
+import '@toolbox-web/grid/features/grouping-rows';
 
 const container = document.getElementById('grouping-rows-default-demo');
 if (container) {
@@ -46,8 +46,8 @@ if (container) {
   function rebuild(opts: Record<string, unknown>) {
     grid.gridConfig = {
       columns,
-      plugins: [
-        new GroupingRowsPlugin({
+      features: {
+        groupingRows: {
           animation: (opts.animation as string) ?? 'slide',
           groupOn: (row: { department: string }) => row.department,
           defaultExpanded: opts.defaultExpanded as boolean ?? false,
@@ -55,8 +55,8 @@ if (container) {
           indentWidth: (opts.indentWidth as number) ?? 20,
           fullWidth: true,
           accordion: opts.accordion as boolean ?? false,
-        } as any),
-      ],
+        } as any,
+      },
     };
     grid.rows = sampleData;
   }

@@ -9,13 +9,13 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
+import '@toolbox-web/grid/features/editing';
 
 const container = document.getElementById('editing-basic-editing-demo');
 if (container) {
   const grid = queryGrid('tbw-grid', container);
-      
-  
+
+
       grid.gridConfig = {
         columns: [
           { field: 'name', header: 'Name', editable: true },
@@ -32,15 +32,15 @@ if (container) {
             ],
           },
         ],
-        plugins: [new EditingPlugin({ editOn: 'dblclick' })],
+        features: { editing: 'dblclick' },
       };
-  
+
       grid.rows = [
         { name: 'Alice', score: 95, role: 'admin' },
         { name: 'Bob', score: 82, role: 'user' },
         { name: 'Carol', score: 91, role: 'guest' },
       ];
-  
+
       grid.addEventListener('cell-commit', (e) => {
         const detail = (e).detail;
         console.log('Edited:', detail.field, '→', detail.newValue);

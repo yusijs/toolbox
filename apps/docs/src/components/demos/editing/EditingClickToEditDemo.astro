@@ -9,7 +9,7 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
+import '@toolbox-web/grid/features/editing';
 
 const container = document.getElementById('editing-click-to-edit-demo');
 if (container) {
@@ -21,7 +21,7 @@ if (container) {
       { field: 'email', header: 'Email', editable: true },
       { field: 'role', header: 'Role', editable: true },
     ],
-    plugins: [new EditingPlugin({ editOn: 'click' })],
+    features: { editing: 'click' },
   };
 
   grid.rows = [

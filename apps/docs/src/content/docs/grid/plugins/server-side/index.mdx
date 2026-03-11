@@ -35,18 +35,18 @@ The Server-Side plugin enables **virtual scrolling with lazy loading** from a re
 ## Installation
 
 ```ts
-import { ServerSidePlugin } from '@toolbox-web/grid/plugins/server-side';
+import '@toolbox-web/grid/features/server-side';
 ```
 
 ## Basic Usage
 
-The plugin requires a **data source** that implements the `getRows` method. This is typically set after the grid is ready:
+The feature requires a **data source** that implements the `getRows` method. Set it via `getPluginByName('serverSide')` after the grid is ready:
 
 <Tabs syncKey="framework">
   <TabItem label="Vanilla JS">
 ```ts
 import '@toolbox-web/grid';
-import { ServerSidePlugin } from '@toolbox-web/grid/plugins/server-side';
+import '@toolbox-web/grid/features/server-side';
 
 const dataSource = {
   async getRows(params) {
@@ -60,8 +60,6 @@ const dataSource = {
   },
 };
 
-const plugin = new ServerSidePlugin({ pageSize: 50 });
-
 const grid = document.querySelector('tbw-grid');
 grid.gridConfig = {
   columns: [
@@ -69,19 +67,23 @@ grid.gridConfig = {
     { field: 'name', header: 'Name' },
     { field: 'email', header: 'Email' },
   ],
-  plugins: [plugin],
+  features: {
+    serverSide: { pageSize: 50 },
+  },
 };
 
 // Set data source after grid is ready
-grid.ready().then(() => plugin.setDataSource(dataSource));
+grid.ready().then(() => {
+  const plugin = grid.getPluginByName('serverSide');
+  plugin.setDataSource(dataSource);
+});
 ```
   </TabItem>
   <TabItem label="React">
 ```tsx
 import '@toolbox-web/grid-react/features/server-side';
 import { DataGrid, useGrid } from '@toolbox-web/grid-react';
-import { ServerSidePlugin } from '@toolbox-web/grid/plugins/server-side';
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 
 const dataSource = {
   async getRows(params) {
@@ -121,9 +123,9 @@ function ServerSideGrid() {
   <TabItem label="Vue">
 ```html
 <script setup>
+import '@toolbox-web/grid-vue/features/server-side';
 import { TbwGrid, TbwGridColumn } from '@toolbox-web/grid-vue';
-import { ServerSidePlugin } from '@toolbox-web/grid/plugins/server-side';
-import { ref, markRaw, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 
 const gridRef = ref(null);
 
@@ -135,16 +137,15 @@ const dataSource = {
   },
 };
 
-const serverSidePlugin = markRaw(new ServerSidePlugin({ pageSize: 50 }));
-
 onMounted(async () => {
-  await gridRef.value?.element?.ready();
-  serverSidePlugin.setDataSource(dataSource);
+  const grid = gridRef.value?.element;
+  await grid?.ready();
+  grid?.getPluginByName('serverSide')?.setDataSource(dataSource);
 });
 </script>
 
 <template>
-  <TbwGrid ref="gridRef" :plugins="[serverSidePlugin]" style="height: 400px">
+  <TbwGrid ref="gridRef" :server-side="{ pageSize: 50 }" style="height: 400px">
     <TbwGridColumn field="id" header="ID" />
     <TbwGridColumn field="name" header="Name" />
     <TbwGridColumn field="email" header="Email" />
@@ -159,7 +160,6 @@ import '@toolbox-web/grid-angular/features/server-side';
 
 import { Component, viewChild, ElementRef } from '@angular/core';
 import { Grid } from '@toolbox-web/grid-angular';
-import { ServerSidePlugin } from '@toolbox-web/grid/plugins/server-side';
 import type { ColumnConfig, GridElement } from '@toolbox-web/grid';
 
 @Component({

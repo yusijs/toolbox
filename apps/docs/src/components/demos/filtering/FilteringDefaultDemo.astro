@@ -15,7 +15,7 @@ import DemoControls from '@components/DemoControls.astro';
 <script>
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { FilteringPlugin } from '@toolbox-web/grid/plugins/filtering';
+import '@toolbox-web/grid/features/filtering';
 
 const container = document.getElementById('filtering-default-demo');
 if (container) {
@@ -44,7 +44,7 @@ if (container) {
   function rebuild(debounceMs = 150, caseSensitive = false) {
     grid.gridConfig = {
       columns,
-      plugins: [new FilteringPlugin({ debounceMs, caseSensitive })],
+      features: { filtering: { debounceMs, caseSensitive } },
     };
     grid.rows = sampleData;
   }

@@ -9,7 +9,7 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { TreePlugin } from '@toolbox-web/grid/plugins/tree';
+import '@toolbox-web/grid/features/tree';
 
 const container = document.getElementById('tree-expanded-by-default-demo');
 if (container) {
@@ -56,17 +56,17 @@ if (container) {
   ];
 
   const grid = queryGrid('tbw-grid', container);
-      
+
       grid.gridConfig = {
         columns,
-        plugins: [
-          new TreePlugin({
+        features: {
+          tree: {
             childrenField: 'children',
             defaultExpanded: true,
             indentWidth: 20,
             showExpandIcons: true,
-          }),
-        ],
+          },
+        },
       };
       grid.rows = fileSystemData;
 }

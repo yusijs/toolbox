@@ -20,7 +20,7 @@ import DemoControls from '@components/DemoControls.astro';
 <script>
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { PinnedColumnsPlugin } from '@toolbox-web/grid/plugins/pinned-columns';
+import '@toolbox-web/grid/features/pinned-columns';
 
 const container = document.getElementById('pinned-columns-default-demo');
 if (container) {
@@ -71,7 +71,7 @@ if (container) {
         { field: 'actions', header: 'Actions', width: 100, pinned: toPinned(pins.pinActions ?? 'right') },
       ],
       fitMode: 'fixed',
-      plugins: [new PinnedColumnsPlugin()],
+      features: { pinnedColumns: true },
     };
     grid.rows = sampleData;
   }

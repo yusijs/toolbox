@@ -23,7 +23,7 @@ import DemoControls from '@components/DemoControls.astro';
 <script>
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { ResponsivePlugin } from '@toolbox-web/grid/plugins/responsive';
+import '@toolbox-web/grid/features/responsive';
 
 const container = document.getElementById('responsive-default-demo');
 if (container) {
@@ -52,7 +52,7 @@ if (container) {
     currentBreakpoint = breakpoint;
     grid.gridConfig = {
       columns,
-      plugins: [new ResponsivePlugin({ breakpoint, hideHeader, debounceMs })],
+      features: { responsive: { breakpoint, hideHeader, debounceMs } },
     };
     grid.rows = sampleData;
   }

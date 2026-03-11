@@ -9,8 +9,8 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
-import { ClipboardPlugin } from '@toolbox-web/grid/plugins/clipboard';
+import '@toolbox-web/grid/features/clipboard';
+import '@toolbox-web/grid/features/selection';
 
 const container = document.getElementById('clipboard-custom-paste-handler-demo');
 if (container) {
@@ -43,8 +43,8 @@ if (container) {
       sampleDataBox.textContent = `hello\tworld
   foo\tbar`;
       sampleDataBox.title = 'Paste this into the grid - values will be uppercased!';
-      
-  
+
+
       // Instructions banner
       const banner = document.createElement('div');
       banner.style.cssText = `
@@ -58,31 +58,31 @@ if (container) {
         <strong>Custom Handler:</strong> Pasted values are automatically UPPERCASED.
         <br>This demo also prevents adding new rows when pasting beyond the grid.
       `;
-      
-  
+
+
       // Grid
       const grid = queryGrid('tbw-grid', container);
       grid.style.cssText = 'flex: 1;';
-  
+
       // Custom paste handler that uppercases values and prevents adding rows
       const customPasteHandler = (detail, gridEl) => {
         if (!detail.target) return;
-  
+
         const { rows: pastedRows, target, fields } = detail;
         const columns = gridEl.effectiveConfig.columns ?? [];
         const allFields = columns.map((c) => c.field);
         const currentRows = [...(gridEl.rows as Record<string, string>[])];
-  
+
         pastedRows.forEach((rowData, rowOffset) => {
           const targetRowIndex = target.row + rowOffset;
-  
+
           // This handler allows adding rows (unlike the code sample which doesn't)
           while (targetRowIndex >= currentRows.length) {
             const emptyRow = {};
             allFields.forEach((f) => (emptyRow[f] = ''));
             currentRows.push(emptyRow);
           }
-  
+
           currentRows[targetRowIndex] = { ...currentRows[targetRowIndex] };
           rowData.forEach((value, colOffset) => {
             const field = fields[colOffset];
@@ -92,19 +92,22 @@ if (container) {
             }
           });
         });
-  
+
         gridEl.rows = currentRows;
       };
-  
+
       grid.gridConfig = {
         columns: [
           { field: 'col1', header: 'Column 1' },
           { field: 'col2', header: 'Column 2' },
           { field: 'col3', header: 'Column 3' },
         ],
-        plugins: [new SelectionPlugin({ mode: 'range' }), new ClipboardPlugin({ pasteHandler: customPasteHandler })],
+        features: {
+          selection: 'range',
+          clipboard: { pasteHandler: customPasteHandler },
+        },
       };
-  
+
       grid.rows = [
         { col1: 'A1', col2: 'B1', col3: 'C1' },
         { col1: 'A2', col2: 'B2', col3: 'C2' },

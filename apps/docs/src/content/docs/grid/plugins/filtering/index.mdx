@@ -20,7 +20,7 @@ The Filtering plugin adds column header filters with text search, dropdown optio
 ## Installation
 
 ```ts
-import { FilteringPlugin } from '@toolbox-web/grid/plugins/filtering';
+import '@toolbox-web/grid/features/filtering';
 ```
 
 ## Basic Usage
@@ -30,7 +30,7 @@ import { FilteringPlugin } from '@toolbox-web/grid/plugins/filtering';
 
 ```ts
 import '@toolbox-web/grid';
-import { FilteringPlugin } from '@toolbox-web/grid/plugins/filtering';
+import '@toolbox-web/grid/features/filtering';
 
 const grid = document.querySelector('tbw-grid');
 grid.gridConfig = {
@@ -39,7 +39,7 @@ grid.gridConfig = {
     { field: 'status', header: 'Status', filterable: true },
     { field: 'email', header: 'Email', filterable: true },
   ],
-  plugins: [new FilteringPlugin({ debounceMs: 300 })],
+  features: { filtering: { debounceMs: 300 } },
 };
 grid.rows = data;
 ```
@@ -181,8 +181,8 @@ Your custom renderer receives a `params` object with:
 const grid = document.querySelector('tbw-grid');
 
 grid.gridConfig = {
-  plugins: [
-    new FilteringPlugin({
+  features: {
+    filtering: {
       filterPanelRenderer: (container, params) => {
         // Custom panel only for 'status' column
         if (params.field !== 'status') return undefined;
@@ -212,8 +212,9 @@ grid.gridConfig = {
           });
         });
       },
-    }),
-  ],
+      },
+    },
+  },
 };
 ```
 
@@ -280,8 +281,8 @@ Use `valuesHandler` and `filterHandler` to customize this behavior:
 ```ts
 grid.gridConfig = {
   columns: [...],
-  plugins: [
-    new FilteringPlugin({
+  features: {
+    filtering: {
       // Fetch unique values for a column from the server
       valuesHandler: async (field, column) => {
         const response = await fetch(`/api/distinct-values?field=${field}`);
@@ -297,8 +298,8 @@ grid.gridConfig = {
         });
         return response.json();
       },
-    }),
-  ],
+    },
+  },
 };
 ```
 
@@ -331,7 +332,7 @@ You can disable filtering grid-wide using `gridConfig.filterable`:
 ```ts
 grid.gridConfig = {
   filterable: false, // Disables ALL filtering, even on filterable columns
-  plugins: [new FilteringPlugin()],
+  features: { filtering: true },
 };
 ```
 
@@ -397,7 +398,7 @@ By default, filter state is **not** included in column state and does not fire `
 Enable `trackColumnState` to opt in:
 
 ```ts
-new FilteringPlugin({ trackColumnState: true })
+features: { filtering: { trackColumnState: true } }
 ```
 
 When enabled:
@@ -417,7 +418,7 @@ grid.addEventListener('column-state-change', (e) => {
 // Restore state (filters are re-applied automatically)
 gridConfig: {
   columnState: JSON.parse(localStorage.getItem('grid-state')),
-  plugins: [new FilteringPlugin({ trackColumnState: true })],
+  features: { filtering: { trackColumnState: true } },
 }
 ```
 

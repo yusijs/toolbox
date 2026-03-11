@@ -16,12 +16,12 @@ The Row Reorder plugin lets users rearrange rows by dragging a grip handle or us
 ## Installation
 
 ```ts
-import { RowReorderPlugin } from '@toolbox-web/grid/plugins/reorder-rows';
+import '@toolbox-web/grid/features/reorder-rows';
 ```
 
 ## Basic Usage
 
-Add the plugin and a drag handle column appears automatically. Users can drag rows to new positions or use Ctrl+Up/Down to move the focused row.
+Enable the feature and a drag handle column appears automatically. Users can drag rows to new positions or use Ctrl+Up/Down to move the focused row.
 
 <Tabs syncKey="framework">
   <TabItem label="Vanilla JS">
@@ -33,13 +33,13 @@ grid.gridConfig = {
     { field: 'task', header: 'Task' },
     { field: 'status', header: 'Status' },
   ],
-  plugins: [
-    new RowReorderPlugin({
+  features: {
+    reorderRows: {
       dragHandlePosition: 'left',
       enableKeyboard: true,
       animation: 'flip',
-    }),
-  ],
+    },
+  },
 };
 
 // Listen for row moves

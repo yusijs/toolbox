@@ -8,7 +8,7 @@
 <script>
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { ServerSidePlugin } from '@toolbox-web/grid/plugins/server-side';
+import '@toolbox-web/grid/features/server-side';
 
 const container = document.getElementById('server-side-paging-mode-demo');
 if (container) {
@@ -53,8 +53,6 @@ if (container) {
   }
 
   // Use ServerSidePlugin with a data source that returns one page at a time
-  const plugin = new ServerSidePlugin({ pageSize });
-
   grid.gridConfig = {
     columns: [
       { field: 'id', header: 'ID', type: 'number', sortable: true },
@@ -63,7 +61,7 @@ if (container) {
       { field: 'salary', header: 'Salary', type: 'number', sortable: true },
       { field: 'email', header: 'Email' },
     ],
-    plugins: [plugin],
+    features: { serverSide: { pageSize } },
   };
 
   function loadPage(page: number) {

@@ -10,12 +10,12 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
+import '@toolbox-web/grid/features/editing';
 
 const container = document.getElementById('editing-custom-editor-demo');
 if (container) {
   const grid = queryGrid('tbw-grid', container);
-  
+
       // Register custom styles for the editor
       grid.registerStyles(
         'priority-editor',
@@ -45,8 +45,8 @@ if (container) {
         }
       `,
       );
-      
-  
+
+
       grid.gridConfig = {
         columns: [
           { field: 'name', header: 'Name', editable: true },
@@ -57,12 +57,12 @@ if (container) {
             editor: (ctx) => {
               const editorEl = document.createElement('div');
               editorEl.className = 'priority-editor';
-  
+
               ['Low', 'Medium', 'High'].forEach((level) => {
                 const btn = document.createElement('button');
                 btn.textContent = level;
                 if (ctx.value === level) btn.classList.add('selected');
-  
+
                 btn.onclick = () => {
                   // Remove selected from siblings, add to clicked
                   editorEl.querySelectorAll('button').forEach((b) => b.classList.remove('selected'));
@@ -71,14 +71,14 @@ if (container) {
                 };
                 editorEl.appendChild(btn);
               });
-  
+
               return editorEl;
             },
           },
         ],
-        plugins: [new EditingPlugin({ editOn: 'dblclick' })],
+        features: { editing: 'dblclick' },
       };
-  
+
       grid.rows = [
         { name: 'Task A', priority: 'High' },
         { name: 'Task B', priority: 'Medium' },

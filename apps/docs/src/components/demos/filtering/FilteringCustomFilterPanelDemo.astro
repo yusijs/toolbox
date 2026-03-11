@@ -9,7 +9,7 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { FilteringPlugin } from '@toolbox-web/grid/plugins/filtering';
+import '@toolbox-web/grid/features/filtering';
 
 const container = document.getElementById('filtering-custom-filter-panel-demo');
 if (container) {
@@ -35,7 +35,7 @@ if (container) {
   ];
 
   const grid = queryGrid('tbw-grid', container);
-      
+
       // Custom filter panel for Status column (radio-button style)
       const statusFilterPanel = (container) => {
         container.innerHTML = `
@@ -49,12 +49,12 @@ if (container) {
             </button>
           </div>
         `;
-  
+
         const optionsDiv = container.querySelector('.status-options');
         if (!optionsDiv) return;
-  
+
         const options = ['All', ...params.uniqueValues.map((v) => String(v))];
-  
+
         options.forEach((opt) => {
           const label = document.createElement('label');
           label.style.cssText = 'display: flex; align-items: center; gap: 6px; padding: 4px 0; cursor: pointer;';
@@ -76,17 +76,17 @@ if (container) {
           }
           optionsDiv.appendChild(label);
         });
-  
+
         const clearBtn = container.querySelector('.clear-btn');
         if (clearBtn) {
           clearBtn.addEventListener('click', () => params.clearFilter());
         }
       };
-  
+
       grid.gridConfig = {
         columns,
-        plugins: [
-          new FilteringPlugin({
+        features: {
+          filtering: {
             debounceMs: 150,
             caseSensitive: false,
             filterPanelRenderer: (container, params) => {
@@ -96,8 +96,8 @@ if (container) {
                 return undefined; // Use default panel
               }
             },
-          }),
-        ],
+          },
+        },
       };
       grid.rows = sampleData;
 }

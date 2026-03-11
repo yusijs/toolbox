@@ -19,7 +19,7 @@ The Row Grouping plugin organizes your rows into collapsible hierarchical groups
 ## Installation
 
 ```ts
-import { GroupingRowsPlugin } from '@toolbox-web/grid/plugins/grouping-rows';
+import '@toolbox-web/grid/features/grouping-rows';
 ```
 
 ## Basic Usage
@@ -36,13 +36,13 @@ grid.gridConfig = {
     { field: 'department', header: 'Department' },
     { field: 'salary', header: 'Salary', type: 'currency' }
   ],
-  plugins: [
-    new GroupingRowsPlugin({
+  features: {
+    groupingRows: {
       groupOn: (row) => [row.department],
       showRowCount: true,
       defaultExpanded: false,
-    }),
-  ],
+    },
+  },
 };
 
 grid.rows = employees;
@@ -185,19 +185,19 @@ The `defaultExpanded` option controls which groups are expanded on initial rende
 
 ```ts
 // Expand all groups
-new GroupingRowsPlugin({ defaultExpanded: true, groupOn: ... });
+features: { groupingRows: { defaultExpanded: true, groupOn: ... } }
 
 // Collapse all groups (default)
-new GroupingRowsPlugin({ defaultExpanded: false, groupOn: ... });
+features: { groupingRows: { defaultExpanded: false, groupOn: ... } }
 
 // Expand group at index 0
-new GroupingRowsPlugin({ defaultExpanded: 0, groupOn: ... });
+features: { groupingRows: { defaultExpanded: 0, groupOn: ... } }
 
 // Expand group with specific key
-new GroupingRowsPlugin({ defaultExpanded: 'Engineering', groupOn: ... });
+features: { groupingRows: { defaultExpanded: 'Engineering', groupOn: ... } }
 
 // Expand multiple groups by key
-new GroupingRowsPlugin({ defaultExpanded: ['Engineering', 'Sales'], groupOn: ... });
+features: { groupingRows: { defaultExpanded: ['Engineering', 'Sales'], groupOn: ... } }
 ```
 
 :::note
@@ -211,13 +211,13 @@ The `animation` option controls how grouped rows appear/disappear:
 
 ```ts
 // Slide animation (default)
-new GroupingRowsPlugin({ animation: 'slide', ... });
+features: { groupingRows: { animation: 'slide', ... } }
 
 // Fade animation
-new GroupingRowsPlugin({ animation: 'fade', ... });
+features: { groupingRows: { animation: 'fade', ... } }
 
 // No animation
-new GroupingRowsPlugin({ animation: false, ... });
+features: { groupingRows: { animation: false, ... } }
 ```
 
 :::note
@@ -235,10 +235,12 @@ In accordion mode, only one group can be expanded at a time. Expanding a group a
 
 
 ```ts
-new GroupingRowsPlugin({
-  groupOn: (row) => row.department,
-  accordion: true, // Only one group open at a time
-});
+features: {
+  groupingRows: {
+    groupOn: (row) => row.department,
+    accordion: true, // Only one group open at a time
+  },
+},
 ```
 
 ### Aggregators
@@ -252,14 +254,16 @@ Display aggregate values (sum, avg, count, min, max, first, last) in group heade
 
 
 ```ts
-new GroupingRowsPlugin({
-  groupOn: (row) => row.department,
-  aggregators: {
-    salary: 'sum',    // Sum of salaries in each group
-    bonus: 'avg',     // Average bonus
-    id: 'count',      // Count of rows
+features: {
+  groupingRows: {
+    groupOn: (row) => row.department,
+    aggregators: {
+      salary: 'sum',    // Sum of salaries in each group
+      bonus: 'avg',     // Average bonus
+      id: 'count',      // Count of rows
+    },
   },
-});
+},
 ```
 
 **Built-in aggregators:**
@@ -287,9 +291,11 @@ aggregators: {
 Return multiple values from `groupOn` to create nested group hierarchies:
 
 ```ts
-new GroupingRowsPlugin({
-  groupOn: (row) => [row.region, row.department, row.team],
-});
+features: {
+  groupingRows: {
+    groupOn: (row) => [row.region, row.department, row.team],
+  },
+},
 ```
 
 ## Programmatic API

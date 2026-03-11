@@ -17,7 +17,7 @@ import DemoControls from '@components/DemoControls.astro';
 <script>
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { RowReorderPlugin } from '@toolbox-web/grid/plugins/reorder-rows';
+import '@toolbox-web/grid/features/reorder-rows';
 
 const container = document.getElementById('row-reorder-default-demo');
 if (container) {
@@ -40,7 +40,7 @@ if (container) {
   function rebuild(dragHandlePosition = 'left', enableKeyboard = true, animation = 'flip') {
     grid.gridConfig = {
       columns,
-      plugins: [new RowReorderPlugin({ dragHandlePosition, enableKeyboard, animation } as any)],
+      features: { reorderRows: { dragHandlePosition, enableKeyboard, animation } as any },
     };
     grid.rows = sampleData;
   }

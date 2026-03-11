@@ -9,7 +9,7 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { FilteringPlugin } from '@toolbox-web/grid/plugins/filtering';
+import '@toolbox-web/grid/features/filtering';
 
 const container = document.getElementById('filtering-case-sensitive-demo');
 if (container) {
@@ -35,15 +35,15 @@ if (container) {
   ];
 
   const grid = queryGrid('tbw-grid', container);
-      
+
       grid.gridConfig = {
         columns,
-        plugins: [
-          new FilteringPlugin({
+        features: {
+          filtering: {
             debounceMs: 150,
             caseSensitive: true,
-          }),
-        ],
+          },
+        },
       };
       grid.rows = sampleData;
 }

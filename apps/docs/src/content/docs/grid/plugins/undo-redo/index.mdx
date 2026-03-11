@@ -17,13 +17,13 @@ The Undo/Redo plugin tracks all cell edits and lets users revert or replay chang
 ## Installation
 
 ```ts
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
-import { UndoRedoPlugin } from '@toolbox-web/grid/plugins/undo-redo';
+import '@toolbox-web/grid/features/editing';
+import '@toolbox-web/grid/features/undo-redo';
 ```
 
 ## Basic Usage
 
-Add the plugin along with `EditingPlugin` to any grid with editable columns. History tracking is automatic—every cell edit is recorded, and users can navigate back and forth through the edit history.
+Enable both features and history tracking is automatic—every cell edit is recorded, and users can navigate back and forth through the edit history.
 
 <Tabs syncKey="framework">
   <TabItem label="Vanilla JS">
@@ -37,12 +37,10 @@ grid.gridConfig = {
     { field: 'price', header: 'Price', type: 'number', editable: true },
     { field: 'quantity', header: 'Quantity', type: 'number', editable: true },
   ],
-  plugins: [
-    new EditingPlugin({ editOn: 'dblclick' }),
-    new UndoRedoPlugin({
-      maxHistorySize: 50, // Remember last 50 edits
-    }),
-  ],
+  features: {
+    editing: 'dblclick',
+    undoRedo: { maxHistorySize: 50 },
+  },
 };
 ```
   </TabItem>

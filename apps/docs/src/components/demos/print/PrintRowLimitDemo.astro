@@ -16,7 +16,7 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { PrintPlugin } from '@toolbox-web/grid/plugins/print';
+import '@toolbox-web/grid/features/print';
 
 const container = document.getElementById('print-row-limit-demo');
 if (container) {
@@ -30,12 +30,6 @@ if (container) {
     salary: 50000 + Math.floor(Math.random() * 50000),
   }));
 
-  const printPlugin = new PrintPlugin({
-    warnThreshold: 500,
-    maxRows: 100,
-    title: 'Large Dataset Print Test',
-  });
-
   grid.gridConfig = {
     columns: [
       { field: 'id', header: 'ID', width: 60 },
@@ -43,7 +37,13 @@ if (container) {
       { field: 'department', header: 'Department', width: 120 },
       { field: 'salary', header: 'Salary', width: 100, align: 'right' },
     ],
-    plugins: [printPlugin],
+    features: {
+      print: {
+        warnThreshold: 500,
+        maxRows: 100,
+        title: 'Large Dataset Print Test',
+      },
+    },
   };
   grid.rows = largeDataset;
 

@@ -127,9 +127,11 @@ The grid is a standard web component that works in any JavaScript environment â€
 ```typescript title="main.ts"
 import '@toolbox-web/grid';
 import { createGrid, queryGrid } from '@toolbox-web/grid';
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
-import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
-import { FilteringPlugin } from '@toolbox-web/grid/plugins/filtering';
+
+// Import features you need (side-effect imports for tree-shaking)
+import '@toolbox-web/grid/features/editing';
+import '@toolbox-web/grid/features/selection';
+import '@toolbox-web/grid/features/filtering';
 
 interface Employee {
   id: number;
@@ -166,11 +168,11 @@ const grid = createGrid<Employee>({
       },
     },
   ],
-  plugins: [
-    new EditingPlugin({ editOn: 'dblclick' }), // Required for editable columns
-    new SelectionPlugin({ mode: 'row' }),
-    new FilteringPlugin({ debounceMs: 200 }),
-  ],
+  features: {
+    editing: 'dblclick', // Required for editable columns
+    selection: 'row',
+    filtering: { debounceMs: 200 },
+  },
   fitMode: 'stretch',
 });
 
@@ -204,10 +206,11 @@ npm install @toolbox-web/grid @toolbox-web/grid-react
 ```
 
 ```tsx title="EmployeeGrid.tsx"
-import { DataGrid, type ReactGridConfig } from '@toolbox-web/grid-react';
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
-import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
-import { FilteringPlugin } from '@toolbox-web/grid/plugins/filtering';
+import '@toolbox-web/grid-react/features/editing';
+import '@toolbox-web/grid-react/features/selection';
+import '@toolbox-web/grid-react/features/filtering';
+
+import { DataGrid } from '@toolbox-web/grid-react';
 
 interface Employee {
   id: number;
@@ -222,43 +225,37 @@ const employees: Employee[] = [
 ];
 
 function EmployeeGrid() {
-  const config: ReactGridConfig<Employee> = {
-    columns: [
-      { field: 'id', header: 'ID', type: 'number' },
-      { field: 'name', header: 'Name', editable: true },
-      {
-        field: 'status',
-        header: 'Status',
-        // Inline React renderer
-        renderer: (ctx) => (
-          <span className={`status-badge status-${ctx.value}`}>{ctx.value}</span>
-        ),
-        // Inline React editor
-        editor: (ctx) => (
-          <select
-            defaultValue={ctx.value}
-            onChange={(e) => ctx.commit(e.target.value)}
-            onKeyDown={(e) => e.key === 'Escape' && ctx.cancel()}
-            autoFocus
-          >
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
-        ),
-      },
-    ],
-    plugins: [
-      new EditingPlugin({ editOn: 'dblclick' }), // Required for editable columns
-      new SelectionPlugin({ mode: 'row' }),
-      new FilteringPlugin({ debounceMs: 200 }),
-    ],
-    fitMode: 'stretch',
-  };
-
   return (
     <DataGrid
       rows={employees}
-      gridConfig={config}
+      columns={[
+        { field: 'id', header: 'ID', type: 'number' },
+        { field: 'name', header: 'Name', editable: true },
+        {
+          field: 'status',
+          header: 'Status',
+          // Inline React renderer
+          renderer: (ctx) => (
+            <span className={`status-badge status-${ctx.value}`}>{ctx.value}</span>
+          ),
+          // Inline React editor
+          editor: (ctx) => (
+            <select
+              defaultValue={ctx.value}
+              onChange={(e) => ctx.commit(e.target.value)}
+              onKeyDown={(e) => e.key === 'Escape' && ctx.cancel()}
+              autoFocus
+            >
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          ),
+        },
+      ]}
+      editing="dblclick"
+      selection="row"
+      filtering={{ debounceMs: 200 }}
+      fitMode="stretch"
       onCellCommit={(e) => console.log('Edited:', e.detail)}
       style={{ height: 400, display: 'block' }}
     />
@@ -437,10 +434,10 @@ The package includes full TypeScript definitions. Import types for better IDE su
 ```typescript
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
+import '@toolbox-web/grid/features/editing';
 import type { ColumnConfig, GridConfig, CellCommitDetail, SortChangeDetail } from '@toolbox-web/grid';
 
-// Type-safe column configuration (editable requires EditingPlugin)
+// Type-safe column configuration (editable requires editing feature)
 const columns: ColumnConfig[] = [
   { field: 'id', header: 'ID', type: 'number' },
   { field: 'name', header: 'Name', editable: true },
@@ -449,7 +446,7 @@ const columns: ColumnConfig[] = [
 const grid = queryGrid('tbw-grid');
 grid.gridConfig = {
   columns,
-  plugins: [new EditingPlugin()], // Required for editable: true
+  features: { editing: true }, // Required for editable: true
 };
 
 // Type-safe event handling

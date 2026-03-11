@@ -15,8 +15,8 @@ import DemoControls from '@components/DemoControls.astro';
 <script>
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { ClipboardPlugin } from '@toolbox-web/grid/plugins/clipboard';
-import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
+import '@toolbox-web/grid/features/clipboard';
+import '@toolbox-web/grid/features/selection';
 
 const container = document.getElementById('clipboard-default-demo');
 if (container) {
@@ -38,10 +38,10 @@ if (container) {
   function rebuild(includeHeaders = false, quoteStrings = false) {
     grid.gridConfig = {
       columns,
-      plugins: [
-        new SelectionPlugin({ mode: 'range' }),
-        new ClipboardPlugin({ includeHeaders, quoteStrings }),
-      ],
+      features: {
+        selection: 'range',
+        clipboard: { includeHeaders, quoteStrings },
+      },
     };
     grid.rows = sampleData;
   }

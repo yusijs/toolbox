@@ -28,10 +28,7 @@ and applying print-optimized styles. It handles large datasets gracefully with c
 ## Installation
 
 ```typescript
-import { PrintPlugin } from '@toolbox-web/grid/plugins/print';
-
-// Or from all-in-one bundle
-import { PrintPlugin } from '@toolbox-web/grid/all';
+import '@toolbox-web/grid/features/print';
 ```
 
 ## Basic Usage
@@ -42,7 +39,7 @@ import { PrintPlugin } from '@toolbox-web/grid/all';
   <TabItem label="Vanilla JS">
 ```typescript
 import '@toolbox-web/grid';
-import { PrintPlugin } from '@toolbox-web/grid/plugins/print';
+import '@toolbox-web/grid/features/print';
 
 const grid = document.querySelector('tbw-grid');
 
@@ -52,13 +49,13 @@ grid.gridConfig = {
     { field: 'department', header: 'Department' },
     { field: 'salary', header: 'Salary' },
   ],
-  plugins: [
-    new PrintPlugin({
+  features: {
+    print: {
       title: 'Employee Report',
       includeTitle: true,
       includeTimestamp: true,
-    }),
-  ],
+    },
+  },
 };
 
 // Programmatic print
@@ -104,9 +101,9 @@ function EmployeeGrid({ data }) {
   <TabItem label="Vue">
 ```html
 <script setup>
+import '@toolbox-web/grid-vue/features/print';
 import { TbwGrid, TbwGridColumn } from '@toolbox-web/grid-vue';
-import { PrintPlugin } from '@toolbox-web/grid/plugins/print';
-import { ref, markRaw } from 'vue';
+import { ref } from 'vue';
 
 const data = [
   { name: 'Alice', department: 'Engineering', salary: 95000 },
@@ -114,12 +111,6 @@ const data = [
 ];
 
 const gridRef = ref(null);
-
-const printPlugin = markRaw(new PrintPlugin({
-  title: 'Employee Report',
-  includeTitle: true,
-  includeTimestamp: true,
-}));
 
 const handlePrint = async () => {
   await gridRef.value?.element?.getPluginByName('print')?.print();
@@ -129,7 +120,7 @@ const handlePrint = async () => {
 <template>
   <div>
     <button @click="handlePrint">Print Report</button>
-    <TbwGrid ref="gridRef" :rows="data" :plugins="[printPlugin]" style="height: 400px">
+    <TbwGrid ref="gridRef" :rows="data" :print="{ title: 'Employee Report', includeTitle: true, includeTimestamp: true }" style="height: 400px">
       <TbwGridColumn field="name" header="Name" />
       <TbwGridColumn field="department" header="Department" />
       <TbwGridColumn field="salary" header="Salary" />
@@ -145,7 +136,6 @@ import '@toolbox-web/grid-angular/features/print';
 
 import { Component, viewChild, ElementRef } from '@angular/core';
 import { Grid } from '@toolbox-web/grid-angular';
-import { PrintPlugin } from '@toolbox-web/grid/plugins/print';
 import type { ColumnConfig, GridElement } from '@toolbox-web/grid';
 
 @Component({
@@ -209,7 +199,7 @@ grid.gridConfig = {
     { field: 'email', header: 'Email' },
     { field: 'actions', header: 'Actions', printHidden: true }, // Hidden when printing
   ],
-  plugins: [new PrintPlugin()],
+  features: { print: true },
 };
 ```
 
@@ -230,10 +220,12 @@ When `button: true` is configured, a print button appears in the grid toolbar:
 <PrintToolbarButtonDemo />
 
 ```typescript
-new PrintPlugin({
-  button: true,
-  title: 'Employee Directory',
-})
+features: {
+  print: {
+    button: true,
+    title: 'Employee Directory',
+  },
+},
 ```
 
 ## Page Orientation
@@ -243,9 +235,11 @@ Control the print orientation with the `orientation` option:
 <PrintPortraitOrientationDemo />
 
 ```typescript
-new PrintPlugin({
-  orientation: 'portrait', // or 'landscape' (default)
-})
+features: {
+  print: {
+    orientation: 'portrait', // or 'landscape' (default)
+  },
+},
 ```
 
 ## Row Limits
@@ -260,13 +254,13 @@ Two separate options control large dataset behavior:
 
 ```typescript
 // Warn at 500+ rows, but print all if confirmed
-new PrintPlugin({ warnThreshold: 500 })
+features: { print: { warnThreshold: 500 } }
 
 // Hard limit to 100 rows (no warning, just limits)
-new PrintPlugin({ maxRows: 100, warnThreshold: 0 })
+features: { print: { maxRows: 100, warnThreshold: 0 } }
 
 // Warn at 500+ rows AND hard limit to 1000
-new PrintPlugin({ warnThreshold: 500, maxRows: 1000 })
+features: { print: { warnThreshold: 500, maxRows: 1000 } }
 ```
 
 The confirmation dialog shows:

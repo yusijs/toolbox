@@ -8,7 +8,7 @@
 <script>
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { VisibilityPlugin } from '@toolbox-web/grid/plugins/visibility';
+import '@toolbox-web/grid/features/visibility';
 
 const container = document.getElementById('visibility-default-demo');
 if (container) {
@@ -22,7 +22,7 @@ if (container) {
           { field: 'department', header: 'Department' },
           { field: 'salary', header: 'Salary', type: 'number' },
         ],
-        plugins: [new VisibilityPlugin()],
+        features: { visibility: true },
       };
 
       grid.rows = [

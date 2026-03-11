@@ -16,7 +16,7 @@ The Master-Detail plugin lets you create expandable detail rows that reveal addi
 ## Installation
 
 ```ts
-import { MasterDetailPlugin } from '@toolbox-web/grid/plugins/master-detail';
+import '@toolbox-web/grid/features/master-detail';
 ```
 
 ## Basic Usage
@@ -33,8 +33,8 @@ grid.gridConfig = {
     { field: 'customer', header: 'Customer' },
     { field: 'total', header: 'Total', type: 'currency' }
   ],
-  plugins: [
-    new MasterDetailPlugin({
+  features: {
+    masterDetail: {
       detailRenderer: (row) => `
         <div class="order-details">
           <h4>Order Items</h4>
@@ -43,8 +43,8 @@ grid.gridConfig = {
           </ul>
         </div>
       `,
-    }),
-  ],
+    },
+  },
 };
 ```
   </TabItem>
@@ -202,13 +202,13 @@ The `animation` option controls how detail rows appear/disappear:
 
 ```ts
 // Slide animation (default)
-new MasterDetailPlugin({ animation: 'slide', ... });
+features: { masterDetail: { animation: 'slide', ... } }
 
 // Fade animation
-new MasterDetailPlugin({ animation: 'fade', ... });
+features: { masterDetail: { animation: 'fade', ... } }
 
 // No animation
-new MasterDetailPlugin({ animation: false, ... });
+features: { masterDetail: { animation: false, ... } }
 ```
 
 :::note
@@ -218,15 +218,17 @@ Animation respects the grid-level `animation.mode` setting. If the grid has `ani
 ## Nested Grid Example
 
 ```ts
-new MasterDetailPlugin({
-  detailRenderer: (row) => {
-    const childGrid = document.createElement('tbw-grid');
-    childGrid.style.height = '200px';
-    childGrid.gridConfig = { columns: [...] };
-    childGrid.rows = row.items || [];
-    return childGrid;
+features: {
+  masterDetail: {
+    detailRenderer: (row) => {
+      const childGrid = document.createElement('tbw-grid');
+      childGrid.style.height = '200px';
+      childGrid.gridConfig = { columns: [...] };
+      childGrid.rows = row.items || [];
+      return childGrid;
+    },
   },
-})
+},
 ```
 
 ## Programmatic API

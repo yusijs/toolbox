@@ -9,14 +9,14 @@
 
 <script>
   import '@toolbox-web/grid';
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
-import { ExportPlugin } from '@toolbox-web/grid/plugins/export';
-import { FilteringPlugin } from '@toolbox-web/grid/plugins/filtering';
-import { GroupingColumnsPlugin } from '@toolbox-web/grid/plugins/grouping-columns';
-import { MultiSortPlugin } from '@toolbox-web/grid/plugins/multi-sort';
-import { PinnedColumnsPlugin } from '@toolbox-web/grid/plugins/pinned-columns';
-import { PinnedRowsPlugin } from '@toolbox-web/grid/plugins/pinned-rows';
-import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
+import '@toolbox-web/grid/features/editing';
+import '@toolbox-web/grid/features/export';
+import '@toolbox-web/grid/features/filtering';
+import '@toolbox-web/grid/features/grouping-columns';
+import '@toolbox-web/grid/features/multi-sort';
+import '@toolbox-web/grid/features/pinned-columns';
+import '@toolbox-web/grid/features/pinned-rows';
+import '@toolbox-web/grid/features/selection';
 
   // #region Data
   interface Ticker {
@@ -132,15 +132,15 @@ import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
       ],
       sortable: true,
       filterable: true,
-      plugins: [
-        new SelectionPlugin({ mode: 'row', checkbox: true }),
-        new FilteringPlugin({ debounceMs: 200 }),
-        new EditingPlugin({ editOn: 'dblclick' }),
-        new MultiSortPlugin({ showSortIndex: true }),
-        new PinnedColumnsPlugin(),
-        new GroupingColumnsPlugin(),
-        new ExportPlugin(),
-        new PinnedRowsPlugin({
+      features: {
+        selection: { mode: 'row', checkbox: true },
+        filtering: { debounceMs: 200 },
+        editing: 'dblclick',
+        multiSort: { showSortIndex: true },
+        pinnedColumns: true,
+        groupingColumns: true,
+        export: true,
+        pinnedRows: {
           position: 'bottom',
           showRowCount: true,
           showFilteredCount: true,
@@ -163,8 +163,8 @@ import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
               },
             },
           }],
-        }),
-      ],
+        },
+      },
     };
     grid.rows = tickers;
   }

@@ -16,16 +16,12 @@
 <script>
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
+import '@toolbox-web/grid/features/editing';
 
 const container = document.getElementById('editing-cell-validation-demo');
 if (container) {
   const grid = queryGrid('tbw-grid', container);
 
-
-      const editingPlugin = new EditingPlugin<{ id: number; name: string; email: string; salary: number }>({
-        editOn: 'dblclick',
-      });
 
       grid.gridConfig = {
         columns: [
@@ -33,7 +29,7 @@ if (container) {
           { field: 'email', header: 'Email', editable: true },
           { field: 'salary', header: 'Salary', type: 'number', editable: true },
         ],
-        plugins: [editingPlugin],
+        features: { editing: 'dblclick' },
       };
 
       grid.rows = [

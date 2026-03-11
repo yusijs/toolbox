@@ -19,7 +19,7 @@ import DemoControls from '@components/DemoControls.astro';
 <script>
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { ColumnVirtualizationPlugin } from '@toolbox-web/grid/plugins/column-virtualization';
+import '@toolbox-web/grid/features/column-virtualization';
 
 const container = document.getElementById('column-virtualization-default-demo');
 if (container) {
@@ -51,7 +51,7 @@ if (container) {
     grid.gridConfig = {
       columns,
       fitMode: 'fixed',
-      plugins: [new ColumnVirtualizationPlugin({ autoEnable, threshold, overscan })],
+      features: { columnVirtualization: { autoEnable, threshold, overscan } },
     };
     grid.rows = rows;
   }

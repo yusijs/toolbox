@@ -9,12 +9,12 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { VisibilityPlugin } from '@toolbox-web/grid/plugins/visibility';
+import '@toolbox-web/grid/features/visibility';
 
 const container = document.getElementById('visibility-locked-columns-demo');
 if (container) {
   const grid = queryGrid('tbw-grid', container);
-      
+
       grid.gridConfig = {
         columns: [
           { field: 'id', header: 'ID', type: 'number', lockVisible: true },
@@ -23,9 +23,9 @@ if (container) {
           { field: 'department', header: 'Department' },
           { field: 'salary', header: 'Salary', type: 'number' },
         ],
-        plugins: [new VisibilityPlugin()],
+        features: { visibility: true },
       };
-  
+
       grid.rows = [
         { id: 1, name: 'Alice', email: 'alice@example.com', department: 'Engineering', salary: 95000 },
         { id: 2, name: 'Bob', email: 'bob@example.com', department: 'Marketing', salary: 75000 },

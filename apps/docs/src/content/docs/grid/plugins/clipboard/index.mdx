@@ -21,12 +21,12 @@ The Clipboard plugin brings familiar copy/cut/paste functionality to your grid w
 ## Installation
 
 ```ts
-import { ClipboardPlugin } from '@toolbox-web/grid/plugins/clipboard';
+import '@toolbox-web/grid/features/clipboard';
 ```
 
 ## Basic Usage
 
-Just add the plugin and you're ready to go—keyboard shortcuts work automatically. Configure options like `includeHeaders` for copying column headers or `delimiter` for custom CSV formats.
+Just enable the feature and you're ready to go—keyboard shortcuts work automatically. Configure options like `includeHeaders` for copying column headers or `delimiter` for custom CSV formats.
 
 <Tabs syncKey="framework">
   <TabItem label="Vanilla JS">
@@ -38,12 +38,12 @@ grid.gridConfig = {
     { field: 'email', header: 'Email' },
     { field: 'department', header: 'Department' }
   ],
-  plugins: [
-    new ClipboardPlugin({
+  features: {
+    clipboard: {
       includeHeaders: true,
       quoteStrings: true, // Wrap text in quotes for CSV compatibility
-    }),
-  ],
+    },
+  },
 };
 ```
   </TabItem>
@@ -321,10 +321,12 @@ const lastCopied = plugin.getLastCopied();
 The default tab delimiter ensures copied data pastes correctly into Excel:
 
 ```ts
-new ClipboardPlugin({
-  delimiter: '\t', // Tab for Excel
-  includeHeaders: true, // Include column names
-});
+features: {
+  clipboard: {
+    delimiter: '\t', // Tab for Excel
+    includeHeaders: true, // Include column names
+  },
+},
 ```
 
 ## Styling

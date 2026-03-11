@@ -17,7 +17,7 @@ import DemoControls from '@components/DemoControls.astro';
 <script>
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { TreePlugin } from '@toolbox-web/grid/plugins/tree';
+import '@toolbox-web/grid/features/tree';
 
 const container = document.getElementById('tree-default-demo');
 if (container) {
@@ -56,15 +56,15 @@ if (container) {
   function rebuild(opts: Record<string, unknown>) {
     grid.gridConfig = {
       columns,
-      plugins: [
-        new TreePlugin({
+      features: {
+        tree: {
           animation: (opts.animation as string) ?? 'slide',
           childrenField: 'children',
           defaultExpanded: opts.defaultExpanded as boolean ?? false,
           indentWidth: (opts.indentWidth as number) ?? 20,
           showExpandIcons: true,
-        } as any),
-      ],
+        } as any,
+      },
     };
     grid.rows = fileSystemData;
   }

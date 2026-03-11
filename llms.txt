@@ -6,15 +6,19 @@
 
 Built-in (no plugins): Row virtualization (100k+ rows at 60fps, infinite scroll), sorting, column resizing, auto-sizing, keyboard navigation, custom renderers/editors, footer aggregations, 6 themes, row animations.
 
-Via plugins (22 available): Selection (cell/row/range/checkbox), inline editing (cell/row mode), filtering (text/number/date/set/boolean), multi-sort, row grouping with aggregations, column grouping (spanning headers), tree data (hierarchical/nested), master-detail (expandable rows), pinned/frozen/sticky columns & rows, column/row drag reorder, column visibility (show/hide), column virtualization, export (CSV/JSON/Excel/XLSX), print, context menus, clipboard (copy/paste), undo/redo, server-side/remote data (infinite scroll, lazy loading, SSRM-style), pivot tables (row/column fields, value aggregation), responsive/mobile card layout.
+Via features (22 available, tree-shakeable via side-effect imports): Selection (cell/row/range/checkbox), inline editing (cell/row mode), filtering (text/number/date/set/boolean), multi-sort, row grouping with aggregations, column grouping (spanning headers), tree data (hierarchical/nested), master-detail (expandable rows), pinned/frozen/sticky columns & rows, column/row drag reorder, column visibility (show/hide), column virtualization, export (CSV/JSON/Excel/XLSX), print, context menus, clipboard (copy/paste), undo/redo, server-side/remote data (infinite scroll, lazy loading, SSRM-style), pivot tables (row/column fields, value aggregation), responsive/mobile card layout.
 
 ## Important Notes
 
 - This is a **Web Component** (`<tbw-grid>`) that works natively in all frameworks without wrappers (though optional adapter packages exist for React, Angular, and Vue to enable JSX/template/slot renderers)
-- All features are **opt-in via plugins** - import only what you need for tree-shaking
+- **Use `features` (recommended)** or `plugins` to enable capabilities — `features` uses declarative config with side-effect imports for tree-shaking; `plugins` uses manual class instantiation
 - Configuration uses a **single source of truth** pattern via `gridConfig` property
-- Editing requires `EditingPlugin` - calling `editable: true` without it will throw a helpful error
+- Editing requires the editing feature/plugin — calling `editable: true` without it will throw a helpful error
 - The grid uses **light DOM** (not Shadow DOM) for CSS cascade and accessibility
+
+## Enabling Features
+
+Enable capabilities via side-effect imports and declarative `features` config (or framework-specific props). Each feature is tree-shakeable (~200-300 bytes). See [Full Implementation Guide](./llms-full.txt) for framework-specific examples and complete feature props reference.
 
 ## Core Documentation
 

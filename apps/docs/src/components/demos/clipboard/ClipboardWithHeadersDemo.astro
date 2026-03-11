@@ -9,8 +9,8 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
-import { ClipboardPlugin } from '@toolbox-web/grid/plugins/clipboard';
+import '@toolbox-web/grid/features/clipboard';
+import '@toolbox-web/grid/features/selection';
 
 const container = document.getElementById('clipboard-with-headers-demo');
 if (container) {
@@ -29,16 +29,16 @@ if (container) {
   ];
 
   const grid = queryGrid('tbw-grid', container);
-      
+
       grid.gridConfig = {
         columns,
-        plugins: [
-          new SelectionPlugin({ mode: 'range' }),
-          new ClipboardPlugin({
+        features: {
+          selection: 'range',
+          clipboard: {
             includeHeaders: true,
             quoteStrings: false,
-          }),
-        ],
+          },
+        },
       };
       grid.rows = sampleData;
 }

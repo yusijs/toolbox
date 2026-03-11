@@ -16,7 +16,7 @@ The Pinned Rows plugin creates a fixed status bar at the top or bottom of the gr
 ## Installation
 
 ```ts
-import { PinnedRowsPlugin } from '@toolbox-web/grid/plugins/pinned-rows';
+import '@toolbox-web/grid/features/pinned-rows';
 ```
 
 ## Basic Usage
@@ -33,8 +33,8 @@ grid.gridConfig = {
     { field: 'quantity', header: 'Qty', type: 'number' },
     { field: 'price', header: 'Price', type: 'currency' },
   ],
-  plugins: [
-    new PinnedRowsPlugin({
+  features: {
+    pinnedRows: {
       position: 'bottom',
       showRowCount: true,
       aggregationRows: [
@@ -47,8 +47,8 @@ grid.gridConfig = {
           cells: { product: 'Totals:' },
         },
       ],
-    }),
-  ],
+    },
+  },
 };
 ```
   </TabItem>
@@ -204,24 +204,26 @@ export class OrderGridComponent {
 Configure computed footer/header rows with aggregators:
 
 ```ts
-new PinnedRowsPlugin({
-  aggregationRows: [
-    {
-      id: 'totals',
-      position: 'bottom',
-      aggregators: {
-        // Simple string aggregator
-        quantity: 'sum',
-        // Object syntax with formatter
-        price: {
-          aggFunc: 'sum',
-          formatter: (value) => `$${value.toFixed(2)}`,
+features: {
+  pinnedRows: {
+    aggregationRows: [
+      {
+        id: 'totals',
+        position: 'bottom',
+        aggregators: {
+          // Simple string aggregator
+          quantity: 'sum',
+          // Object syntax with formatter
+          price: {
+            aggFunc: 'sum',
+            formatter: (value) => `$${value.toFixed(2)}`,
+          },
         },
+        cells: { id: 'Totals:', name: '' },
       },
-      cells: { id: 'Totals:', name: '' },
-    },
-  ],
-});
+    ],
+  },
+},
 ```
 
 ### Aggregator Syntax
@@ -243,31 +245,34 @@ When `fullWidth` is `true`, aggregation rows render as a single spanning cell wi
 Set `fullWidth` globally on the plugin config or per-row on `AggregationRowConfig`. Per-row settings override the global default:
 
 ```ts
-new PinnedRowsPlugin({
-  fullWidth: true,  // All aggregation rows span full width by default
-  aggregationRows: [
-    {
-      id: 'totals',
-      label: 'Totals',
-      aggregators: { quantity: 'sum', price: 'sum' },
-    },
-    {
-      id: 'detail',
-      fullWidth: false,  // Override: render per-column
-      aggregators: { quantity: 'avg', price: 'avg' },
-      cells: { product: 'Averages:' },
-    },
-  ],
-});
+features: {
+  pinnedRows: {
+    fullWidth: true,  // All aggregation rows span full width by default
+    aggregationRows: [
+      {
+        id: 'totals',
+        label: 'Totals',
+        aggregators: { quantity: 'sum', price: 'sum' },
+      },
+      {
+        id: 'detail',
+        fullWidth: false,  // Override: render per-column
+        aggregators: { quantity: 'avg', price: 'avg' },
+        cells: { product: 'Averages:' },
+      },
+    ],
+  },
+},
 ```
 
 ## Custom Panels
 
 ```ts
-new PinnedRowsPlugin({
-  customPanels: [
-    {
-      id: 'info',
+features: {
+  pinnedRows: {
+    customPanels: [
+      {
+        id: 'info',
       position: 'right',
       render: (ctx) => `<span>Rows: ${ctx.totalRows}</span>`,
     },

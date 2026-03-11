@@ -14,7 +14,7 @@
 <script>
   import '@toolbox-web/grid';
 import type { ColumnConfig, GridConfig, ToolPanelDefinition } from '@toolbox-web/grid';
-import { VisibilityPlugin } from '@toolbox-web/grid/plugins/visibility';
+import '@toolbox-web/grid/features/visibility';
 
   const grid = document.querySelector<HTMLElement & {
     columns: ColumnConfig[];
@@ -36,7 +36,7 @@ import { VisibilityPlugin } from '@toolbox-web/grid/plugins/visibility';
         { field: 'salary', header: 'Salary', type: 'number', width: 120 },
         { field: 'active', header: 'Active', type: 'boolean', width: 80 },
       ],
-      plugins: [new VisibilityPlugin()],
+      features: { visibility: true },
     };
 
     grid.rows = Array.from({ length: 20 }, (_, i) => ({

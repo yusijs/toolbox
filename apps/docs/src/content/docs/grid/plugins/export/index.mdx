@@ -15,12 +15,12 @@ The Export plugin lets users download grid data as CSV, JSON, or other formats w
 ## Installation
 
 ```ts
-import { ExportPlugin } from '@toolbox-web/grid/plugins/export';
+import '@toolbox-web/grid/features/export';
 ```
 
 ## Basic Usage
 
-Add the plugin and call `exportCsv()` or `exportJson()` when you're ready to download. You can also combine it with the SelectionPlugin to export only selected rows.
+Enable the feature and call `exportCsv()` or `exportJson()` when you're ready to download. You can also combine it with the selection feature to export only selected rows.
 
 <Tabs syncKey="framework">
   <TabItem label="Vanilla JS">
@@ -32,13 +32,13 @@ grid.gridConfig = {
     { field: 'email', header: 'Email' },
     { field: 'department', header: 'Department' }
   ],
-  plugins: [
-    new ExportPlugin({
+  features: {
+    export: {
       filename: 'employees',
       format: 'csv',
       includeHeaders: true,
-    }),
-  ],
+    },
+  },
 };
 
 // Trigger export via button click
@@ -52,13 +52,12 @@ document.getElementById('export-btn').addEventListener('click', () => {
 ```tsx
 import '@toolbox-web/grid-react/features/export';
 import { DataGrid, useGrid } from '@toolbox-web/grid-react';
-import { ExportPlugin } from '@toolbox-web/grid/plugins/export';
 
 function EmployeeGrid({ data }) {
-  const { gridRef, getPlugin } = useGrid();
+  const { gridRef } = useGrid();
 
   const handleExport = () => {
-    getPlugin(ExportPlugin)?.exportCsv();
+    gridRef.current?.getPluginByName('export')?.exportCsv();
   };
 
   return (
@@ -82,9 +81,9 @@ function EmployeeGrid({ data }) {
   <TabItem label="Vue">
 ```html
 <script setup>
+import '@toolbox-web/grid-vue/features/export';
 import { TbwGrid, TbwGridColumn } from '@toolbox-web/grid-vue';
-import { ExportPlugin } from '@toolbox-web/grid/plugins/export';
-import { ref, markRaw } from 'vue';
+import { ref } from 'vue';
 
 const data = [
   { name: 'Alice', email: 'alice@example.com', department: 'Engineering' },
@@ -92,12 +91,6 @@ const data = [
 ];
 
 const gridRef = ref(null);
-
-const exportPlugin = markRaw(new ExportPlugin({
-  filename: 'employees',
-  format: 'csv',
-  includeHeaders: true,
-}));
 
 const handleExport = () => {
   gridRef.value?.element?.getPluginByName('export')?.exportCsv();
@@ -107,7 +100,8 @@ const handleExport = () => {
 <template>
   <div>
     <button @click="handleExport">Export CSV</button>
-    <TbwGrid ref="gridRef" :rows="data" :plugins="[exportPlugin]">
+    <TbwGrid ref="gridRef" :rows="data" :export="{ filename: 'employees', format: 'csv', includeHeaders: true }">
+
       <TbwGridColumn field="name" header="Name" />
       <TbwGridColumn field="email" header="Email" />
       <TbwGridColumn field="department" header="Department" />
@@ -123,7 +117,6 @@ import '@toolbox-web/grid-angular/features/export';
 
 import { Component, viewChild, ElementRef } from '@angular/core';
 import { Grid } from '@toolbox-web/grid-angular';
-import { ExportPlugin } from '@toolbox-web/grid/plugins/export';
 import type { ColumnConfig, GridElement } from '@toolbox-web/grid';
 
 @Component({

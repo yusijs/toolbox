@@ -49,7 +49,7 @@
 <script>
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
+import '@toolbox-web/grid/features/editing';
 
 const container = document.getElementById('editing-grid-mode-demo');
 if (container) {
@@ -62,7 +62,7 @@ if (container) {
       { field: 'quantity', header: 'Qty', type: 'number', editable: true },
       { field: 'price', header: 'Price', type: 'number', editable: true },
     ],
-    plugins: [new EditingPlugin({ mode: 'grid' })],
+    features: { editing: { mode: 'grid' } },
   };
 
   grid.rows = [

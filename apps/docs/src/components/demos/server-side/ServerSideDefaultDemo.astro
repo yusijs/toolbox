@@ -13,8 +13,8 @@ import DemoControls from '@components/DemoControls.astro';
 <script>
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { PinnedRowsPlugin } from '@toolbox-web/grid/plugins/pinned-rows';
-import { ServerSidePlugin } from '@toolbox-web/grid/plugins/server-side';
+import '@toolbox-web/grid/features/pinned-rows';
+import '@toolbox-web/grid/features/server-side';
 
 const container = document.getElementById('server-side-default-demo');
 if (container) {
@@ -60,19 +60,18 @@ if (container) {
   });
 
   function rebuild(pageSize = 50) {
-    const plugin = new ServerSidePlugin({ pageSize, cacheBlockSize: pageSize });
     grid.gridConfig = {
       columns,
-      plugins: [
-        plugin,
-        new PinnedRowsPlugin({
+      features: {
+        serverSide: { pageSize, cacheBlockSize: pageSize },
+        pinnedRows: {
           position: 'bottom',
           showRowCount: true,
           customPanels: [{ id: 'scroll-info', position: 'right', render: () => '<em>Scroll to load more rows...</em>' }],
-        }),
-      ],
+        },
+      },
     };
-    grid.ready().then(() => plugin.setDataSource(createDataSource() as any));
+    grid.ready().then(() => grid.getPluginByName('server-side')?.setDataSource(createDataSource() as any));
   }
 
   rebuild();

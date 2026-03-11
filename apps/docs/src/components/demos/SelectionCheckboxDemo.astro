@@ -8,7 +8,7 @@
 <script>
   import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-  import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
+import '@toolbox-web/grid/features/selection';
 
   const container = document.getElementById('checkbox-selection-demo');
   if (container) {
@@ -21,7 +21,7 @@ import { queryGrid } from '@toolbox-web/grid';
           { field: 'department', header: 'Department' },
           { field: 'salary', header: 'Salary', type: 'number' as const },
         ],
-        plugins: [new SelectionPlugin({ mode: 'row', checkbox: true })],
+        features: { selection: { mode: 'row', checkbox: true } },
       };
       grid.rows = [
         { id: 1, name: 'Alice', department: 'Engineering', salary: 95000 },

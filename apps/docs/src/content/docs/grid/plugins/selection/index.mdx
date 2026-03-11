@@ -15,7 +15,7 @@ The Selection plugin adds cell, row, and range selection capabilities to the gri
 ## Installation
 
 ```ts
-import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
+import '@toolbox-web/grid/features/selection';
 ```
 
 ## Basic Usage
@@ -24,7 +24,7 @@ import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
   <TabItem label="Vanilla JS">
   ```ts
   import '@toolbox-web/grid';
-  import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
+  import '@toolbox-web/grid/features/selection';
 
   const grid = document.querySelector('tbw-grid');
   grid.gridConfig = {
@@ -33,9 +33,9 @@ import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
       { field: 'name', header: 'Name' },
       { field: 'email', header: 'Email' },
     ],
-    plugins: [
-      new SelectionPlugin({ mode: 'row' }),
-    ],
+    features: {
+      selection: 'row',
+    },
   };
   grid.rows = data;
   ```
@@ -136,7 +136,7 @@ Add `checkbox: true` to show a selection checkbox column with a "select all" hea
 </ShowSource>
 
 ```ts
-new SelectionPlugin({ mode: 'row', checkbox: true })
+features: { selection: { mode: 'row', checkbox: true } }
 ```
 
 ## Configuration Options
@@ -148,7 +148,7 @@ You can disable selection grid-wide using `gridConfig.selectable`:
 ```ts
 grid.gridConfig = {
   selectable: false, // Disables ALL selection
-  plugins: [new SelectionPlugin({ mode: 'range' })],
+  features: { selection: 'range' },
 };
 ```
 
@@ -172,10 +172,12 @@ In data-entry grids, you may want single-click to only **focus** the row/cell fo
 :::
 
 ```ts
-new SelectionPlugin({
-  mode: 'row',
-  triggerOn: 'dblclick',  // Single-click focuses, double-click selects
-})
+features: {
+  selection: {
+    mode: 'row',
+    triggerOn: 'dblclick',  // Single-click focuses, double-click selects
+  },
+}
 ```
 
 ### Conditional Selection
@@ -183,10 +185,12 @@ new SelectionPlugin({
 Use the `isSelectable` callback to prevent selection of specific rows or cells:
 
 ```ts
-new SelectionPlugin({
-  mode: 'row',
-  isSelectable: (row) => row.status !== 'locked',
-})
+features: {
+  selection: {
+    mode: 'row',
+    isSelectable: (row) => row.status !== 'locked',
+  },
+}
 ```
 
 **Behavior of non-selectable rows/cells:**

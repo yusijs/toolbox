@@ -12,8 +12,8 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { ExportPlugin } from '@toolbox-web/grid/plugins/export';
-import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
+import '@toolbox-web/grid/features/export';
+import '@toolbox-web/grid/features/selection';
 
 const container = document.getElementById('export-export-selected-demo');
 if (container) {
@@ -34,19 +34,15 @@ if (container) {
 
   const grid = queryGrid('tbw-grid', container);
 
-  const plugin = new ExportPlugin({
-    includeHeaders: true,
-    onlyVisible: true,
-    onlySelected: true,
-    fileName: 'selected-export',
-  });
-
   grid.gridConfig = {
     columns,
-    plugins: [new SelectionPlugin({ mode: 'range' }), plugin],
+    features: {
+      selection: 'range',
+      export: { includeHeaders: true, onlyVisible: true, onlySelected: true, fileName: 'selected-export' },
+    },
   };
   grid.rows = sampleData;
 
-  container.querySelector('.export-csv')?.addEventListener('click', () => plugin.exportCsv());
+  container.querySelector('.export-csv')?.addEventListener('click', () => grid.getPluginByName('export')?.exportCsv());
 }
 </script>

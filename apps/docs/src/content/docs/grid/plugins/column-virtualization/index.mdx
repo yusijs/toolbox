@@ -14,7 +14,7 @@ The Column Virtualization plugin improves performance for grids with many column
 ## Installation
 
 ```ts
-import { ColumnVirtualizationPlugin } from '@toolbox-web/grid/plugins/column-virtualization';
+import '@toolbox-web/grid/features/column-virtualization';
 ```
 
 ## Basic Usage
@@ -23,13 +23,13 @@ import { ColumnVirtualizationPlugin } from '@toolbox-web/grid/plugins/column-vir
   <TabItem label="Vanilla JS">
 ```ts
 import '@toolbox-web/grid';
-import { ColumnVirtualizationPlugin } from '@toolbox-web/grid/plugins/column-virtualization';
+import '@toolbox-web/grid/features/column-virtualization';
 
 const grid = document.querySelector('tbw-grid');
 grid.gridConfig = {
   columns: generateManyColumns(100), // Your column generator
   fitMode: 'fixed', // Required for column virtualization
-  plugins: [new ColumnVirtualizationPlugin()],
+  features: { columnVirtualization: true },
 };
 grid.rows = data;
 ```

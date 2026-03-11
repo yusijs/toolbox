@@ -9,7 +9,7 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { MasterDetailPlugin } from '@toolbox-web/grid/plugins/master-detail';
+import '@toolbox-web/grid/features/master-detail';
 
 const container = document.getElementById('master-detail-expand-on-row-click-demo');
 if (container) {
@@ -35,7 +35,7 @@ if (container) {
       'License',
       'Hardware Kit',
     ];
-  
+
     return Array.from({ length: count }, (_, i) => {
       const itemCount = 1 + (i % 4);
       const items = Array.from({ length: itemCount }, (_, j) => ({
@@ -91,16 +91,16 @@ if (container) {
   };
 
   const grid = queryGrid('tbw-grid', container);
-      
+
       grid.gridConfig = {
         columns,
-        plugins: [
-          new MasterDetailPlugin({
+        features: {
+          masterDetail: {
             detailHeight: "auto",
             expandOnRowClick: true,
             detailRenderer,
-          }),
-        ],
+          },
+        },
       };
       grid.rows = generateOrderData(50);
 }

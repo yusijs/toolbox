@@ -9,7 +9,7 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { ContextMenuPlugin } from '@toolbox-web/grid/plugins/context-menu';
+import '@toolbox-web/grid/features/context-menu';
 
 const container = document.getElementById('context-menu-conditional-items-demo');
 if (container) {
@@ -50,7 +50,7 @@ if (container) {
 
       grid.gridConfig = {
         columns,
-        plugins: [new ContextMenuPlugin({ items: menuItems })],
+        features: { contextMenu: { items: menuItems } },
       };
       grid.rows = sampleData;
 }

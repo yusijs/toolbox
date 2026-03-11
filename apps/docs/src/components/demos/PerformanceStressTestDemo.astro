@@ -25,11 +25,11 @@
 <script>
   import '@toolbox-web/grid';
 import type { ColumnConfig } from '@toolbox-web/grid';
-import { ColumnVirtualizationPlugin } from '@toolbox-web/grid/plugins/column-virtualization';
-import { FilteringPlugin } from '@toolbox-web/grid/plugins/filtering';
-import { MultiSortPlugin } from '@toolbox-web/grid/plugins/multi-sort';
-import { PinnedColumnsPlugin } from '@toolbox-web/grid/plugins/pinned-columns';
-import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
+import '@toolbox-web/grid/features/column-virtualization';
+import '@toolbox-web/grid/features/filtering';
+import '@toolbox-web/grid/features/multi-sort';
+import '@toolbox-web/grid/features/pinned-columns';
+import '@toolbox-web/grid/features/selection';
 
   // #region Types & Helpers
   type ExtendedColumnConfig = ColumnConfig & { sticky?: 'left' | 'right'; filterable?: boolean };
@@ -177,13 +177,13 @@ import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
     grid.gridConfig = {
       columns: generateColumns(colCount, { sortable: true, filterable: true }),
       fitMode: 'fixed',
-      plugins: [
-        new SelectionPlugin({ mode: 'range' }),
-        new PinnedColumnsPlugin(),
-        new MultiSortPlugin({ maxSortColumns: 3 }),
-        new FilteringPlugin({ debounceMs: 0 }),
-        ...(colCount >= 20 ? [new ColumnVirtualizationPlugin({ threshold: 20, overscan: 3 })] : []),
-      ],
+      features: {
+        selection: 'range',
+        pinnedColumns: true,
+        multiSort: { maxSortColumns: 3 },
+        filtering: { debounceMs: 0 },
+        ...(colCount >= 20 ? { columnVirtualization: { threshold: 20, overscan: 3 } } : {}),
+      },
     };
     grid.rows = generateRows(rowCount, colCount);
   }
@@ -225,7 +225,7 @@ import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
 
     // 🎨 INITIAL RENDER
     statusEl.textContent = 'Testing: Initial render (baseline)...';
-    grid.gridConfig = { columns: [], plugins: [] };
+    grid.gridConfig = { columns: [] };
     grid.rows = [];
     await new Promise((r) => setTimeout(r, 50));
 
@@ -236,9 +236,9 @@ import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
     allResults.push({ name: 'Baseline render', category: 'render', time: renderTime, unit: 'ms', target: scaledByCells(100), passed: renderTime < scaledByCells(100) });
     updateResults();
 
-    // Render with plugins
-    statusEl.textContent = 'Testing: Initial render (with plugins)...';
-    grid.gridConfig = { columns: [], plugins: [] };
+    // Render with features
+    statusEl.textContent = 'Testing: Initial render (with features)...';
+    grid.gridConfig = { columns: [] };
     grid.rows = [];
     await new Promise((r) => setTimeout(r, 50));
 
@@ -247,17 +247,17 @@ import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
       grid.gridConfig = {
         columns: pluginColumns as ColumnConfig[],
         fitMode: 'fixed',
-        plugins: [
-          new SelectionPlugin({ mode: 'range' }),
-          new PinnedColumnsPlugin(),
-          new MultiSortPlugin({ maxSortColumns: 3 }),
-          new FilteringPlugin({ debounceMs: 0 }),
-          new ColumnVirtualizationPlugin({ threshold: 20, overscan: 3 }),
-        ],
+        features: {
+          selection: 'range',
+          pinnedColumns: true,
+          multiSort: { maxSortColumns: 3 },
+          filtering: { debounceMs: 0 },
+          columnVirtualization: { threshold: 20, overscan: 3 },
+        },
       };
       grid.rows = [...baseRows];
     });
-    allResults.push({ name: 'Render with 5 plugins', category: 'render', time: pluginRenderTime, unit: 'ms', target: scaledByCells(150), passed: pluginRenderTime < scaledByCells(150) });
+    allResults.push({ name: 'Render with 5 features', category: 'render', time: pluginRenderTime, unit: 'ms', target: scaledByCells(150), passed: pluginRenderTime < scaledByCells(150) });
     updateResults();
 
     // Warm render
@@ -269,20 +269,20 @@ import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
 
     // Time to interactive
     statusEl.textContent = 'Testing: Time to interactive...';
-    grid.gridConfig = { columns: [], plugins: [] };
+    grid.gridConfig = { columns: [] };
     grid.rows = [];
     await new Promise((r) => setTimeout(r, 50));
     const ttiStart = performance.now();
     grid.gridConfig = {
       columns: pluginColumns as ColumnConfig[],
       fitMode: 'fixed',
-      plugins: [
-        new SelectionPlugin({ mode: 'range' }),
-        new PinnedColumnsPlugin(),
-        new MultiSortPlugin({ maxSortColumns: 3 }),
-        new FilteringPlugin({ debounceMs: 0 }),
-        new ColumnVirtualizationPlugin({ threshold: 20, overscan: 3 }),
-      ],
+      features: {
+        selection: 'range',
+        pinnedColumns: true,
+        multiSort: { maxSortColumns: 3 },
+        filtering: { debounceMs: 0 },
+        columnVirtualization: { threshold: 20, overscan: 3 },
+      },
     };
     grid.rows = [...baseRows];
     await nextFrame();

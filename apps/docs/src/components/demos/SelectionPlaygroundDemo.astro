@@ -17,7 +17,7 @@ import DemoControls from '@components/DemoControls.astro';
 <script>
   import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
+import '@toolbox-web/grid/features/selection';
 
   const container = document.getElementById('playground-selection-demo');
   if (container) {
@@ -25,8 +25,6 @@ import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
     const output = container.querySelector<HTMLElement>('[data-output-id="selection-demo"]');
 
     if (grid) {
-      let plugin: InstanceType<typeof SelectionPlugin>;
-
       const sampleData = [
         { id: 1, name: 'Alice', department: 'Engineering', salary: 95000, email: 'alice@example.com' },
         { id: 2, name: 'Bob', department: 'Marketing', salary: 75000, email: 'bob@example.com' },
@@ -47,11 +45,11 @@ import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
       ];
 
       function setupGrid(mode: string) {
-        plugin = new SelectionPlugin({ mode: mode as 'cell' | 'row' | 'range' });
-        grid.gridConfig = { columns, plugins: [plugin] };
+        grid.gridConfig = { columns, features: { selection: mode as 'cell' | 'row' | 'range' } };
         grid.rows = sampleData;
 
         grid.addEventListener('selection-change', () => {
+          const plugin = grid.getPluginByName('selection');
           if (!plugin || !output) return;
           const sel = plugin.getSelection();
           const lines = ['<b>mode:</b> ' + sel.mode];

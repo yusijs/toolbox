@@ -15,7 +15,7 @@ import DemoControls from '@components/DemoControls.astro';
 <script>
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { ReorderPlugin } from '@toolbox-web/grid/plugins/reorder-columns';
+import '@toolbox-web/grid/features/reorder-columns';
 
 const container = document.getElementById('reorder-default-demo');
 if (container) {
@@ -37,7 +37,7 @@ if (container) {
   function rebuild(animation = 'flip', animationDuration = 200) {
     grid.gridConfig = {
       columns,
-      plugins: [new ReorderPlugin({ animation, animationDuration } as any)],
+      features: { reorderColumns: { animation, animationDuration } as any },
     };
     grid.rows = sampleData;
   }

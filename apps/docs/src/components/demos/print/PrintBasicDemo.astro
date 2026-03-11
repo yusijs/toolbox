@@ -12,18 +12,12 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { PrintPlugin } from '@toolbox-web/grid/plugins/print';
+import '@toolbox-web/grid/features/print';
 
 const container = document.getElementById('print-basic-demo');
 if (container) {
   const grid = queryGrid('tbw-grid', container);
   const btn = container.querySelector('#print-basic-btn');
-
-  const printPlugin = new PrintPlugin({
-    title: 'Employee Report',
-    includeTitle: true,
-    includeTimestamp: true,
-  });
 
   const employeeData = [
     { id: 1, name: 'Alice Johnson', department: 'Engineering', salary: 85000, status: 'Active', email: 'alice@company.com' },
@@ -48,7 +42,13 @@ if (container) {
       { field: 'salary', header: 'Salary', width: 100, align: 'right' },
       { field: 'status', header: 'Status', width: 100 },
     ],
-    plugins: [printPlugin],
+    features: {
+      print: {
+        title: 'Employee Report',
+        includeTitle: true,
+        includeTimestamp: true,
+      },
+    },
   };
   grid.rows = employeeData;
 

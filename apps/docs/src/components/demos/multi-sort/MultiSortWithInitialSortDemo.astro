@@ -9,7 +9,7 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { MultiSortPlugin } from '@toolbox-web/grid/plugins/multi-sort';
+import '@toolbox-web/grid/features/multi-sort';
 
 const container = document.getElementById('multi-sort-with-initial-sort-demo');
 if (container) {
@@ -31,21 +31,21 @@ if (container) {
   ];
 
   const grid = queryGrid('tbw-grid', container);
-      
-      const plugin = new MultiSortPlugin({
-        maxSortColumns: 3,
-        showSortIndex: true,
-      });
-  
+
       grid.gridConfig = {
         columns,
-        plugins: [plugin],
+        features: {
+          multiSort: {
+            maxSortColumns: 3,
+            showSortIndex: true,
+          },
+        },
       };
       grid.rows = sampleData;
-  
+
       // Apply initial sort after grid is ready
       grid.ready().then(() => {
-        plugin.setSortModel([
+        grid.getPluginByName('multi-sort')?.setSortModel([
           { field: 'department', direction: 'asc' },
           { field: 'salary', direction: 'desc' },
         ]);

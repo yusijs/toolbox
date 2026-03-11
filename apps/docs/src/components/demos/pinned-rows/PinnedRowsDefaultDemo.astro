@@ -15,7 +15,7 @@ import DemoControls from '@components/DemoControls.astro';
 <script>
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
-import { PinnedRowsPlugin } from '@toolbox-web/grid/plugins/pinned-rows';
+import '@toolbox-web/grid/features/pinned-rows';
 
 const container = document.getElementById('pinned-rows-default-demo');
 if (container) {
@@ -41,8 +41,8 @@ if (container) {
   function rebuild(position: 'top' | 'bottom' = 'bottom', showRowCount = true) {
     grid.gridConfig = {
       columns,
-      plugins: [
-        new PinnedRowsPlugin({
+      features: {
+        pinnedRows: {
           position,
           showRowCount,
           aggregationRows: [
@@ -57,8 +57,8 @@ if (container) {
               cells: { id: 'Totals:' },
             },
           ],
-        }),
-      ],
+        },
+      },
     };
     grid.rows = sampleData;
   }

@@ -9,7 +9,7 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { ResponsivePlugin } from '@toolbox-web/grid/plugins/responsive';
+import '@toolbox-web/grid/features/responsive';
 
 const container = document.getElementById('responsive-card-mode-demo');
 if (container) {
@@ -67,7 +67,7 @@ if (container) {
   ];
 
   const grid = queryGrid('tbw-grid', container);
-      
+
       grid.gridConfig = {
         columns: [
           { field: 'name', header: 'Name' },
@@ -75,7 +75,7 @@ if (container) {
           { field: 'salary', header: 'Salary', type: 'number' as const },
           { field: 'email', header: 'Email' },
         ],
-        plugins: [new ResponsivePlugin({ breakpoint: 500 })],
+        features: { responsive: { breakpoint: 500 } },
       };
       grid.rows = sampleData;
 }

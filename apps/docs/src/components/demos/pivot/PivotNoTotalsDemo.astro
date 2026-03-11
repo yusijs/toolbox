@@ -9,7 +9,7 @@
 import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-import { PivotPlugin } from '@toolbox-web/grid/plugins/pivot';
+import '@toolbox-web/grid/features/pivot';
 
 const container = document.getElementById('pivot-no-totals-demo');
 if (container) {
@@ -36,19 +36,19 @@ if (container) {
   ];
 
   const grid = queryGrid('tbw-grid', container);
-      
+
       grid.gridConfig = {
         columns,
-        plugins: [
-          new PivotPlugin({
+        features: {
+          pivot: {
             rowGroupFields: ['region', 'product'],
             columnGroupFields: ['quarter'],
             valueFields: [{ field: 'sales', aggFunc: 'sum', header: 'Total Sales' }],
             showTotals: false,
             showGrandTotal: false,
             showToolPanel: true,
-          }),
-        ],
+          },
+        },
       };
       grid.rows = salesData;
 }

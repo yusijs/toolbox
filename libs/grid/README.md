@@ -38,7 +38,7 @@ import { createGrid, queryGrid } from '@toolbox-web/grid';
 // Create a new typed grid
 const grid = createGrid<Employee>({
   columns: [{ field: 'name' }],
-  plugins: [new SelectionPlugin()],
+  features: { selection: 'row' },
 });
 
 // Query an existing grid with proper typing
@@ -59,10 +59,13 @@ The grid supports multiple configuration methods, all converging into a **single
 **1. Via `gridConfig` (recommended for complex setups):**
 
 ```typescript
+import '@toolbox-web/grid/features/selection';
+import '@toolbox-web/grid/features/editing';
+
 grid.gridConfig = {
   columns: [{ field: 'name' }, { field: 'age', type: 'number' }],
   fitMode: 'stretch',
-  plugins: [new SelectionPlugin({ mode: 'row' })],
+  features: { selection: 'row', editing: true },
   shell: { header: { title: 'My Data Grid' } },
 };
 ```
@@ -420,7 +423,8 @@ See the [documentation](https://toolboxjs.com/) for complete configuration examp
 interface GridConfig {
   columns?: ColumnConfig[];
   fitMode?: 'stretch' | 'fixed';
-  plugins?: BaseGridPlugin[]; // Array of plugin class instances
+  features?: Partial<FeatureConfig>; // Declarative feature configuration (recommended)
+  plugins?: BaseGridPlugin[]; // Manual plugin instances (advanced)
   icons?: GridIcons; // Centralized icon configuration
   shell?: ShellConfig; // Optional header bar and tool panels
   getRowId?: (row: T) => string; // Custom row ID resolver
@@ -504,7 +508,32 @@ Framework adapters (`@toolbox-web/grid-react`, `@toolbox-web/grid-angular`) prov
 
 ### Plugin Configuration Example
 
-Plugins are class instances that you import and instantiate with their configuration:
+#### Feature Props (Recommended)
+
+The simplest way to enable plugins is via **feature props** on `gridConfig.features`. Import the feature side-effect modules, then set the config declaratively:
+
+```typescript
+import '@toolbox-web/grid/features/selection';
+import '@toolbox-web/grid/features/grouping-rows';
+import '@toolbox-web/grid/features/filtering';
+
+grid.gridConfig = {
+  features: {
+    selection: { mode: 'row', multiple: true },
+    groupingRows: { groupOn: (row) => row.category, fullWidth: false, aggregators: { total: 'sum' } },
+    filtering: { debounceMs: 200 },
+  },
+};
+```
+
+Each feature import registers a factory; the grid creates the plugin instances from your config. This pattern is **tree-shakeable** — only imported features are bundled.
+
+> [!TIP]
+> For prototyping, import all features at once: `import '@toolbox-web/grid/features';`
+
+#### Manual Plugin Instantiation (Advanced)
+
+For full control (e.g., custom plugin subclasses or mixed feature+plugin setups), pass class instances to `plugins`:
 
 ```typescript
 import { GroupingRowsPlugin } from '@toolbox-web/grid/plugins/grouping-rows';
