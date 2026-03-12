@@ -273,7 +273,7 @@ Use the `*tbwEditor` structural directive for inline cell editing. Editor compon
 ```typescript
 import { Component, CUSTOM_ELEMENTS_SCHEMA, input, output } from '@angular/core';
 import { Grid, TbwRenderer, TbwEditor } from '@toolbox-web/grid-angular';
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
+import '@toolbox-web/grid-angular/features/editing';
 
 // Editor component - emits 'commit' with new value
 @Component({
@@ -314,7 +314,7 @@ export class EmployeeGridComponent {
       { field: 'name', header: 'Name', editable: true },
       { field: 'status', header: 'Status', editable: true },
     ],
-    plugins: [new EditingPlugin()],
+    features: { editing: true },
   };
 }
 ```

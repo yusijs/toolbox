@@ -685,16 +685,16 @@ import { GridIconProvider, TbwGrid } from '@toolbox-web/grid-vue';
 ```typescript
 import { markRaw } from 'vue';
 
-// ✅ Good: Prevents Vue from making plugins reactive
+// ✅ Good: Prevents Vue from making config deeply reactive
 const config = markRaw({
   columns: [...],
-  plugins: [new SelectionPlugin()],
+  features: { selection: true },
 });
 
-// ❌ Bad: Vue's reactivity can break plugin instances
+// ❌ Bad: Vue's reactivity wraps config objects in proxies
 const config = {
   columns: [...],
-  plugins: [new SelectionPlugin()],
+  features: { selection: true },
 };
 ```
 

@@ -15,38 +15,33 @@ While [feature props](/grid/react/getting-started/) are recommended for most use
 - Third-party or custom plugins
 
 ```tsx
+import '@toolbox-web/grid-react/features/selection';
+import '@toolbox-web/grid-react/features/editing';
+import '@toolbox-web/grid-react/features/clipboard';
+import '@toolbox-web/grid-react/features/undo-redo';
 import { useMemo } from 'react';
 import { DataGrid, type GridConfig } from '@toolbox-web/grid-react';
-import {
-  SelectionPlugin,
-  EditingPlugin,
-  ClipboardPlugin,
-  UndoRedoPlugin,
-} from '@toolbox-web/grid/all';
 
 function EmployeeGrid() {
-  // Create stable plugin instances with useMemo
-  const plugins = useMemo(() => [
-    new SelectionPlugin({ mode: 'range', checkbox: true }),
-    new EditingPlugin({ editOn: 'dblclick' }),
-    new ClipboardPlugin({ includeHeaders: true }),
-    new UndoRedoPlugin({ maxHistory: 100 }),
-  ], []);
-
-  const config: GridConfig<Employee> = {
+  const config = useMemo<GridConfig<Employee>>(() => ({
     columns: [
       { field: 'id', header: 'ID' },
       { field: 'name', header: 'Name', editable: true },
       { field: 'salary', header: 'Salary', editable: true, type: 'number' },
     ],
-    plugins,
-  };
+    features: {
+      selection: { mode: 'range', checkbox: true },
+      editing: { editOn: 'dblclick' },
+      clipboard: { includeHeaders: true },
+      undoRedo: { maxHistory: 100 },
+    },
+  }), []);
 
   return <DataGrid rows={employees} gridConfig={config} />;
 }
 ```
 
-> **Important**: Always use `useMemo` for plugin arrays to prevent re-creating plugins on every render.
+> **Important**: Always use `useMemo` for config objects to prevent re-creating them on every render.
 
 ## Combining Feature Props with Manual Plugins
 
@@ -549,28 +544,26 @@ function EmployeeGrid() {
 Switch between table and card views based on screen size:
 
 ```tsx
+import '@toolbox-web/grid-react/features/responsive';
+import { useMemo } from 'react';
 import { DataGrid, type GridConfig } from '@toolbox-web/grid-react';
-import { ResponsivePlugin } from '@toolbox-web/grid/all';
 
 function ResponsiveGrid() {
-  const responsivePlugin = useMemo(
-    () => new ResponsivePlugin({
-      breakpoint: 768,           // Switch at 768px
-      cardTitleField: 'name',    // Show name as card title
-      cardSubtitleField: 'role', // Show role as subtitle
-    }),
-    []
-  );
-
-  const config: GridConfig<Employee> = {
+  const config = useMemo<GridConfig<Employee>>(() => ({
     columns: [
       { field: 'name', header: 'Name' },
       { field: 'role', header: 'Role' },
       { field: 'department', header: 'Department' },
       { field: 'salary', header: 'Salary', type: 'number' },
     ],
-    plugins: [responsivePlugin],
-  };
+    features: {
+      responsive: {
+        breakpoint: 768,           // Switch at 768px
+        cardTitleField: 'name',    // Show name as card title
+        cardSubtitleField: 'role', // Show role as subtitle
+      },
+    },
+  }), []);
 
   return <DataGrid rows={employees} gridConfig={config} />;
 }
@@ -647,13 +640,13 @@ function App() {
 // ✅ Good: Memoized config
 const config = useMemo<GridConfig<Employee>>(() => ({
   columns: [/* ... */],
-  plugins: [new SelectionPlugin()],
+  features: { selection: true },
 }), []);
 
 // ❌ Bad: Creates new config every render
 const config: GridConfig<Employee> = {
   columns: [/* ... */],
-  plugins: [new SelectionPlugin()], // New instance every render!
+  features: { selection: true }, // New object every render!
 };
 ```
 
@@ -740,19 +733,18 @@ import '@toolbox-web/grid-react/features/selection';
 <DataGrid selection="range" />
 ```
 
-### Plugins recreated on every render?
+### Config object recreated on every render?
 
-Wrap in `useMemo`:
+Wrap in `useMemo`, or use feature props directly on `<DataGrid>` instead:
 
 ```tsx
-// ❌ Bad: New array and instances every render
-const config = {
-  plugins: [new SelectionPlugin()],
-};
+// ✅ Best: Use feature props — no config object needed
+import '@toolbox-web/grid-react/features/selection';
+<DataGrid selection="row" />
 
-// ✅ Good: Stable reference
+// ✅ Also good: Stable config reference
 const config = useMemo(() => ({
-  plugins: [new SelectionPlugin()],
+  features: { selection: true },
 }), []);
 ```
 

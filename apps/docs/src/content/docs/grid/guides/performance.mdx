@@ -28,14 +28,14 @@ grid.gridConfig = {
 
 ### Column Virtualization
 
-For grids with many columns (50+), enable the `ColumnVirtualizationPlugin`:
+For grids with many columns (50+), enable column virtualization:
 
 ```typescript
-import { ColumnVirtualizationPlugin } from '@toolbox-web/grid/plugins/column-virtualization';
+import '@toolbox-web/grid/features/column-virtualization';
 
 grid.gridConfig = {
   columns: manyColumns,
-  plugins: [new ColumnVirtualizationPlugin()],
+  features: { columnVirtualization: true },
 };
 ```
 
@@ -58,18 +58,18 @@ When multiple phases are requested in the same frame, only the highest-priority 
 
 ## Bundle Size Optimization
 
-### Tree-Shaking Plugins
+### Tree-Shaking Features
 
-The most important optimization: **only import the plugins you use**.
+The most important optimization: **only import the features you use**.
 
 ```typescript
-// ✅ Optimal: ~45 KB core + only plugins you need
+// ✅ Optimal: ~45 KB core + only features you need
 import '@toolbox-web/grid';
-import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
+import '@toolbox-web/grid/features/selection';
+import '@toolbox-web/grid/features/editing';
 
 // ❌ Heavy: imports ALL plugins even if you use two
-import { SelectionPlugin, EditingPlugin } from '@toolbox-web/grid/all';
+import '@toolbox-web/grid/all';
 ```
 
 ### Budget Reference
@@ -118,12 +118,14 @@ for (const newRow of newRows) {
 
 ### Debounce Filtering
 
-When using `FilteringPlugin` with a large dataset, increase the debounce to reduce re-filtering:
+When using filtering with a large dataset, increase the debounce to reduce re-filtering:
 
 ```typescript
-import { FilteringPlugin } from '@toolbox-web/grid/plugins/filtering';
+import '@toolbox-web/grid/features/filtering';
 
-new FilteringPlugin({ debounceMs: 300 }); // Default: 200
+grid.gridConfig = {
+  features: { filtering: { debounceMs: 300 } }, // Default: 200
+};
 ```
 
 ### Custom Sort Comparators

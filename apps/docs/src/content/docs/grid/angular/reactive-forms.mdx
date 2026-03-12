@@ -26,7 +26,7 @@ import {
   ReactiveFormsModule, Validators, AbstractControl
 } from '@angular/forms';
 import { Grid, GridFormArray, TbwEditor, TbwRenderer } from '@toolbox-web/grid-angular';
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
+import '@toolbox-web/grid-angular/features/editing';
 
 // Custom validated input editor
 @Component({
@@ -107,7 +107,7 @@ export class FormArrayExample {
       { field: 'name', header: 'Name', editable: true },
       { field: 'age', header: 'Age', editable: true },
     ],
-    plugins: [new EditingPlugin()],
+    features: { editing: true },
   };
 
   getFormErrors(): string[] {
@@ -293,7 +293,7 @@ For large datasets, `GridFormArray` can be slow because it creates **all FormGro
 import { Component, inject, signal, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Grid, GridLazyForm, TbwEditor } from '@toolbox-web/grid-angular';
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
+import '@toolbox-web/grid-angular/features/editing';
 
 interface Employee {
   id: number;
@@ -348,7 +348,7 @@ export class LazyFormExample {
       { field: 'lastName', header: 'Last Name', editable: true },
       { field: 'salary', header: 'Salary', editable: true, type: 'number' },
     ],
-    plugins: [new EditingPlugin()],
+    features: { editing: true },
   };
 }
 ```
@@ -475,7 +475,7 @@ gridConfig = {
     { field: 'name', header: 'Name', editable: true },
     { field: 'age', header: 'Age', editable: true, type: 'number' },
   ],
-  plugins: [new EditingPlugin({ mode: 'grid' })],
+  features: { editing: { mode: 'grid' } },
 };
 ```
 
@@ -533,7 +533,7 @@ export class GridModeFormArrayExample {
       { field: 'name', header: 'Name', editable: true },
       { field: 'age', header: 'Age', editable: true, type: 'number' },
     ],
-    plugins: [new EditingPlugin({ mode: 'grid' })],
+    features: { editing: { mode: 'grid' } },
   };
 
   save() {

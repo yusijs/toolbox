@@ -1,11 +1,11 @@
 ---
 title: Common Patterns
-description: Practical recipes for combining plugins and grid features. Covers data browsing, editable grids, master-detail, grouping, export, and more.
+description: Practical recipes for combining grid features. Covers data browsing, editable grids, master-detail, grouping, export, and more.
 ---
 
 import { LinkCard, CardGrid, Tabs, TabItem } from '@astrojs/starlight/components';
 
-Real-world grids rarely use a single plugin in isolation. This guide shows **tested combinations** that solve everyday requirements.
+Real-world grids rarely use a single feature in isolation. This guide shows **tested combinations** that solve everyday requirements.
 
 ## Data Browsing & Selection
 
@@ -15,10 +15,10 @@ Real-world grids rarely use a single plugin in isolation. This guide shows **tes
   <TabItem label="Vanilla JS">
 ```typescript
 import '@toolbox-web/grid';
+import '@toolbox-web/grid/features/selection';
+import '@toolbox-web/grid/features/filtering';
+import '@toolbox-web/grid/features/multi-sort';
 import { queryGrid } from '@toolbox-web/grid';
-import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
-import { FilteringPlugin } from '@toolbox-web/grid/plugins/filtering';
-import { MultiSortPlugin } from '@toolbox-web/grid/plugins/multi-sort';
 import type { ColumnConfig } from '@toolbox-web/grid';
 
 const grid = queryGrid<Employee>('#grid');
@@ -29,11 +29,11 @@ grid.gridConfig = {
     { field: 'department', header: 'Department', filterable: true },
     { field: 'salary', header: 'Salary', type: 'number', sortable: true },
   ],
-  plugins: [
-    new SelectionPlugin({ mode: 'row', multiSelect: true }),
-    new FilteringPlugin({ debounceMs: 200 }),
-    new MultiSortPlugin(),
-  ],
+  features: {
+    selection: { mode: 'row', multiSelect: true },
+    filtering: { debounceMs: 200 },
+    multiSort: true,
+  },
 };
 
 // React to selected rows
@@ -152,9 +152,9 @@ Use `getSelectedRows()` instead of `getSelectedRowIndices()` — row objects are
 <Tabs syncKey="framework">
   <TabItem label="Vanilla JS">
 ```typescript
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
-import { UndoRedoPlugin } from '@toolbox-web/grid/plugins/undo-redo';
-import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
+import '@toolbox-web/grid/features/editing';
+import '@toolbox-web/grid/features/undo-redo';
+import '@toolbox-web/grid/features/selection';
 
 grid.gridConfig = {
   columns: [
@@ -163,11 +163,11 @@ grid.gridConfig = {
     { field: 'email', header: 'Email', editable: true },
     { field: 'active', header: 'Active', type: 'boolean', editable: true },
   ],
-  plugins: [
-    new EditingPlugin({ editOn: 'dblclick', dirtyTracking: true }),
-    new UndoRedoPlugin(),                    // Must come after EditingPlugin
-    new SelectionPlugin({ mode: 'cell' }),
-  ],
+  features: {
+    editing: { editOn: 'dblclick', dirtyTracking: true },
+    undoRedo: true,
+    selection: 'cell',
+  },
   getRowId: (row) => row.id,                 // Required for dirty tracking
 };
 
@@ -324,8 +324,9 @@ export class EditableGridComponent {
   </TabItem>
 </Tabs>
 
-:::danger
-`EditingPlugin` must be loaded **before** `UndoRedoPlugin`. Wrong order throws a runtime error.
+:::tip
+When using the features API, plugin dependencies are resolved automatically — no need to worry about ordering.
+If using the advanced plugins API directly, `EditingPlugin` must be loaded **before** `UndoRedoPlugin`.
 :::
 
 ## Grouped Data with Aggregates
@@ -335,8 +336,8 @@ export class EditableGridComponent {
 <Tabs syncKey="framework">
   <TabItem label="Vanilla JS">
 ```typescript
-import { GroupingRowsPlugin } from '@toolbox-web/grid/plugins/grouping-rows';
-import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
+import '@toolbox-web/grid/features/grouping-rows';
+import '@toolbox-web/grid/features/selection';
 
 const columns = [
   { field: 'department', header: 'Department' },
@@ -358,10 +359,10 @@ const columns = [
 
 grid.gridConfig = {
   columns,
-  plugins: [
-    new GroupingRowsPlugin({ groupOn: (row) => [row.department], defaultExpanded: true }),
-    new SelectionPlugin({ mode: 'row' }),
-  ],
+  features: {
+    groupingRows: { groupOn: (row) => [row.department], defaultExpanded: true },
+    selection: 'row',
+  },
 };
 ```
   </TabItem>
@@ -466,9 +467,9 @@ export class DepartmentGridComponent {
 <Tabs syncKey="framework">
   <TabItem label="Vanilla JS">
 ```typescript
-import { ExportPlugin } from '@toolbox-web/grid/plugins/export';
-import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
-import { FilteringPlugin } from '@toolbox-web/grid/plugins/filtering';
+import '@toolbox-web/grid/features/export';
+import '@toolbox-web/grid/features/selection';
+import '@toolbox-web/grid/features/filtering';
 
 grid.gridConfig = {
   columns: [
@@ -476,11 +477,11 @@ grid.gridConfig = {
     { field: 'email', header: 'Email' },
     { field: 'department', header: 'Department', filterable: true },
   ],
-  plugins: [
-    new SelectionPlugin({ mode: 'row', multiSelect: true }),
-    new FilteringPlugin(),
-    new ExportPlugin(),
-  ],
+  features: {
+    selection: { mode: 'row', multiSelect: true },
+    filtering: true,
+    export: true,
+  },
 };
 
 // Export button — exports only selected rows (or all if none selected)
@@ -582,7 +583,7 @@ export class ExportableGridComponent {
 <Tabs syncKey="framework">
   <TabItem label="Vanilla JS">
 ```typescript
-import { MasterDetailPlugin } from '@toolbox-web/grid/plugins/master-detail';
+import '@toolbox-web/grid/features/master-detail';
 
 grid.gridConfig = {
   columns: [
@@ -590,8 +591,8 @@ grid.gridConfig = {
     { field: 'customer', header: 'Customer' },
     { field: 'total', header: 'Total', type: 'number' },
   ],
-  plugins: [
-    new MasterDetailPlugin({
+  features: {
+    masterDetail: {
       detailRenderer: (ctx) => {
         const container = document.createElement('div');
         container.style.padding = '1rem';
@@ -610,8 +611,8 @@ grid.gridConfig = {
         container.appendChild(detail);
         return container;
       },
-    }),
-  ],
+    },
+  },
 };
 ```
   </TabItem>
@@ -721,10 +722,10 @@ export class OrderGridComponent {
 <Tabs syncKey="framework">
   <TabItem label="Vanilla JS">
 ```typescript
-import { PinnedColumnsPlugin } from '@toolbox-web/grid/plugins/pinned-columns';
-import { ColumnVirtualizationPlugin } from '@toolbox-web/grid/plugins/column-virtualization';
-import { MultiSortPlugin } from '@toolbox-web/grid/plugins/multi-sort';
-import { FilteringPlugin } from '@toolbox-web/grid/plugins/filtering';
+import '@toolbox-web/grid/features/pinned-columns';
+import '@toolbox-web/grid/features/column-virtualization';
+import '@toolbox-web/grid/features/multi-sort';
+import '@toolbox-web/grid/features/filtering';
 
 grid.gridConfig = {
   columns: [
@@ -732,12 +733,12 @@ grid.gridConfig = {
     { field: 'name', header: 'Name', pinned: 'left', width: 180 },
     // ... many more columns
   ],
-  plugins: [
-    new PinnedColumnsPlugin(),
-    new ColumnVirtualizationPlugin(),
-    new MultiSortPlugin(),
-    new FilteringPlugin({ debounceMs: 300 }),
-  ],
+  features: {
+    pinnedColumns: true,
+    columnVirtualization: true,
+    multiSort: true,
+    filtering: { debounceMs: 300 },
+  },
   fitMode: 'none', // Let columns use natural widths
 };
 ```

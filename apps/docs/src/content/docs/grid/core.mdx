@@ -724,12 +724,14 @@ The shell wraps the grid with an optional **header bar** (title + toolbar) and a
 
 ### Basic Shell
 
-Enable the shell by providing a `shell.header.title`. Plugins like `VisibilityPlugin` automatically register a tool panel when the shell is active.
+Enable the shell by providing a `shell.header.title`. Features like `visibility` automatically register a tool panel when the shell is active.
 
 ```typescript
+import '@toolbox-web/grid/features/visibility';
+
 grid.gridConfig = {
   shell: { header: { title: 'Employee Data' } },
-  plugins: [new VisibilityPlugin()],
+  features: { visibility: true },
 };
 ```
 

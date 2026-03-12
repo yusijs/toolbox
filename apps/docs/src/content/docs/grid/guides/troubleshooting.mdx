@@ -128,15 +128,16 @@ grid.toggleToolPanel?.();
 
 ### Module not found: '@toolbox-web/grid/plugins/selection'
 
-**Solution**: Check your import path and ensure the package is installed:
+**Solution**: Use feature imports (recommended) or check your plugin import path:
 
 ```typescript
-// ✅ Recommended: individual imports (best tree-shaking)
+// ✅ Recommended: features API (side-effect imports)
+import '@toolbox-web/grid/features/selection';
+import '@toolbox-web/grid/features/filtering';
+
+// ✅ Alternative: plugin imports (advanced usage)
 import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
 import { FilteringPlugin } from '@toolbox-web/grid/plugins/filtering';
-
-// ⚠️ Alternative: /all includes all plugins (larger bundle)
-// import { SelectionPlugin, FilteringPlugin } from '@toolbox-web/grid/all';
 ```
 
 If using TypeScript, ensure your `tsconfig.json` has proper module resolution:
@@ -296,21 +297,26 @@ grid.addEventListener('cell-commit', (e: CustomEvent<CellCommitDetail>) => {
 
 **Checklist**:
 
-1. **Plugin instantiated**: Pass `new Plugin()`, not the class:
+1. **Feature imported**: Use the features API (recommended):
+
+```typescript
+// ✅ Recommended — features API
+import '@toolbox-web/grid/features/selection';
+
+grid.gridConfig = {
+  features: { selection: 'row' },
+};
+```
+
+2. **Or plugin instantiated**: When using the plugins API, pass `new Plugin()`, not the class:
 
 ```typescript
 // ❌ Wrong - passing class, not instance
 plugins: [SelectionPlugin]
 
 // ✅ Correct - pass instance
-plugins: [new SelectionPlugin({ mode: 'row' })]
-```
-
-2. **Plugin imported**: Ensure import is from correct path:
-
-```typescript
-// Recommended
 import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
+plugins: [new SelectionPlugin({ mode: 'row' })]
 ```
 
 3. **Configuration valid**: Check plugin docs for required config options.
@@ -319,7 +325,8 @@ import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
 
 **Problem**: Two plugins don't work well together.
 
-**Solution**: Check plugin order — some plugins should come before others:
+**Solution**: Check plugin order — some plugins should come before others.
+When using the features API, dependencies are resolved automatically. When using the plugins API directly:
 
 ```typescript
 plugins: [

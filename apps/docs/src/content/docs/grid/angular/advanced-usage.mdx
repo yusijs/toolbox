@@ -199,11 +199,12 @@ const columns: ColumnConfig[] = [
 
 ## Controlled Selection
 
-Manage selection state externally via the `SelectionPlugin` API:
+Manage selection state externally via the selection feature API:
 
 ```typescript
 import { Component, viewChild, ElementRef, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { Grid } from '@toolbox-web/grid-angular';
+import '@toolbox-web/grid-angular/features/selection';
 import type { DataGridElement } from '@toolbox-web/grid';
 
 @Component({
@@ -215,6 +216,7 @@ import type { DataGridElement } from '@toolbox-web/grid';
       #grid
       [rows]="employees"
       [columns]="columns"
+      [selection]="'row'"
       [gridConfig]="gridConfig"
       (selection-change)="onSelectionChange($event)"
     ></tbw-grid>
@@ -229,7 +231,7 @@ export class EmployeeGridComponent {
   selectedCount = 0;
 
   gridConfig = {
-    plugins: [new SelectionPlugin({ mode: 'row', checkbox: true })],
+    features: { selection: { mode: 'row', checkbox: true } },
   };
 
   onSelectionChange(event: CustomEvent) {
@@ -257,7 +259,6 @@ that automatically update when the selection changes:
 import { Component, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { Grid } from '@toolbox-web/grid-angular';
 import { injectGridSelection } from '@toolbox-web/grid-angular/features/selection';
-import { SelectionPlugin } from '@toolbox-web/grid/all';
 
 @Component({
   selector: 'app-employee-grid',
@@ -277,7 +278,7 @@ export class EmployeeGridComponent {
   selectedCount = computed(() => this.gridSelection.selectedRowIndices().length);
 
   gridConfig = {
-    plugins: [new SelectionPlugin({ mode: 'row', checkbox: true })],
+    features: { selection: { mode: 'row', checkbox: true } },
   };
 }
 ```
@@ -357,7 +358,7 @@ const gridConfig: GridConfig = {
 };
 ```
 
-The grid automatically handles virtualization — only visible rows are in the DOM. For very small datasets (≤8 rows), virtualization is bypassed.
+The grid automatically handles virtualization — only visible rows are in the DOM. If you display the full height of the grid, virtualization is bypassed.
 
 ## Custom Context Menu Actions
 
@@ -366,7 +367,7 @@ Add a right-click context menu with custom actions:
 ```typescript
 import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { Grid } from '@toolbox-web/grid-angular';
-import { ContextMenuPlugin } from '@toolbox-web/grid/all';
+import '@toolbox-web/grid-angular/features/context-menu';
 import type { GridConfig, ContextMenuItem } from '@toolbox-web/grid';
 
 @Component({
@@ -382,8 +383,8 @@ export class EmployeeGridComponent {
 
   gridConfig: GridConfig = {
     columns: [/* ... */],
-    plugins: [
-      new ContextMenuPlugin({
+    features: {
+      contextMenu: {
         items: [
           {
             id: 'copy',
@@ -405,8 +406,8 @@ export class EmployeeGridComponent {
             },
           },
         ] as ContextMenuItem[],
-      }),
-    ],
+      },
+    },
   };
 }
 ```
@@ -419,7 +420,7 @@ Load data from a server with sorting and filtering handled remotely:
 import { Component, inject, signal, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Grid } from '@toolbox-web/grid-angular';
-import { ServerSidePlugin } from '@toolbox-web/grid/all';
+import '@toolbox-web/grid-angular/features/server-side';
 import type { GridConfig, ServerDataSource } from '@toolbox-web/grid';
 
 interface Employee {
@@ -465,21 +466,21 @@ export class EmployeeGridComponent {
       { field: 'name', header: 'Name', sortable: true },
       { field: 'department', header: 'Department' },
     ],
-    plugins: [
-      new ServerSidePlugin({ dataSource: this.dataSource }),
-    ],
+    features: {
+      serverSide: { dataSource: this.dataSource },
+    },
   };
 }
 ```
 
 ## Responsive Layouts
 
-Use `ResponsivePlugin` with the Angular `GridResponsiveCard` directive for mobile-friendly card layouts:
+Use the responsive feature with the Angular `GridResponsiveCard` directive for mobile-friendly card layouts:
 
 ```typescript
 import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { Grid, GridResponsiveCard } from '@toolbox-web/grid-angular';
-import { ResponsivePlugin } from '@toolbox-web/grid/all';
+import '@toolbox-web/grid-angular/features/responsive';
 import type { GridConfig } from '@toolbox-web/grid';
 
 @Component({
@@ -502,12 +503,12 @@ export class EmployeeGridComponent {
 
   gridConfig: GridConfig = {
     columns: [/* ... */],
-    plugins: [
-      new ResponsivePlugin({
+    features: {
+      responsive: {
         breakpoint: 600,
         cardTitleField: 'name',
-      }),
-    ],
+      },
+    },
   };
 }
 ```
@@ -519,7 +520,7 @@ Use the `GridDetailView` directive for expandable detail panels with Angular tem
 ```typescript
 import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { Grid, GridDetailView } from '@toolbox-web/grid-angular';
-import { MasterDetailPlugin } from '@toolbox-web/grid/all';
+import '@toolbox-web/grid-angular/features/master-detail';
 import type { GridConfig } from '@toolbox-web/grid';
 
 @Component({
@@ -544,7 +545,7 @@ export class EmployeeGridComponent {
 
   gridConfig: GridConfig = {
     columns: [/* ... */],
-    plugins: [new MasterDetailPlugin()],
+    features: { masterDetail: true },
   };
 }
 ```

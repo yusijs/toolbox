@@ -55,15 +55,15 @@ Always sanitize data from external sources before feeding it to the grid:
 
 ### Bundle Size
 
-Import only the plugins you need for optimal bundle size:
+Import only the features you need for optimal bundle size:
 
 ```typescript
-// ✅ Tree-shakeable individual imports
-import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
-import { FilteringPlugin } from '@toolbox-web/grid/plugins/filtering';
+// ✅ Tree-shakeable side-effect imports
+import '@toolbox-web/grid/features/selection';
+import '@toolbox-web/grid/features/filtering';
 
 // ❌ Imports everything — no tree-shaking
-import { SelectionPlugin, FilteringPlugin } from '@toolbox-web/grid/all';
+import '@toolbox-web/grid/all';
 ```
 
 Target bundle sizes:

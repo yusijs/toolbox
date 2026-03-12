@@ -442,9 +442,9 @@ await grid.resetChangedRows();
 const selection = grid.getPluginByName('selection');
 selection?.selectAll(); // ✅ SelectionPlugin methods are available
 
-// Alternative — get by class (requires import)
+// Alternative — get by class (requires plugin import)
 import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
-const sel = grid.getPluginByName('selection');
+const sel = grid.getPlugin(SelectionPlugin);
 
 // Check if plugin is registered
 if (selection) {
