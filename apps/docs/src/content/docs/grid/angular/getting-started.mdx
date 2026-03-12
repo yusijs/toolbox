@@ -161,46 +161,6 @@ Each feature input enables a specific plugin with simplified configuration:
 <tbw-grid [selectable]="false" [selection]="'range'" />  <!-- plugin loaded but disabled -->
 ```
 
-## Advanced: Plugin-Based Configuration
-
-For complex scenarios requiring dynamic plugin toggling or advanced configuration, use the plugin-based pattern:
-
-```typescript
-import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { Grid } from '@toolbox-web/grid-angular';
-import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
-import { MultiSortPlugin } from '@toolbox-web/grid/plugins/multi-sort';
-import { FilteringPlugin } from '@toolbox-web/grid/plugins/filtering';
-
-@Component({
-  imports: [Grid],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  template: `
-    <tbw-grid [rows]="employees" [gridConfig]="config" style="height: 400px; display: block;" />
-  `,
-})
-export class EmployeeGridComponent {
-  employees = [/* ... */];
-
-  // Dynamic plugin configuration - useful when plugins need to be toggled at runtime
-  config = {
-    columns: [
-      { field: 'id', header: 'ID', width: 70 },
-      { field: 'name', header: 'Name', editable: true, sortable: true },
-      { field: 'department', header: 'Department', editable: true },
-      { field: 'salary', header: 'Salary', type: 'number' },
-    ],
-    plugins: [
-      new SelectionPlugin({ mode: 'range' }),
-      new EditingPlugin({ editOn: 'dblclick' }),
-      new MultiSortPlugin(),
-      new FilteringPlugin({ debounceMs: 200 }),
-    ],
-  };
-}
-```
-
 ## Custom Cell Renderers
 
 Use the `*tbwRenderer` structural directive to customize how cell values are displayed:

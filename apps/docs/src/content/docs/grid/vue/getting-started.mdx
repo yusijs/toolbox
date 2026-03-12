@@ -178,56 +178,6 @@ Each feature prop enables a specific plugin with simplified configuration:
 </template>
 ```
 
-## Advanced: Plugin-Based Configuration
-
-For complex scenarios requiring dynamic plugin toggling or advanced configuration, use the plugin-based pattern:
-
-```html
-<script setup lang="ts">
-import { TbwGrid, type GridConfig } from '@toolbox-web/grid-vue';
-import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
-import { EditingPlugin } from '@toolbox-web/grid/plugins/editing';
-import { MultiSortPlugin } from '@toolbox-web/grid/plugins/multi-sort';
-import { FilteringPlugin } from '@toolbox-web/grid/plugins/filtering';
-import { markRaw, ref } from 'vue';
-
-interface Employee {
-  id: number;
-  name: string;
-  department: string;
-  salary: number;
-}
-
-const employees = ref<Employee[]>([/* ... */]);
-
-// Use markRaw to prevent Vue from making plugins reactive
-const config = markRaw<GridConfig<Employee>>({
-  columns: [
-    { field: 'id', header: 'ID', width: 70 },
-    { field: 'name', header: 'Name', editable: true, sortable: true },
-    { field: 'department', header: 'Department', editable: true },
-    { field: 'salary', header: 'Salary', type: 'number' },
-  ],
-  plugins: [
-    new SelectionPlugin({ mode: 'range' }),
-    new EditingPlugin({ editOn: 'dblclick' }),
-    new MultiSortPlugin(),
-    new FilteringPlugin({ debounceMs: 200 }),
-  ],
-});
-</script>
-
-<template>
-  <TbwGrid
-    :rows="employees"
-    :grid-config="config"
-    style="height: 400px; display: block"
-  />
-</template>
-```
-
-> **Important**: Always use `markRaw()` for grid configs containing plugins to prevent Vue's reactivity system from interfering with plugin instances.
-
 ## Custom Cell Renderers
 
 Use the `TbwGridColumn` component with the `#cell` slot to customize how cell values are displayed:
