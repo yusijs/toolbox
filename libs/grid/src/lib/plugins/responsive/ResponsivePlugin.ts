@@ -140,6 +140,7 @@ export class ResponsivePlugin<T = unknown> extends BaseGridPlugin<ResponsivePlug
         width: this.#currentWidth,
         breakpoint: this.config.breakpoint ?? 0,
       } satisfies ResponsiveChangeDetail);
+      this.requestRender();
     }
   }
 
