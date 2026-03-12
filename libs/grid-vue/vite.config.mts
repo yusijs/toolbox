@@ -9,7 +9,7 @@ import dts from 'vite-plugin-dts';
 const outDir = path.resolve(import.meta.dirname, '../../dist/libs/grid-vue');
 
 // Resolve @toolbox-web/grid paths for tests
-const gridDistPath = path.resolve(import.meta.dirname, '../../dist/libs/grid');
+const gridSrcPath = path.resolve(import.meta.dirname, '../../libs/grid/src');
 
 /** Copy README.md to dist for npm publishing */
 function copyReadme(): Plugin {
@@ -113,20 +113,17 @@ export default defineConfig(() => ({
       provider: 'v8' as const,
     },
     alias: [
-      // Resolve @toolbox-web/grid/features/* to dist
+      // Resolve @toolbox-web/grid imports to grid source (so tests pass without building grid)
       {
         find: /^@toolbox-web\/grid\/features\/(.+)$/,
-        replacement: path.join(gridDistPath, 'lib/features/$1.js'),
+        replacement: path.join(gridSrcPath, 'lib/features/$1.ts'),
       },
-      // Resolve @toolbox-web/grid/plugins/* to dist
       {
         find: /^@toolbox-web\/grid\/plugins\/(.+)$/,
-        replacement: path.join(gridDistPath, 'lib/plugins/$1/index.js'),
+        replacement: path.join(gridSrcPath, 'lib/plugins/$1/index.ts'),
       },
-      // Resolve @toolbox-web/grid/all to dist
-      { find: '@toolbox-web/grid/all', replacement: path.join(gridDistPath, 'all.js') },
-      // Resolve @toolbox-web/grid to dist
-      { find: '@toolbox-web/grid', replacement: path.join(gridDistPath, 'index.js') },
+      { find: '@toolbox-web/grid/all', replacement: path.join(gridSrcPath, 'all.ts') },
+      { find: '@toolbox-web/grid', replacement: path.join(gridSrcPath, 'public.ts') },
     ],
   },
 }));

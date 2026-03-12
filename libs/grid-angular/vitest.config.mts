@@ -2,8 +2,8 @@
 import * as path from 'path';
 import { defineConfig } from 'vitest/config';
 
-// Resolve @toolbox-web/grid paths for tests
-const gridDistPath = path.resolve(import.meta.dirname, '../../dist/libs/grid');
+// Resolve @toolbox-web/grid paths for tests (point to source so tests work without building grid first)
+const gridSrcPath = path.resolve(import.meta.dirname, '../../libs/grid/src');
 
 export default defineConfig({
   root: import.meta.dirname,
@@ -30,20 +30,20 @@ export default defineConfig({
         find: '@toolbox-web/grid-angular',
         replacement: path.join(import.meta.dirname, 'src/index.ts'),
       },
-      // Resolve plugin imports to dist for tests (must be first, more specific)
+      // Resolve plugin imports to source for tests (must be first, more specific)
       {
         find: /^@toolbox-web\/grid\/plugins\/(.+)$/,
-        replacement: path.join(gridDistPath, 'lib/plugins/$1/index.js'),
+        replacement: path.join(gridSrcPath, 'lib/plugins/$1/index.ts'),
       },
-      // Resolve feature imports to dist for tests
+      // Resolve feature imports to source for tests
       {
         find: /^@toolbox-web\/grid\/features\/(.+)$/,
-        replacement: path.join(gridDistPath, 'lib/features/$1.js'),
+        replacement: path.join(gridSrcPath, 'lib/features/$1.ts'),
       },
-      // Resolve @toolbox-web/grid/all to dist
-      { find: '@toolbox-web/grid/all', replacement: path.join(gridDistPath, 'all.js') },
-      // Resolve @toolbox-web/grid to dist
-      { find: '@toolbox-web/grid', replacement: path.join(gridDistPath, 'index.js') },
+      // Resolve @toolbox-web/grid/all to source
+      { find: '@toolbox-web/grid/all', replacement: path.join(gridSrcPath, 'all.ts') },
+      // Resolve @toolbox-web/grid to source
+      { find: '@toolbox-web/grid', replacement: path.join(gridSrcPath, 'public.ts') },
     ],
   },
 });
