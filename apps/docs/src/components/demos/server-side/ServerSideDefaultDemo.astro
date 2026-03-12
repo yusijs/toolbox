@@ -71,7 +71,7 @@ if (container) {
         },
       },
     };
-    grid.ready().then(() => grid.getPluginByName('server-side')?.setDataSource(createDataSource() as any));
+    grid.ready().then(() => grid.getPluginByName('serverSide')?.setDataSource(createDataSource() as any));
   }
 
   rebuild();
