@@ -13,6 +13,7 @@ export default [
       '**/vitest.config.*.timestamp*',
       '**/test-output',
       '**/.angular',
+      '**/.astro',
     ],
   },
   {
