@@ -3,6 +3,9 @@ import type {
   GridConfig as BaseGridConfig,
   CellRenderContext,
   ColumnEditorContext,
+  HeaderCellContext,
+  HeaderLabelContext,
+  LoadingContext,
 } from '@toolbox-web/grid';
 import type { ReactNode } from 'react';
 import { flushSync } from 'react-dom';
@@ -38,7 +41,7 @@ import { createRoot, type Root } from 'react-dom/client';
  */
 export interface ColumnConfig<TRow = unknown> extends Omit<
   BaseColumnConfig<TRow>,
-  'renderer' | 'viewRenderer' | 'editor'
+  'renderer' | 'viewRenderer' | 'editor' | 'headerRenderer' | 'headerLabelRenderer'
 > {
   /**
    * React component renderer for cell display.
@@ -55,6 +58,18 @@ export interface ColumnConfig<TRow = unknown> extends Omit<
    * Same property name as vanilla JS, but accepts React components.
    */
   editor?: (ctx: ColumnEditorContext<TRow>) => ReactNode;
+
+  /**
+   * React component header renderer for full header cell control.
+   * Receives header cell context and returns a React node (JSX).
+   */
+  headerRenderer?: (ctx: HeaderCellContext<TRow>) => ReactNode;
+
+  /**
+   * React component header label renderer for customizing just the label portion.
+   * Receives header label context and returns a React node (JSX).
+   */
+  headerLabelRenderer?: (ctx: HeaderLabelContext<TRow>) => ReactNode;
 }
 
 /**
@@ -85,8 +100,12 @@ export type ReactColumnConfig<TRow = unknown> = ColumnConfig<TRow>;
  * };
  * ```
  */
-export type GridConfig<TRow = unknown> = Omit<BaseGridConfig<TRow>, 'columns'> & {
+export type GridConfig<TRow = unknown> = Omit<BaseGridConfig<TRow>, 'columns' | 'loadingRenderer'> & {
   columns?: ColumnConfig<TRow>[];
+  /**
+   * Custom loading renderer - can be a vanilla DOM function or a React render function returning JSX.
+   */
+  loadingRenderer?: BaseGridConfig<TRow>['loadingRenderer'] | ((ctx: LoadingContext) => ReactNode);
 };
 
 /**
@@ -187,6 +206,82 @@ export function wrapReactEditor<TRow>(
 }
 
 /**
+ * Wraps a React header renderer function into a DOM-returning function.
+ * Used internally by DataGrid to process headerRenderer properties.
+ */
+export function wrapReactHeaderRenderer<TRow>(
+  renderFn: (ctx: HeaderCellContext<TRow>) => ReactNode,
+): (ctx: HeaderCellContext<TRow>) => HTMLElement {
+  return (ctx: HeaderCellContext<TRow>) => {
+    const container = document.createElement('div');
+    container.className = 'react-header-renderer';
+    container.style.display = 'contents';
+
+    const root = createRoot(container);
+    flushSync(() => {
+      root.render(renderFn(ctx));
+    });
+    mountedRoots.push({ root, container });
+
+    return container;
+  };
+}
+
+/**
+ * Wraps a React header label renderer function into a DOM-returning function.
+ * Used internally by DataGrid to process headerLabelRenderer properties.
+ */
+export function wrapReactHeaderLabelRenderer<TRow>(
+  renderFn: (ctx: HeaderLabelContext<TRow>) => ReactNode,
+): (ctx: HeaderLabelContext<TRow>) => HTMLElement {
+  return (ctx: HeaderLabelContext<TRow>) => {
+    const container = document.createElement('div');
+    container.className = 'react-header-label-renderer';
+    container.style.display = 'contents';
+
+    const root = createRoot(container);
+    flushSync(() => {
+      root.render(renderFn(ctx));
+    });
+    mountedRoots.push({ root, container });
+
+    return container;
+  };
+}
+
+/**
+ * Wraps a React loading renderer function into a DOM-returning function.
+ * Used internally by processGridConfig to process loadingRenderer properties.
+ * Skips wrapping if the function already returns an HTMLElement or string (vanilla DOM renderer).
+ */
+export function wrapReactLoadingRenderer(
+  renderFn: (ctx: LoadingContext) => ReactNode,
+): (ctx: LoadingContext) => HTMLElement | string {
+  return (ctx: LoadingContext) => {
+    // Call the function to see what it returns
+    const result = renderFn(ctx);
+
+    // If the result is already an HTMLElement or string, pass through (vanilla renderer)
+    if (result instanceof HTMLElement || typeof result === 'string') {
+      return result;
+    }
+
+    // Otherwise, mount as React JSX
+    const container = document.createElement('div');
+    container.className = 'react-loading-renderer';
+    container.style.display = 'contents';
+
+    const root = createRoot(container);
+    flushSync(() => {
+      root.render(result);
+    });
+    mountedRoots.push({ root, container });
+
+    return container;
+  };
+}
+
+/**
  * Processes a GridConfig, converting React renderer/editor functions
  * to DOM-returning functions that the grid core understands.
  *
@@ -194,10 +289,20 @@ export function wrapReactEditor<TRow>(
  */
 export function processGridConfig<TRow>(config: GridConfig<TRow> | undefined): BaseGridConfig<TRow> | undefined {
   if (!config) return undefined;
+
+  // Process loadingRenderer at grid config level
+  if (config.loadingRenderer && typeof config.loadingRenderer === 'function') {
+    const originalRenderer = config.loadingRenderer as (ctx: LoadingContext) => ReactNode;
+    config = {
+      ...config,
+      loadingRenderer: wrapReactLoadingRenderer(originalRenderer) as unknown as BaseGridConfig<TRow>['loadingRenderer'],
+    };
+  }
+
   if (!config.columns) return config as BaseGridConfig<TRow>;
 
   const processedColumns = config.columns.map((col) => {
-    const { renderer, editor, ...rest } = col as ColumnConfig<TRow>;
+    const { renderer, editor, headerRenderer, headerLabelRenderer, ...rest } = col as ColumnConfig<TRow>;
     const processed = { ...rest } as BaseColumnConfig<TRow>;
 
     // Convert React renderer to DOM renderer
@@ -208,6 +313,16 @@ export function processGridConfig<TRow>(config: GridConfig<TRow> | undefined): B
     // Convert React editor to DOM editor
     if (editor) {
       processed.editor = wrapReactEditor(editor) as any;
+    }
+
+    // Convert React header renderer to DOM header renderer
+    if (headerRenderer) {
+      (processed as any).headerRenderer = wrapReactHeaderRenderer(headerRenderer);
+    }
+
+    // Convert React header label renderer to DOM header label renderer
+    if (headerLabelRenderer) {
+      (processed as any).headerLabelRenderer = wrapReactHeaderLabelRenderer(headerLabelRenderer);
     }
 
     return processed;

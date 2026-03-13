@@ -3,6 +3,8 @@ import type {
   GridConfig as BaseGridConfig,
   CellRenderContext,
   ColumnEditorContext,
+  HeaderCellContext,
+  HeaderLabelContext,
 } from '@toolbox-web/grid';
 import type { Component, VNode } from 'vue';
 
@@ -98,7 +100,7 @@ export type VueCellEditor<TRow = unknown, TValue = unknown> = CellEditor<TRow, T
  */
 export interface ColumnConfig<TRow = unknown, TValue = unknown> extends Omit<
   BaseColumnConfig<TRow>,
-  'renderer' | 'editor'
+  'renderer' | 'editor' | 'headerRenderer' | 'headerLabelRenderer'
 > {
   /**
    * Vue component or render function for custom cell rendering.
@@ -111,6 +113,18 @@ export interface ColumnConfig<TRow = unknown, TValue = unknown> extends Omit<
    * Receives ColumnEditorContext with value, row, commit, and cancel functions.
    */
   editor?: CellEditor<TRow, TValue>;
+
+  /**
+   * Vue component or render function for custom header cell rendering.
+   * Receives HeaderCellContext with column, value, sortState, filterActive, and helper functions.
+   */
+  headerRenderer?: ((ctx: HeaderCellContext<TRow>) => VNode) | Component;
+
+  /**
+   * Vue component or render function for custom header label rendering.
+   * Receives HeaderLabelContext with column and value.
+   */
+  headerLabelRenderer?: ((ctx: HeaderLabelContext<TRow>) => VNode) | Component;
 }
 
 /**
@@ -144,11 +158,22 @@ export type VueColumnConfig<TRow = unknown, TValue = unknown> = ColumnConfig<TRo
  * };
  * ```
  */
-export interface GridConfig<TRow = unknown> extends Omit<BaseGridConfig<TRow>, 'columns'> {
+export interface GridConfig<TRow = unknown> extends Omit<BaseGridConfig<TRow>, 'columns' | 'loadingRenderer'> {
   /**
    * Column definitions with Vue renderer/editor support.
    */
   columns?: ColumnConfig<TRow>[];
+
+  /**
+   * Custom loading renderer - can be:
+   * - A vanilla function `(ctx: LoadingContext) => HTMLElement | string`
+   * - A Vue component with a `size` prop
+   * - A Vue render function `(ctx: LoadingContext) => VNode`
+   */
+  loadingRenderer?:
+    | BaseGridConfig<TRow>['loadingRenderer']
+    | ((ctx: import('@toolbox-web/grid').LoadingContext) => VNode)
+    | Component;
 }
 
 /**

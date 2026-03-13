@@ -7,6 +7,9 @@ import type {
   ColumnEditorSpec,
   ColumnViewRenderer,
   FrameworkAdapter,
+  HeaderCellContext,
+  HeaderLabelContext,
+  LoadingContext,
 } from '@toolbox-web/grid';
 import type { FilterPanelParams } from '@toolbox-web/grid/plugins/filtering';
 import { createApp, createVNode, type App, type Component, type VNode } from 'vue';
@@ -290,6 +293,19 @@ export class GridAdapter implements FrameworkAdapter {
       >;
     }
 
+    // Process loadingRenderer - convert Vue component/VNode to DOM-returning function
+    if (config.loadingRenderer) {
+      if (isVueComponent(config.loadingRenderer)) {
+        (result as BaseGridConfig<TRow>).loadingRenderer = this.createComponentLoadingRenderer(
+          config.loadingRenderer as unknown as Component,
+        ) as unknown as BaseGridConfig<TRow>['loadingRenderer'];
+      } else if (isVNodeRenderFunction(config.loadingRenderer)) {
+        (result as BaseGridConfig<TRow>).loadingRenderer = this.createVNodeLoadingRenderer(
+          config.loadingRenderer as unknown as (ctx: LoadingContext) => VNode,
+        ) as unknown as BaseGridConfig<TRow>['loadingRenderer'];
+      }
+    }
+
     return result;
   }
 
@@ -373,6 +389,37 @@ export class GridAdapter implements FrameworkAdapter {
         const wrapped = this.createConfigVNodeEditor(column.editor as (ctx: ColumnEditorContext<TRow>) => VNode);
         (wrapped as unknown as Record<symbol, unknown>)[PROCESSED_MARKER] = true;
         processed.editor = wrapped as BaseColumnConfig<TRow>['editor'];
+      }
+    }
+
+    if (column.headerRenderer && !(column.headerRenderer as unknown as Record<symbol, unknown>)[PROCESSED_MARKER]) {
+      if (isVueComponent(column.headerRenderer)) {
+        const wrapped = this.createConfigComponentHeaderRenderer(column.headerRenderer as Component);
+        (wrapped as unknown as Record<symbol, unknown>)[PROCESSED_MARKER] = true;
+        processed.headerRenderer = wrapped as any;
+      } else if (isVNodeRenderFunction(column.headerRenderer)) {
+        const wrapped = this.createConfigVNodeHeaderRenderer(
+          column.headerRenderer as (ctx: HeaderCellContext<TRow>) => VNode,
+        );
+        (wrapped as unknown as Record<symbol, unknown>)[PROCESSED_MARKER] = true;
+        processed.headerRenderer = wrapped as any;
+      }
+    }
+
+    if (
+      column.headerLabelRenderer &&
+      !(column.headerLabelRenderer as unknown as Record<symbol, unknown>)[PROCESSED_MARKER]
+    ) {
+      if (isVueComponent(column.headerLabelRenderer)) {
+        const wrapped = this.createConfigComponentHeaderLabelRenderer(column.headerLabelRenderer as Component);
+        (wrapped as unknown as Record<symbol, unknown>)[PROCESSED_MARKER] = true;
+        processed.headerLabelRenderer = wrapped as any;
+      } else if (isVNodeRenderFunction(column.headerLabelRenderer)) {
+        const wrapped = this.createConfigVNodeHeaderLabelRenderer(
+          column.headerLabelRenderer as (ctx: HeaderLabelContext<TRow>) => VNode,
+        );
+        (wrapped as unknown as Record<symbol, unknown>)[PROCESSED_MARKER] = true;
+        processed.headerLabelRenderer = wrapped as any;
       }
     }
 
@@ -557,6 +604,169 @@ export class GridAdapter implements FrameworkAdapter {
       app.mount(container);
       // Track in editor-specific array for per-cell cleanup via releaseCell
       this.editorViews.push({ app, container });
+
+      return container;
+    };
+  }
+
+  /**
+   * Creates a DOM-returning header renderer from a Vue component class.
+   * Used for config-based headerRenderer (not slot-based).
+   * @internal
+   */
+  private createConfigComponentHeaderRenderer<TRow = unknown>(
+    component: Component,
+  ): (ctx: HeaderCellContext<TRow>) => HTMLElement {
+    return (ctx: HeaderCellContext<TRow>) => {
+      const container = document.createElement('div');
+      container.className = 'vue-header-renderer';
+      container.style.display = 'contents';
+
+      const comp = component;
+      const app = createApp({
+        render() {
+          return createVNode(comp, {
+            column: ctx.column,
+            value: ctx.value,
+            sortState: ctx.sortState,
+            filterActive: ctx.filterActive,
+            renderSortIcon: ctx.renderSortIcon,
+            renderFilterButton: ctx.renderFilterButton,
+          });
+        },
+      });
+
+      app.mount(container);
+      this.mountedViews.push({ app, container });
+
+      return container;
+    };
+  }
+
+  /**
+   * Creates a DOM-returning header renderer from a VNode-returning render function.
+   * Used for config-based headerRenderer (not slot-based).
+   * @internal
+   */
+  private createConfigVNodeHeaderRenderer<TRow = unknown>(
+    renderFn: (ctx: HeaderCellContext<TRow>) => VNode,
+  ): (ctx: HeaderCellContext<TRow>) => HTMLElement {
+    return (ctx: HeaderCellContext<TRow>) => {
+      const container = document.createElement('div');
+      container.className = 'vue-header-renderer';
+      container.style.display = 'contents';
+
+      const app = createApp({
+        render() {
+          return renderFn(ctx);
+        },
+      });
+
+      app.mount(container);
+      this.mountedViews.push({ app, container });
+
+      return container;
+    };
+  }
+
+  /**
+   * Creates a DOM-returning header label renderer from a Vue component class.
+   * Used for config-based headerLabelRenderer (not slot-based).
+   * @internal
+   */
+  private createConfigComponentHeaderLabelRenderer<TRow = unknown>(
+    component: Component,
+  ): (ctx: HeaderLabelContext<TRow>) => HTMLElement {
+    return (ctx: HeaderLabelContext<TRow>) => {
+      const container = document.createElement('div');
+      container.className = 'vue-header-label-renderer';
+      container.style.display = 'contents';
+
+      const comp = component;
+      const app = createApp({
+        render() {
+          return createVNode(comp, {
+            column: ctx.column,
+            value: ctx.value,
+          });
+        },
+      });
+
+      app.mount(container);
+      this.mountedViews.push({ app, container });
+
+      return container;
+    };
+  }
+
+  /**
+   * Creates a DOM-returning header label renderer from a VNode-returning render function.
+   * Used for config-based headerLabelRenderer (not slot-based).
+   * @internal
+   */
+  private createConfigVNodeHeaderLabelRenderer<TRow = unknown>(
+    renderFn: (ctx: HeaderLabelContext<TRow>) => VNode,
+  ): (ctx: HeaderLabelContext<TRow>) => HTMLElement {
+    return (ctx: HeaderLabelContext<TRow>) => {
+      const container = document.createElement('div');
+      container.className = 'vue-header-label-renderer';
+      container.style.display = 'contents';
+
+      const app = createApp({
+        render() {
+          return renderFn(ctx);
+        },
+      });
+
+      app.mount(container);
+      this.mountedViews.push({ app, container });
+
+      return container;
+    };
+  }
+
+  /**
+   * Creates a DOM-returning loading renderer from a Vue component class.
+   * @internal
+   */
+  private createComponentLoadingRenderer(component: Component): (ctx: LoadingContext) => HTMLElement {
+    return (ctx: LoadingContext) => {
+      const container = document.createElement('div');
+      container.className = 'vue-loading-renderer';
+      container.style.display = 'contents';
+
+      const comp = component;
+      const app = createApp({
+        render() {
+          return createVNode(comp, { size: ctx.size });
+        },
+      });
+
+      app.mount(container);
+      this.mountedViews.push({ app, container });
+
+      return container;
+    };
+  }
+
+  /**
+   * Creates a DOM-returning loading renderer from a VNode-returning render function.
+   * @internal
+   */
+  private createVNodeLoadingRenderer(renderFn: (ctx: LoadingContext) => VNode): (ctx: LoadingContext) => HTMLElement {
+    return (ctx: LoadingContext) => {
+      const container = document.createElement('div');
+      container.className = 'vue-loading-renderer';
+      container.style.display = 'contents';
+
+      const app = createApp({
+        render() {
+          return renderFn(ctx);
+        },
+      });
+
+      app.mount(container);
+      this.mountedViews.push({ app, container });
 
       return container;
     };

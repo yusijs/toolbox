@@ -1274,11 +1274,31 @@ export class Grid implements OnInit, AfterContentInit, OnDestroy {
     addPlugin('reorderColumns', this.reorderColumns() ?? this.reorder());
     addPlugin('visibility', this.visibility());
     addPlugin('pinnedColumns', this.pinnedColumns());
-    addPlugin('groupingColumns', this.groupingColumns());
+
+    // Pre-process groupingColumns config to bridge Angular component classes
+    const gcConfig = this.groupingColumns();
+    if (gcConfig && typeof gcConfig === 'object' && this.adapter) {
+      addPlugin('groupingColumns', this.adapter.processGroupingColumnsConfig(gcConfig as GroupingColumnsConfig));
+    } else {
+      addPlugin('groupingColumns', gcConfig);
+    }
+
     addPlugin('columnVirtualization', this.columnVirtualization());
     addPlugin('reorderRows', this.reorderRows() ?? this.rowReorder());
-    addPlugin('groupingRows', this.groupingRows());
-    addPlugin('pinnedRows', this.pinnedRows());
+    // Pre-process groupingRows config to bridge Angular component classes
+    const grConfig = this.groupingRows();
+    if (grConfig && typeof grConfig === 'object' && this.adapter) {
+      addPlugin('groupingRows', this.adapter.processGroupingRowsConfig(grConfig as GroupingRowsConfig));
+    } else {
+      addPlugin('groupingRows', grConfig);
+    }
+    // Pre-process pinnedRows config to bridge Angular component classes in customPanels
+    const prConfig = this.pinnedRows();
+    if (prConfig && typeof prConfig === 'object' && this.adapter) {
+      addPlugin('pinnedRows', this.adapter.processPinnedRowsConfig(prConfig as PinnedRowsConfig));
+    } else {
+      addPlugin('pinnedRows', prConfig);
+    }
     addPlugin('tree', this.tree());
     addPlugin('masterDetail', this.masterDetail());
     addPlugin('responsive', this.responsive());

@@ -206,7 +206,10 @@ export type AngularTypeDefault<TRow = unknown> = TypeDefault<TRow>;
  * ];
  * ```
  */
-export interface ColumnConfig<TRow = unknown> extends Omit<BaseColumnConfig<TRow>, 'renderer' | 'editor'> {
+export interface ColumnConfig<TRow = unknown> extends Omit<
+  BaseColumnConfig<TRow>,
+  'renderer' | 'editor' | 'headerRenderer' | 'headerLabelRenderer'
+> {
   /**
    * Cell renderer - can be:
    * - A function `(ctx) => HTMLElement | string`
@@ -220,6 +223,20 @@ export interface ColumnConfig<TRow = unknown> extends Omit<BaseColumnConfig<TRow
    * - An Angular component class implementing CellEditor
    */
   editor?: BaseColumnConfig<TRow>['editor'] | Type<CellEditor<TRow, unknown>>;
+
+  /**
+   * Header cell renderer - can be:
+   * - A function `(ctx: HeaderCellContext) => Node | string | void | null`
+   * - An Angular component class with column, value, sortState, filterActive, renderSortIcon, renderFilterButton inputs
+   */
+  headerRenderer?: BaseColumnConfig<TRow>['headerRenderer'] | Type<unknown>;
+
+  /**
+   * Header label renderer - can be:
+   * - A function `(ctx: HeaderLabelContext) => Node | string | void | null`
+   * - An Angular component class with column and value inputs
+   */
+  headerLabelRenderer?: BaseColumnConfig<TRow>['headerLabelRenderer'] | Type<unknown>;
 }
 
 /**
@@ -246,10 +263,19 @@ export type AngularColumnConfig<TRow = unknown> = ColumnConfig<TRow>;
  * };
  * ```
  */
-export interface GridConfig<TRow = unknown> extends Omit<BaseGridConfig<TRow>, 'columns' | 'typeDefaults'> {
+export interface GridConfig<TRow = unknown> extends Omit<
+  BaseGridConfig<TRow>,
+  'columns' | 'typeDefaults' | 'loadingRenderer'
+> {
   columns?: ColumnConfig<TRow>[];
   /** Type-level defaults that can use Angular component classes */
   typeDefaults?: Record<string, TypeDefault<TRow>>;
+  /**
+   * Custom loading renderer - can be:
+   * - A function `(ctx: LoadingContext) => HTMLElement | string`
+   * - An Angular component class with a `size` input
+   */
+  loadingRenderer?: BaseGridConfig<TRow>['loadingRenderer'] | Type<unknown>;
 }
 
 /**

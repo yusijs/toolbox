@@ -569,12 +569,14 @@ Type defaults reduce repetition when many columns share the same presentation. C
 
 Customize column header cells using `headerLabelRenderer` or `headerRenderer`.
 
-:::note
-Header renderers use vanilla DOM APIs across all frameworks. The framework adapters (React, Vue, Angular) do not intercept `headerLabelRenderer` or `headerRenderer` — the function always receives and returns DOM elements.
+:::tip
+The framework adapters (React, Vue, Angular) bridge `headerRenderer` and `headerLabelRenderer` — you can use React JSX, Vue components/render functions, or Angular component classes just like cell renderers. Vanilla DOM functions also work.
 :::
 
 **`headerLabelRenderer`** — Modify just the label portion of the header (sort icons and filter buttons are still managed by the grid):
 
+<Tabs syncKey="framework">
+  <TabItem label="Vanilla JS">
 ```typescript
 {
   field: 'name',
@@ -586,9 +588,56 @@ Header renderers use vanilla DOM APIs across all frameworks. The framework adapt
   },
 }
 ```
+  </TabItem>
+  <TabItem label="React">
+```tsx
+// In GridConfig or ColumnConfig
+{
+  field: 'name',
+  header: 'Name',
+  headerLabelRenderer: ({ value }) => (
+    <span>{value} <span style={{ color: 'red' }}>*</span></span>
+  ),
+}
+```
+  </TabItem>
+  <TabItem label="Vue">
+```ts
+// In GridConfig or ColumnConfig
+{
+  field: 'name',
+  header: 'Name',
+  headerLabelRenderer: ({ value }) =>
+    h('span', [value, h('span', { style: 'color:red' }, ' *')]),
+}
+```
+  </TabItem>
+  <TabItem label="Angular">
+```typescript
+// Using a component class in ColumnConfig
+{
+  field: 'name',
+  header: 'Name',
+  headerLabelRenderer: RequiredLabelComponent,
+}
+
+// RequiredLabelComponent
+@Component({
+  selector: 'app-required-label',
+  template: `{{ value() }} <span style="color:red">*</span>`,
+})
+export class RequiredLabelComponent {
+  value = input<string>();
+  column = input<unknown>();
+}
+```
+  </TabItem>
+</Tabs>
 
 **`headerRenderer`** — Full control over the entire header cell. You are responsible for rendering sort icons using `ctx.renderSortIcon()`:
 
+<Tabs syncKey="framework">
+  <TabItem label="Vanilla JS">
 ```typescript
 {
   field: 'email',
@@ -612,6 +661,95 @@ Header renderers use vanilla DOM APIs across all frameworks. The framework adapt
   },
 }
 ```
+  </TabItem>
+  <TabItem label="React">
+```tsx
+// In GridConfig or ColumnConfig
+{
+  field: 'email',
+  header: 'Email',
+  headerRenderer: (ctx) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%' }}>
+      <span>📧</span>
+      <span style={{ flex: 1 }}>{ctx.value}</span>
+    </div>
+  ),
+}
+
+// Note: ctx.renderSortIcon() returns a DOM element.
+// To include it in React JSX, use a ref or dangerouslySetInnerHTML,
+// or return the full DOM element from the renderer instead:
+{
+  field: 'email',
+  headerRenderer: (ctx) => {
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'display:flex;align-items:center;gap:6px;width:100%';
+    wrapper.append('📧 ', ctx.value);
+    const sortIcon = ctx.renderSortIcon();
+    if (sortIcon) wrapper.appendChild(sortIcon);
+    return wrapper; // Returning DOM elements also works in React config
+  },
+}
+```
+  </TabItem>
+  <TabItem label="Vue">
+```ts
+// In GridConfig or ColumnConfig
+{
+  field: 'email',
+  header: 'Email',
+  headerRenderer: (ctx) =>
+    h('div', { style: 'display:flex;align-items:center;gap:6px;width:100%' }, [
+      h('span', '📧'),
+      h('span', { style: 'flex:1' }, ctx.value),
+    ]),
+}
+
+// Note: ctx.renderSortIcon() returns a DOM element.
+// For sort icon support, use a vanilla DOM renderer instead:
+{
+  field: 'email',
+  headerRenderer: (ctx) => {
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'display:flex;align-items:center;gap:6px;width:100%';
+    wrapper.append('📧 ', ctx.value);
+    const sortIcon = ctx.renderSortIcon();
+    if (sortIcon) wrapper.appendChild(sortIcon);
+    return wrapper; // Returning DOM elements also works in Vue config
+  },
+}
+```
+  </TabItem>
+  <TabItem label="Angular">
+```typescript
+// Using a component class in ColumnConfig
+{
+  field: 'email',
+  header: 'Email',
+  headerRenderer: EmailHeaderComponent,
+}
+
+// EmailHeaderComponent
+@Component({
+  selector: 'app-email-header',
+  template: `
+    <div style="display:flex;align-items:center;gap:6px;width:100%">
+      <span>📧</span>
+      <span style="flex:1">{{ value() }}</span>
+    </div>
+  `,
+})
+export class EmailHeaderComponent {
+  value = input<string>();
+  column = input<unknown>();
+  sortState = input<'asc' | 'desc' | null>();
+  filterActive = input<boolean>();
+  renderSortIcon = input<() => HTMLElement | null>();
+  renderFilterButton = input<() => HTMLElement | null>();
+}
+```
+  </TabItem>
+</Tabs>
 
 The `HeaderCellContext` provides:
 
@@ -914,8 +1052,8 @@ grid.gridConfig = {
 };
 ```
 
-:::note
-`loadingRenderer` uses vanilla DOM APIs across all frameworks. Pass the config via `gridConfig` in React (`<DataGrid gridConfig={config}>`), Vue (`:grid-config="config"`), and Angular (`[gridConfig]="config"`).
+:::tip
+The framework adapters bridge `loadingRenderer` — you can use React JSX, Vue components/render functions, or Angular component classes. Vanilla DOM functions also work. Pass the config via `gridConfig` in React (`<DataGrid gridConfig={config}>`), Vue (`:grid-config="config"`), and Angular (`[gridConfig]="config"`).
 :::
 
 The `LoadingContext` provides a `size` property: `'large'` for the grid-wide overlay (up to 48×48 px) and `'small'` for row/cell indicators (sized to the row height).

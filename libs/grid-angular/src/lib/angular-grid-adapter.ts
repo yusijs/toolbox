@@ -18,8 +18,14 @@ import type {
   ColumnEditorSpec,
   ColumnViewRenderer,
   FrameworkAdapter,
+  HeaderCellContext,
+  HeaderLabelContext,
+  LoadingContext,
 } from '@toolbox-web/grid';
 import type { FilterPanelParams } from '@toolbox-web/grid/plugins/filtering';
+import type { GroupHeaderRenderParams, GroupingColumnsConfig } from '@toolbox-web/grid/plugins/grouping-columns';
+import type { GroupingRowsConfig, GroupRowRenderParams } from '@toolbox-web/grid/plugins/grouping-rows';
+import type { PinnedRowsConfig, PinnedRowsContext } from '@toolbox-web/grid/plugins/pinned-rows';
 import { isComponentClass, type ColumnConfig, type GridConfig, type TypeDefault } from './angular-column-config';
 import { getEditorTemplate, GridEditorContext } from './directives/grid-column-editor.directive';
 import { getViewTemplate, GridCellContext } from './directives/grid-column-view.directive';
@@ -211,6 +217,13 @@ export class GridAdapter implements FrameworkAdapter {
       result.typeDefaults = this.processTypeDefaults(config.typeDefaults);
     }
 
+    // Process loadingRenderer - convert Angular component class to function
+    if (config.loadingRenderer && isComponentClass(config.loadingRenderer)) {
+      (result as BaseGridConfig<TRow>).loadingRenderer = this.createComponentLoadingRenderer(
+        config.loadingRenderer,
+      ) as unknown as BaseGridConfig<TRow>['loadingRenderer'];
+    }
+
     return result;
   }
 
@@ -268,6 +281,16 @@ export class GridAdapter implements FrameworkAdapter {
     // Convert editor component class to function
     if (column.editor && isComponentClass(column.editor)) {
       processed.editor = this.createComponentEditor(column.editor);
+    }
+
+    // Convert headerRenderer component class to function
+    if (column.headerRenderer && isComponentClass(column.headerRenderer)) {
+      processed.headerRenderer = this.createComponentHeaderRenderer(column.headerRenderer) as any;
+    }
+
+    // Convert headerLabelRenderer component class to function
+    if (column.headerLabelRenderer && isComponentClass(column.headerLabelRenderer)) {
+      processed.headerLabelRenderer = this.createComponentHeaderLabelRenderer(column.headerLabelRenderer) as any;
     }
 
     return processed;
@@ -834,6 +857,264 @@ export class GridAdapter implements FrameworkAdapter {
           }
         }
       });
+
+      return hostElement;
+    };
+  }
+
+  /**
+   * Creates a header renderer function from an Angular component class.
+   * Mounts the component with full header context (column, value, sortState, etc.).
+   * @internal
+   */
+  private createComponentHeaderRenderer<TRow = unknown>(
+    componentClass: Type<unknown>,
+  ): (ctx: HeaderCellContext<TRow>) => HTMLElement {
+    return (ctx: HeaderCellContext<TRow>) => {
+      const hostElement = document.createElement('span');
+      hostElement.style.display = 'contents';
+
+      const componentRef = createComponent(componentClass, {
+        environmentInjector: this.injector,
+        hostElement,
+      });
+
+      this.setComponentInputs(componentRef, {
+        column: ctx.column,
+        value: ctx.value,
+        sortState: ctx.sortState,
+        filterActive: ctx.filterActive,
+        renderSortIcon: ctx.renderSortIcon,
+        renderFilterButton: ctx.renderFilterButton,
+      });
+
+      this.appRef.attachView(componentRef.hostView);
+      this.componentRefs.push(componentRef);
+      componentRef.changeDetectorRef.detectChanges();
+
+      return hostElement;
+    };
+  }
+
+  /**
+   * Creates a header label renderer function from an Angular component class.
+   * Mounts the component with label context (column, value).
+   * @internal
+   */
+  private createComponentHeaderLabelRenderer<TRow = unknown>(
+    componentClass: Type<unknown>,
+  ): (ctx: HeaderLabelContext<TRow>) => HTMLElement {
+    return (ctx: HeaderLabelContext<TRow>) => {
+      const hostElement = document.createElement('span');
+      hostElement.style.display = 'contents';
+
+      const componentRef = createComponent(componentClass, {
+        environmentInjector: this.injector,
+        hostElement,
+      });
+
+      this.setComponentInputs(componentRef, {
+        column: ctx.column,
+        value: ctx.value,
+      });
+
+      this.appRef.attachView(componentRef.hostView);
+      this.componentRefs.push(componentRef);
+      componentRef.changeDetectorRef.detectChanges();
+
+      return hostElement;
+    };
+  }
+
+  /**
+   * Creates a group header renderer function from an Angular component class.
+   *
+   * The component should accept group header inputs (id, label, columns, firstIndex, isImplicit).
+   * Returns the host element directly (groupHeaderRenderer returns an element, not void).
+   * @internal
+   */
+  private createComponentGroupHeaderRenderer(
+    componentClass: Type<unknown>,
+  ): (params: GroupHeaderRenderParams) => HTMLElement {
+    return (params: GroupHeaderRenderParams) => {
+      const hostElement = document.createElement('span');
+      hostElement.style.display = 'contents';
+
+      const componentRef = createComponent(componentClass, {
+        environmentInjector: this.injector,
+        hostElement,
+      });
+
+      this.setComponentInputs(componentRef, {
+        id: params.id,
+        label: params.label,
+        columns: params.columns,
+        firstIndex: params.firstIndex,
+        isImplicit: params.isImplicit,
+      });
+
+      this.appRef.attachView(componentRef.hostView);
+      this.componentRefs.push(componentRef);
+      componentRef.changeDetectorRef.detectChanges();
+
+      return hostElement;
+    };
+  }
+
+  /**
+   * Processes a GroupingColumnsConfig, converting component class references
+   * to actual renderer functions.
+   *
+   * @param config - Angular grouping columns configuration with possible component class references
+   * @returns Processed GroupingColumnsConfig with actual renderer functions
+   */
+  processGroupingColumnsConfig(config: GroupingColumnsConfig): GroupingColumnsConfig {
+    if (config.groupHeaderRenderer && isComponentClass(config.groupHeaderRenderer)) {
+      return {
+        ...config,
+        groupHeaderRenderer: this.createComponentGroupHeaderRenderer(config.groupHeaderRenderer),
+      };
+    }
+    return config;
+  }
+
+  /**
+   * Processes a GroupingRowsConfig, converting component class references
+   * to actual renderer functions.
+   *
+   * @param config - Angular grouping rows configuration with possible component class references
+   * @returns Processed GroupingRowsConfig with actual renderer functions
+   */
+  processGroupingRowsConfig(config: GroupingRowsConfig): GroupingRowsConfig {
+    if (config.groupRowRenderer && isComponentClass(config.groupRowRenderer)) {
+      return {
+        ...config,
+        groupRowRenderer: this.createComponentGroupRowRenderer(config.groupRowRenderer),
+      };
+    }
+    return config;
+  }
+
+  /**
+   * Processes a PinnedRowsConfig, converting component class references
+   * in `customPanels[].render` to actual renderer functions.
+   *
+   * @param config - Angular pinned rows configuration with possible component class references
+   * @returns Processed PinnedRowsConfig with actual renderer functions
+   */
+  processPinnedRowsConfig(config: PinnedRowsConfig): PinnedRowsConfig {
+    if (!Array.isArray(config.customPanels)) return config;
+
+    const hasComponentRender = config.customPanels.some((panel) => isComponentClass(panel.render));
+    if (!hasComponentRender) return config;
+
+    return {
+      ...config,
+      customPanels: config.customPanels.map((panel) => {
+        if (!isComponentClass(panel.render)) return panel;
+        return {
+          ...panel,
+          render: this.createComponentPinnedRowsPanelRenderer(panel.render),
+        };
+      }),
+    };
+  }
+
+  /**
+   * Creates a pinned rows panel renderer function from an Angular component class.
+   *
+   * The component should accept inputs from PinnedRowsContext (totalRows, filteredRows,
+   * selectedRows, columns, rows, grid).
+   * @internal
+   */
+  private createComponentPinnedRowsPanelRenderer(
+    componentClass: Type<unknown>,
+  ): (ctx: PinnedRowsContext) => HTMLElement {
+    return (ctx: PinnedRowsContext) => {
+      const hostElement = document.createElement('span');
+      hostElement.style.display = 'contents';
+
+      const componentRef = createComponent(componentClass, {
+        environmentInjector: this.injector,
+        hostElement,
+      });
+
+      this.setComponentInputs(componentRef, {
+        totalRows: ctx.totalRows,
+        filteredRows: ctx.filteredRows,
+        selectedRows: ctx.selectedRows,
+        columns: ctx.columns,
+        rows: ctx.rows,
+        grid: ctx.grid,
+      });
+
+      this.appRef.attachView(componentRef.hostView);
+      this.componentRefs.push(componentRef);
+      componentRef.changeDetectorRef.detectChanges();
+
+      return hostElement;
+    };
+  }
+
+  /**
+   * Creates a loading renderer function from an Angular component class.
+   *
+   * The component should accept a `size` input ('large' | 'small').
+   * @internal
+   */
+  private createComponentLoadingRenderer(componentClass: Type<unknown>): (ctx: LoadingContext) => HTMLElement {
+    return (ctx: LoadingContext) => {
+      const hostElement = document.createElement('span');
+      hostElement.style.display = 'contents';
+
+      const componentRef = createComponent(componentClass, {
+        environmentInjector: this.injector,
+        hostElement,
+      });
+
+      this.setComponentInputs(componentRef, {
+        size: ctx.size,
+      });
+
+      this.appRef.attachView(componentRef.hostView);
+      this.componentRefs.push(componentRef);
+      componentRef.changeDetectorRef.detectChanges();
+
+      return hostElement;
+    };
+  }
+
+  /**
+   * Creates a group row renderer function from an Angular component class.
+   *
+   * The component should accept group row inputs (key, value, depth, rows, expanded, toggleExpand).
+   * Returns the host element directly (groupRowRenderer returns an element, not void).
+   * @internal
+   */
+  private createComponentGroupRowRenderer(
+    componentClass: Type<unknown>,
+  ): (params: GroupRowRenderParams) => HTMLElement {
+    return (params: GroupRowRenderParams) => {
+      const hostElement = document.createElement('span');
+      hostElement.style.display = 'contents';
+
+      const componentRef = createComponent(componentClass, {
+        environmentInjector: this.injector,
+        hostElement,
+      });
+
+      this.setComponentInputs(componentRef, {
+        key: params.key,
+        value: params.value,
+        depth: params.depth,
+        rows: params.rows,
+        expanded: params.expanded,
+        toggleExpand: params.toggleExpand,
+      });
+
+      this.appRef.attachView(componentRef.hostView);
+      this.componentRefs.push(componentRef);
+      componentRef.changeDetectorRef.detectChanges();
 
       return hostElement;
     };
