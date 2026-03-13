@@ -1003,6 +1003,20 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
   }
 
   /**
+   * Re-render visible rows without rebuilding the row model or recalculating geometry.
+   * Uses non-force refreshVirtualWindow to avoid spacer height recalculations that
+   * can cause scroll position oscillation. Useful when row data has been updated in-place
+   * (e.g., server-side block loads replacing placeholders with real data).
+   * @group Rendering
+   * @internal Plugin API
+   */
+  requestVirtualRefresh(): void {
+    // Invalidate start so refreshVirtualWindow doesn't early-exit
+    this._virtualization.start = -1;
+    this.refreshVirtualWindow(false);
+  }
+
+  /**
    * Initialize plugin system with instances from config.
    * Plugins are class instances passed in gridConfig.plugins[].
    * If gridConfig.features is set and the feature registry is loaded,
@@ -1510,8 +1524,13 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
 
     // Use the larger of row height or max cell height
     const measuredHeight = Math.max(rowRect.height, maxCellHeight);
-    // Use a 1px threshold to avoid oscillation from sub-pixel rounding
-    if (measuredHeight > 0 && Math.abs(measuredHeight - this._virtualization.rowHeight) > 1) {
+    // Only accept height INCREASES (with 1px threshold for sub-pixel rounding).
+    // Decreases are ignored because mixed-height content (e.g., server-side plugin
+    // placeholder rows vs real data rows) can cause oscillation: the ResizeObserver
+    // measures a short placeholder → rowHeight decreases → spacer shrinks → scroll
+    // maps to different rows (tall real data) → rowHeight increases → spacer grows
+    // → scroll maps back to placeholders → repeat forever.
+    if (measuredHeight > 0 && measuredHeight - this._virtualization.rowHeight > 1) {
       this._virtualization.rowHeight = measuredHeight;
       // Use scheduler to batch with other pending work
       this.#scheduler.requestPhase(RenderPhase.VIRTUALIZATION, 'measureRowHeight');

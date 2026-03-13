@@ -404,6 +404,8 @@ export interface GridElementRef {
   requestRenderWithFocus(): void;
   /** Request a lightweight style update without rebuilding DOM. */
   requestAfterRender(): void;
+  /** Re-render visible rows without rebuilding the row model or recalculating geometry. */
+  requestVirtualRefresh(): void;
   /** Force a layout pass. */
   forceLayout(): Promise<void>;
   /** Dispatch an event from the grid element. */

@@ -96,6 +96,8 @@ export class ServerSidePlugin extends BaseGridPlugin<ServerSideConfig> {
   private loadingBlocks = new Set<number>();
   private lastRequestId = 0;
   private scrollDebounceTimer?: ReturnType<typeof setTimeout>;
+  /** Persistent row array with stable placeholder references to avoid unnecessary DOM rebuilds. */
+  private managedRows: unknown[] = [];
   // #endregion
 
   // #region Lifecycle
@@ -106,6 +108,7 @@ export class ServerSidePlugin extends BaseGridPlugin<ServerSideConfig> {
     this.totalRowCount = 0;
     this.loadedBlocks.clear();
     this.loadingBlocks.clear();
+    this.managedRows = [];
     this.lastRequestId = 0;
     if (this.scrollDebounceTimer) {
       clearTimeout(this.scrollDebounceTimer);
@@ -148,7 +151,21 @@ export class ServerSidePlugin extends BaseGridPlugin<ServerSideConfig> {
           this.loadedBlocks.set(blockNum, result.rows);
           this.totalRowCount = result.totalRowCount;
           this.loadingBlocks.delete(blockNum);
-          this.requestRender();
+
+          // Update managed rows in place for this block (avoids full processRows rebuild)
+          const start = blockNum * blockSize;
+          for (let i = 0; i < result.rows.length; i++) {
+            if (start + i < this.managedRows.length) {
+              this.managedRows[start + i] = result.rows[i];
+            }
+          }
+
+          // Re-render visible rows without force geometry recalculation.
+          // requestVirtualRefresh() skips spacer height writes that cause oscillation
+          // with the scheduler's afterRender microtask. Row count hasn't changed —
+          // only cached data replaced placeholders — so geometry is stable.
+          this.requestVirtualRefresh();
+
           // Re-check with fresh viewport: user may have scrolled further
           this.loadRequiredBlocks();
         })
@@ -165,14 +182,25 @@ export class ServerSidePlugin extends BaseGridPlugin<ServerSideConfig> {
   override processRows(rows: readonly unknown[]): unknown[] {
     if (!this.dataSource) return [...rows];
 
-    // Create placeholder rows for total count
-    const result: unknown[] = [];
+    const blockSize = this.config.cacheBlockSize ?? 100;
+
+    // Grow array with stable placeholder objects (created once, reused across renders)
+    while (this.managedRows.length < this.totalRowCount) {
+      const i = this.managedRows.length;
+      this.managedRows.push({ __loading: true, __index: i });
+    }
+    // Shrink if total decreased
+    this.managedRows.length = this.totalRowCount;
+
+    // Replace placeholders with cached data (stable refs for unchanged entries)
     for (let i = 0; i < this.totalRowCount; i++) {
-      const cached = getRowFromCache(i, this.config.cacheBlockSize ?? 100, this.loadedBlocks);
-      result.push(cached ?? { __loading: true, __index: i });
+      const cached = getRowFromCache(i, blockSize, this.loadedBlocks);
+      if (cached) {
+        this.managedRows[i] = cached;
+      }
     }
 
-    return result;
+    return this.managedRows;
   }
 
   /** @internal */
@@ -202,6 +230,7 @@ export class ServerSidePlugin extends BaseGridPlugin<ServerSideConfig> {
     this.dataSource = dataSource;
     this.loadedBlocks.clear();
     this.loadingBlocks.clear();
+    this.managedRows = [];
 
     // Load first block
     const blockSize = this.config.cacheBlockSize ?? 100;
@@ -219,6 +248,7 @@ export class ServerSidePlugin extends BaseGridPlugin<ServerSideConfig> {
     if (!this.dataSource) return;
     this.loadedBlocks.clear();
     this.loadingBlocks.clear();
+    this.managedRows = [];
     this.requestRender();
   }
 
@@ -227,6 +257,7 @@ export class ServerSidePlugin extends BaseGridPlugin<ServerSideConfig> {
    */
   purgeCache(): void {
     this.loadedBlocks.clear();
+    this.managedRows = [];
   }
 
   /**

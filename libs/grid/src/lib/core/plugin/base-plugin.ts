@@ -700,6 +700,15 @@ export abstract class BaseGridPlugin<TConfig = unknown> implements GridPlugin {
   }
 
   /**
+   * Re-render visible rows without rebuilding the row model or recalculating geometry.
+   * Use this when row data has been updated in-place (e.g., server-side block loads)
+   * and only the visible viewport needs to re-render.
+   */
+  protected requestVirtualRefresh(): void {
+    this.grid?.requestVirtualRefresh?.();
+  }
+
+  /**
    * Get the current rows from the grid.
    */
   protected get rows(): any[] {
