@@ -5,8 +5,6 @@ description: "Print the grid contents with configurable page settings."
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import PrintBasicDemo from '../../../../../components/demos/print/PrintBasicDemo.astro';
-import PrintToolbarButtonDemo from '../../../../../components/demos/print/PrintToolbarButtonDemo.astro';
-import PrintPortraitOrientationDemo from '../../../../../components/demos/print/PrintPortraitOrientationDemo.astro';
 import PrintRowLimitDemo from '../../../../../components/demos/print/PrintRowLimitDemo.astro';
 import PrintPrintEventsDemo from '../../../../../components/demos/print/PrintPrintEventsDemo.astro';
 import PrintHiddenColumnsDemo from '../../../../../components/demos/print/PrintHiddenColumnsDemo.astro';
@@ -33,7 +31,12 @@ import '@toolbox-web/grid/features/print';
 
 ## Basic Usage
 
-<PrintBasicDemo />
+Use the controls to try different orientations, toggle title/timestamp, isolated printing, and the toolbar button.
+Enable "Toolbar button" to add a print icon to the grid header (requires `shell.header` config).
+
+<ShowSource file="demos/print/PrintBasicDemo.astro">
+  <PrintBasicDemo />
+</ShowSource>
 
 <Tabs syncKey="framework">
   <TabItem label="Vanilla JS">
@@ -66,10 +69,11 @@ await plugin.print();
   <TabItem label="React">
 ```tsx
 import '@toolbox-web/grid-react/features/print';
-import { DataGrid, useGrid } from '@toolbox-web/grid-react';
+import { DataGrid } from '@toolbox-web/grid-react';
+import { useGridPrint } from '@toolbox-web/grid-react/features/print';
 
 function EmployeeGrid({ data }) {
-  const { ref, print } = useGrid();
+  const { print } = useGridPrint();
 
   const handlePrint = async () => {
     await print({ title: 'Employee Report' });
@@ -79,7 +83,6 @@ function EmployeeGrid({ data }) {
     <div>
       <button onClick={handlePrint}>Print Report</button>
       <DataGrid
-        ref={ref}
         rows={data}
         columns={[
           { field: 'name', header: 'Name' },
@@ -113,7 +116,7 @@ const data = [
 const gridRef = ref(null);
 
 const handlePrint = async () => {
-  await gridRef.value?.element?.getPluginByName('print')?.print();
+  await gridRef.value?.gridElement?.getPluginByName('print')?.print();
 };
 </script>
 
@@ -173,15 +176,7 @@ export class EmployeeGridComponent {
 
 ## Configuration Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `button` | `boolean` | `false` | Show print button in grid toolbar |
-| `orientation` | `'portrait' \| 'landscape'` | `'landscape'` | Page orientation for printing |
-| `warnThreshold` | `number` | `500` | Show confirmation dialog when rows exceed this (0 = no warning) |
-| `maxRows` | `number` | `0` | Hard limit on printed rows (0 = unlimited) |
-| `includeTitle` | `boolean` | `true` | Include grid title in print header |
-| `includeTimestamp` | `boolean` | `true` | Include print timestamp |
-| `title` | `string` | `''` | Custom title (falls back to shell title) |
+See [`PrintConfig`](./Interfaces/PrintConfig/) for the full list of options and defaults.
 
 ## Hiding Columns in Print
 
@@ -212,35 +207,6 @@ The `printHidden` property:
 <ShowSource file="demos/print/PrintHiddenColumnsDemo.astro">
   <PrintHiddenColumnsDemo />
 </ShowSource>
-
-## Toolbar Button
-
-When `button: true` is configured, a print button appears in the grid toolbar:
-
-<PrintToolbarButtonDemo />
-
-```typescript
-features: {
-  print: {
-    button: true,
-    title: 'Employee Directory',
-  },
-},
-```
-
-## Page Orientation
-
-Control the print orientation with the `orientation` option:
-
-<PrintPortraitOrientationDemo />
-
-```typescript
-features: {
-  print: {
-    orientation: 'portrait', // or 'landscape' (default)
-  },
-},
-```
 
 ## Row Limits
 
@@ -372,7 +338,6 @@ The plugin applies these CSS classes during printing:
 
 | Class | Description |
 |-------|-------------|
-| `.print-mode` | Applied to grid during print |
 | `.print-portrait` | Applied when orientation is portrait |
 | `.print-landscape` | Applied when orientation is landscape |
 | `.tbw-print-header` | Print header container |
@@ -385,12 +350,12 @@ Override print styles using CSS:
 
 ```css
 @media print {
-  tbw-grid.print-mode {
+  tbw-grid.print-landscape {
     /* Custom print styles */
     font-size: 10pt;
   }
 
-  tbw-grid.print-mode .dg-cell {
+  tbw-grid.print-landscape .dg-cell {
     border-color: #000;
   }
 }
@@ -445,5 +410,5 @@ If you need to print all rows, use the full PrintPlugin with `isolate: true`.
 
 ## See Also
 
-- **[Export](../?path=/grid/plugins/export/)** — Export to CSV/JSON
-- **[Selection](../?path=/grid/plugins/selection/)** — Print selected rows only
+- **[Export](/grid/plugins/export/)** — Export to CSV/JSON
+- **[Selection](/grid/plugins/selection/)** — Row/cell selection

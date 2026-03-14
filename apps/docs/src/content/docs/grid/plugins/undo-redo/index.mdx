@@ -5,7 +5,6 @@ description: "Add undo/redo support for cell edits."
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import UndoRedoDefaultDemo from '@components/demos/undo-redo/UndoRedoDefaultDemo.astro';
-import UndoRedoLimitedHistoryDemo from '@components/demos/undo-redo/UndoRedoLimitedHistoryDemo.astro';
 import ShowSource from '@components/ShowSource.astro';
 
 
@@ -128,9 +127,9 @@ export class MyGridComponent {
   </TabItem>
 </Tabs>
 
-## Demos
+## Demo
 
-### Default Undo/Redo
+Edit cells by double-clicking, then use Ctrl+Z / Ctrl+Y to undo/redo. Adjust the max history size with the control.
 
 <ShowSource file="demos/undo-redo/UndoRedoDefaultDemo.astro">
   <UndoRedoDefaultDemo />
@@ -138,27 +137,16 @@ export class MyGridComponent {
 
 
 
-
-### Limited History
-
-<ShowSource file="demos/undo-redo/UndoRedoLimitedHistoryDemo.astro">
-  <UndoRedoLimitedHistoryDemo />
-</ShowSource>
-
-
-
 ## Configuration Options
 
-| Option           | Type     | Default | Description            |
-| ---------------- | -------- | ------- | ---------------------- |
-| `maxHistorySize` | `number` | `100`   | Max actions in history |
+See [`UndoRedoConfig`](./Interfaces/UndoRedoConfig/) for the full list of options and defaults.
 
 ## Keyboard Shortcuts
 
-| Shortcut                 | Action |
-| ------------------------ | ------ |
-| `Ctrl+Z` / `Cmd+Z`       | Undo   |
-| `Ctrl+Y` / `Cmd+Shift+Z` | Redo   |
+| Shortcut                              | Action |
+| ------------------------------------- | ------ |
+| `Ctrl+Z` / `Cmd+Z`                    | Undo   |
+| `Ctrl+Y` / `Cmd+Y` / `Cmd+Shift+Z`   | Redo   |
 
 ## Programmatic API
 
@@ -198,7 +186,27 @@ grid.addEventListener('cell-commit', (e) => {
 | `endTransaction()`  | Finalize and push the compound as a single undo step|
 | `recordEdit()`      | Manually record a cell edit (buffered during txn)   |
 
+## Events
+
+### undo / redo
+
+Fired after an undo or redo action is applied:
+
+```ts
+grid.addEventListener('undo', (e) => {
+  const { action, type } = e.detail;
+  console.log(`${type}: reverted ${action.field} on row ${action.rowIndex}`);
+});
+
+grid.addEventListener('redo', (e) => {
+  const { action, type } = e.detail;
+  console.log(`${type}: reapplied ${action.field} on row ${action.rowIndex}`);
+});
+```
+
+See [`UndoRedoDetail`](./Interfaces/UndoRedoDetail/) for the full event payload type.
+
 ## See Also
 
-- **[Editing](../?path=/grid/plugins/editing/)** — Inline cell editing (required)
-- **[Clipboard](../?path=/grid/plugins/clipboard/)** — Copy/paste cells
+- **[Editing](/grid/plugins/editing/)** — Inline cell editing (required)
+- **[Clipboard](/grid/plugins/clipboard/)** — Copy/paste cells

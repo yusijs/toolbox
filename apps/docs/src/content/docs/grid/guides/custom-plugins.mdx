@@ -362,6 +362,10 @@ export class MyPlugin extends BaseGridPlugin {
   </TabItem>
 </Tabs>
 
+:::caution
+Do not append `<style>` elements as children of `<tbw-grid>` — the grid calls `replaceChildren()` during renders, which removes them. Always use the `styles` property (shown above) or `this.gridElement.registerStyles(id, css)` for runtime-injected styles.
+:::
+
 ## Accessing Grid State
 
 ```typescript
@@ -509,7 +513,7 @@ export class UndoRedoPlugin extends BaseGridPlugin<UndoRedoConfig> {
 ```
 
 :::danger
-Dependencies must be loaded *before* the dependent plugin. Wrong order **throws a runtime error**:
+When using the manual `plugins` array, dependencies must be loaded *before* the dependent plugin. Wrong order **throws a runtime error**:
 
 ```typescript
 // ✅ Correct order
@@ -517,6 +521,20 @@ plugins: [new EditingPlugin(), new UndoRedoPlugin()]
 
 // ❌ Wrong order — throws error
 plugins: [new UndoRedoPlugin(), new EditingPlugin()]
+```
+:::
+
+:::tip
+The **features API** handles dependency ordering automatically. When you use `features: { ... }`, the grid reorders plugins based on declared dependencies — no manual ordering required, and import order doesn't matter (safe from Prettier's alphabetical sorting).
+
+```typescript
+// Order doesn't matter — the grid resolves dependencies for you
+import '@toolbox-web/grid/features/undo-redo';
+import '@toolbox-web/grid/features/editing';
+
+grid.gridConfig = {
+  features: { editing: true, undoRedo: true },
+};
 ```
 :::
 
@@ -717,6 +735,106 @@ describe('RowNumberPlugin', () => {
     expect(columns[0].field).toBe('__rowNumber');
   });
 });
+```
+
+## Registering as a Feature
+
+Plugins can be promoted to **features** so consumers can enable them via the declarative `features` config instead of manually instantiating classes. This also enables shorthand syntax and tree-shaking.
+
+### 1. Create the Feature Module
+
+Create a feature file that registers your plugin with a factory function:
+
+```typescript
+// my-feature.ts (e.g., libs/grid/src/lib/features/row-numbers.ts)
+import { RowNumberPlugin, type RowNumberConfig } from '../plugins/row-numbers';
+import { registerFeature } from './registry';
+
+// Augment the FeatureConfig interface so TypeScript knows about your feature
+declare module '../core/types' {
+  interface FeatureConfig {
+    /** Enable row numbering. Shorthand: `true` or a start number. */
+    rowNumbers?: boolean | number | RowNumberConfig;
+  }
+}
+
+// Register the factory — convert shorthands to full plugin config
+registerFeature('rowNumbers', (config) => {
+  if (config === true) {
+    return new RowNumberPlugin(); // defaults
+  }
+  if (typeof config === 'number') {
+    return new RowNumberPlugin({ startFrom: config }); // shorthand
+  }
+  return new RowNumberPlugin(config as RowNumberConfig); // full config
+});
+```
+
+### 2. The Pattern
+
+Every feature module follows the same three steps:
+
+1. **Import** the plugin class and its config type
+2. **Augment** `FeatureConfig` via `declare module` — this adds your shorthand types to the `features` object
+3. **Call** `registerFeature(name, factory)` — the factory receives the raw config value and returns a plugin instance
+
+The factory function is responsible for converting shorthand values (`true`, `'row'`, a number, etc.) into the full plugin constructor config.
+
+### 3. How It Works at Runtime
+
+Feature modules are **side-effect imports** — importing the file automatically registers the feature:
+
+```typescript
+// Consumer code
+import '@toolbox-web/grid/features/row-numbers'; // ← registers the feature
+
+grid.gridConfig = {
+  features: {
+    rowNumbers: 5, // shorthand: start from 5
+  },
+};
+```
+
+If no one imports the feature module, it doesn't exist in the bundle — this is how tree-shaking works.
+
+### 4. Common Shorthand Patterns
+
+| Shorthand Type | Example | Usage |
+|---------------|---------|-------|
+| `boolean` | `filtering: true` | Enable with defaults |
+| String literal | `selection: 'row'` | Pick a mode |
+| `number` | `rowNumbers: 5` | Single numeric option |
+| Full config | `editing: { editOn: 'click', ... }` | Full control |
+
+### 5. Declaring Dependencies
+
+If your feature depends on other features, declare it in the `PLUGIN_DEPENDENCIES` map in `registry.ts`:
+
+```typescript
+// In registry.ts
+const PLUGIN_DEPENDENCIES: Record<string, string[]> = {
+  clipboard: ['selection'],   // clipboard needs selection
+  rowNumbers: [],             // no dependencies
+};
+```
+
+The grid reorders plugins automatically based on declared dependencies and warns if a dependency is missing.
+
+### 6. Framework Adapter Integration
+
+For the feature to work with framework adapters (React, Vue, Angular), each adapter needs to re-export or reference the feature. The typical pattern:
+
+```typescript
+// libs/grid-react/src/features/row-numbers.ts
+import '@toolbox-web/grid/features/row-numbers';
+```
+
+This ensures the side-effect import is available when consumers import from the adapter package:
+
+```tsx
+import '@toolbox-web/grid-react/features/row-numbers';
+
+<DataGrid rows={rows} gridConfig={{ features: { rowNumbers: true } }} />
 ```
 
 ## See Also

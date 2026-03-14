@@ -5,11 +5,13 @@ import DemoControls from '@components/DemoControls.astro';
 <div class="grid-demo not-content" id="tree-default-demo">
   <DemoControls controls={[
     { section: 'TREE', name: 'animation', label: 'Animation', type: 'select',
-      options: ['slide', 'expand', 'fade', 'none'], default: 'slide', description: 'Expand/collapse animation' },
+      options: ['slide', 'fade', 'false'], default: 'slide', description: 'Expand/collapse animation' },
     { section: 'TREE', name: 'defaultExpanded', label: 'Default expanded', type: 'boolean',
       default: false, description: 'Expand all nodes by default' },
     { section: 'TREE', name: 'indentWidth', label: 'Indent width (px)', type: 'number',
       min: 10, max: 50, step: 5, default: 20, description: 'Indentation per nesting level' },
+    { section: 'TREE', name: 'showExpandIcons', label: 'Show expand icons', type: 'boolean',
+      default: true, description: 'Show expand/collapse toggle icons' },
   ]} />
   <tbw-grid style="display: block; height: 400px;"></tbw-grid>
 </div>
@@ -58,18 +60,18 @@ if (container) {
       columns,
       features: {
         tree: {
-          animation: (opts.animation as string) ?? 'slide',
+          animation: opts.animation === 'false' ? false : (opts.animation as string) ?? 'slide',
           childrenField: 'children',
           defaultExpanded: opts.defaultExpanded as boolean ?? false,
           indentWidth: (opts.indentWidth as number) ?? 20,
-          showExpandIcons: true,
+          showExpandIcons: opts.showExpandIcons as boolean ?? true,
         } as any,
       },
     };
     grid.rows = fileSystemData;
   }
 
-  rebuild({ animation: 'slide', defaultExpanded: false, indentWidth: 20 });
+  rebuild({ animation: 'slide', defaultExpanded: false, indentWidth: 20, showExpandIcons: true });
 
   container.addEventListener('control-change', ((e: CustomEvent) => {
     rebuild(e.detail.allValues);

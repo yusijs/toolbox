@@ -5,9 +5,6 @@ description: "Sort by multiple columns with shift-click support."
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import MultiSortDefaultDemo from '@components/demos/multi-sort/MultiSortDefaultDemo.astro';
-import MultiSortWithInitialSortDemo from '@components/demos/multi-sort/MultiSortWithInitialSortDemo.astro';
-import MultiSortNoBadgesDemo from '@components/demos/multi-sort/MultiSortNoBadgesDemo.astro';
-import MultiSortSingleColumnOnlyDemo from '@components/demos/multi-sort/MultiSortSingleColumnOnlyDemo.astro';
 import ShowSource from '@components/ShowSource.astro';
 
 
@@ -51,12 +48,19 @@ grid.addEventListener('sort-change', (e) => {
   </TabItem>
   <TabItem label="React">
 ```tsx
-import '@toolbox-web/grid-react/features/sorting';
-import { DataGrid } from '@toolbox-web/grid-react';
+import '@toolbox-web/grid-react/features/multi-sort';
+import { DataGrid, useGrid, useGridEvent } from '@toolbox-web/grid-react';
 
 function SortableGrid({ data }) {
+  const { ref } = useGrid();
+
+  useGridEvent(ref, 'sort-change', (e) => {
+    console.log('Sort changed:', e.detail.sortModel);
+  });
+
   return (
     <DataGrid
+      ref={ref}
       rows={data}
       columns={[
         { field: 'name', header: 'Name', sortable: true },
@@ -64,7 +68,6 @@ function SortableGrid({ data }) {
         { field: 'salary', header: 'Salary', type: 'number', sortable: true },
       ]}
       multiSort={{ maxSortColumns: 3 }}
-      onSortChange={(e) => console.log('Sort changed:', e.detail.sortModel)}
     />
   );
 }
@@ -141,74 +144,37 @@ export class SortableGridComponent {
   </TabItem>
 </Tabs>
 
-## Demos
+## Demo
 
-### Default Multi-Sort
+Use the controls to explore different multi-sort configurations: adjust the maximum number of sort levels, toggle priority badges, or apply an initial sort.
 
 <ShowSource file="demos/multi-sort/MultiSortDefaultDemo.astro">
   <MultiSortDefaultDemo />
 </ShowSource>
 
-Hold Shift and click multiple column headers to sort by multiple columns.
-
-
-
-
-### With Initial Sort
-
-<ShowSource file="demos/multi-sort/MultiSortWithInitialSortDemo.astro">
-  <MultiSortWithInitialSortDemo />
-</ShowSource>
-
-Pre-configured sort order on load.
-
-
-
-### Without Badges
-
-<ShowSource file="demos/multi-sort/MultiSortNoBadgesDemo.astro">
-  <MultiSortNoBadgesDemo />
-</ShowSource>
-
-Hide the sort priority numbers.
-
-
-
-### Single Column Only
-
-<ShowSource file="demos/multi-sort/MultiSortSingleColumnOnlyDemo.astro">
-  <MultiSortSingleColumnOnlyDemo />
-</ShowSource>
-
-Restrict sorting to one column at a time with `maxSortColumns: 1`. Clicking any column header replaces the current sort.
+Hold **Shift** and click column headers to add columns to the sort stack. Set **Max sort columns** to `1` for single-column-only sorting.
 
 
 
 ## Configuration Options
 
-| Option           | Type      | Default | Description                |     |
-| ---------------- | --------- | ------- | -------------------------- | --- |
-| `maxSortColumns` | `number`  | `3`     | Maximum columns to sort by |
-| `showSortIndex`  | `boolean` | `true`  | Show sort priority badges  |
+See [`MultiSortConfig`](./interfaces/multisortconfig/) for the full list of options and their defaults.
 
-## Initial Sort Configuration
+## Initial Sort
+
+Use `setSortModel()` to set a pre-configured sort order after the grid initializes:
 
 ```ts
-features: {
-  multiSort: {
-    initialSort: [
-      { field: 'department', direction: 'asc' },
-      { field: 'salary', direction: 'desc' },
-    ],
-  },
-},
+const plugin = grid.getPluginByName('multiSort');
+plugin.setSortModel([
+  { field: 'department', direction: 'asc' },
+  { field: 'salary', direction: 'desc' },
+]);
 ```
 
 ## Events
 
-| Event         | Detail                       | Description             |
-| ------------- | ---------------------------- | ----------------------- |
-| `sort-change` | `{ sortModel: SortModel[] }` | Fired when sort changes |
+The grid fires a `sort-change` event whenever the sort model changes:
 
 ```ts
 grid.addEventListener('sort-change', (e) => {
@@ -219,24 +185,16 @@ grid.addEventListener('sort-change', (e) => {
 
 ## Programmatic API
 
+See [`MultiSortPlugin`](./classes/multisortplugin/) for the full list of methods.
+
 ```ts
 const plugin = grid.getPluginByName('multiSort');
 
-// Set sort programmatically
-plugin.setSortModel([
-  { field: 'department', direction: 'asc' },
-  { field: 'name', direction: 'asc' },
-]);
-
-// Get current sort model
-const sortModel = plugin.getSortModel();
-
-// Clear all sorting
+plugin.setSortModel([{ field: 'department', direction: 'asc' }]);
+plugin.getSortModel();               // SortModel[]
 plugin.clearSort();
-
-// Check sort state for a specific column
-const direction = plugin.getSortDirection('salary'); // 'asc' | 'desc' | undefined
-const index = plugin.getSortIndex('salary'); // number | undefined
+plugin.getSortDirection('salary');    // 'asc' | 'desc' | undefined
+plugin.getSortIndex('salary');        // number | undefined
 ```
 
 ## Keyboard Shortcuts
@@ -245,7 +203,6 @@ const index = plugin.getSortIndex('salary'); // number | undefined
 | --------------- | ----------------------------------- |
 | `Click header`  | Sort by column (clears other sorts) |
 | `Shift + Click` | Add column to multi-sort            |
-| `Ctrl + Click`  | Toggle sort direction               |
 
 ## Styling
 
@@ -258,13 +215,11 @@ tbw-grid .sort-indicator {
 }
 
 /* Sort priority badge */
-tbw-grid .sort-badge {
-  background: var(--tbw-color-accent);
-  color: var(--tbw-color-accent-fg);
-  border-radius: 50%;
-  font-size: 10px;
-  padding: 2px 6px;
-  margin-left: 4px;
+tbw-grid .sort-index {
+  background: var(--tbw-multi-sort-badge-bg, var(--tbw-color-panel-bg));
+  color: var(--tbw-multi-sort-badge-color, var(--tbw-color-fg));
+  width: var(--tbw-multi-sort-badge-size, 1em);
+  height: var(--tbw-multi-sort-badge-size, 1em);
 }
 ```
 
@@ -290,3 +245,6 @@ multi-sort re-apply.
 :::
 
 ## See Also
+
+- **[Filtering](../filtering/)** — Filter rows by column values
+- **[Plugins Overview](/grid/plugins/)** — Plugin compatibility and combinations

@@ -72,20 +72,23 @@ function MyGrid({ data }) {
 ```html
 <script setup>
 import '@toolbox-web/grid-vue/features/reorder-columns';
-import { TbwGrid, TbwGridColumn } from '@toolbox-web/grid-vue';
+import { TbwGrid, TbwGridColumn, useGridEvent } from '@toolbox-web/grid-vue';
+import { ref } from 'vue';
 
 const data = [
   { id: 1, name: 'Alice', email: 'alice@example.com', department: 'Engineering' },
   { id: 2, name: 'Bob', email: 'bob@example.com', department: 'Marketing' },
 ];
 
-const onColumnMove = (e) => {
+const gridRef = ref(null);
+
+useGridEvent(gridRef, 'column-move', (e) => {
   console.log('Column moved:', e.detail);
-};
+});
 </script>
 
 <template>
-  <TbwGrid :rows="data" :reorder-columns="{ animation: 'flip' }" @column-move="onColumnMove">
+  <TbwGrid ref="gridRef" :rows="data" :reorder-columns="{ animation: 'flip' }">
     <TbwGridColumn field="id" header="ID" />
     <TbwGridColumn field="name" header="Name" />
     <TbwGridColumn field="email" header="Email" />
@@ -149,10 +152,7 @@ Drag column headers to reorder them. Use the controls below to experiment with d
 
 ## Configuration Options
 
-| Option              | Type                        | Default  | Description                                                               |
-| ------------------- | --------------------------- | -------- | ------------------------------------------------------------------------- |
-| `animation`         | `false \| 'flip' \| 'fade'` | `'flip'` | Animation type: `false` (instant), `'flip'` (slide), `'fade'` (crossfade) |
-| `animationDuration` | `number`                    | `200`    | Animation duration in ms (applies to FLIP animation)                      |
+See [`ReorderConfig`](./Interfaces/ReorderConfig/) for the full list of options and defaults.
 
 ### Animation Examples
 
@@ -182,6 +182,6 @@ features: { reorderColumns: { animation: 'fade' } }
 
 ## See Also
 
-- **[Pinned Columns](../?path=/grid/plugins/pinned-columns/)** — Sticky columns
-- **[Column Visibility](..//grid/plugins/column-visibility/)** — Show/hide columns
-- **[Column Groups](..//grid/plugins/column-groups/)** — Group column headers
+- **[Pinned Columns](/grid/plugins/pinned-columns/)** — Sticky columns
+- **[Column Visibility](../visibility/)** — Show/hide columns
+- **[Column Groups](../grouping-columns/)** — Group column headers

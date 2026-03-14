@@ -189,7 +189,7 @@ grid.addEventListener('cell-change', (e) => {
 The `cell-change` event fires for programmatic updates via `updateRow()`/`updateRows()`. The `cell-commit` event fires for inline edits made by users.
 :::
 
-See the [API Reference](..//grid/api/#row-update-api) for full documentation.
+See the [API Reference](/grid/api-reference/#row-update-api) for full documentation.
 
 ## Edit Triggers
 
@@ -203,7 +203,7 @@ features: { editing: 'dblclick' } // or 'click', 'manual'
 | ----------- | --------------------------------------------- |
 | `'click'`   | Single click on cell enters edit mode         |
 | `'dblclick'`| Double-click on cell enters edit mode (default) |
-| `'manual'`  | Programmatic only via `startEdit(row, field)` |
+| `'manual'`  | Programmatic only via `beginCellEdit(rowIndex, field)` |
 
 <ShowSource file="demos/editing/EditingClickToEditDemo.astro">
   <EditingClickToEditDemo />
@@ -525,6 +525,52 @@ function MyGrid({ data }) {
 }
 ```
   </TabItem>
+  <TabItem label="Vue">
+```html
+<script setup>
+import '@toolbox-web/grid-vue/features/editing';
+import { TbwGrid, TbwGridColumn } from '@toolbox-web/grid-vue';
+import { h } from 'vue';
+
+const data = [
+  { name: 'Alice', country: 'USA', priority: 'high' },
+  { name: 'Bob', country: 'Germany', priority: 'low' },
+];
+
+// Grid-level type defaults are passed via gridConfig
+const gridConfig = {
+  typeDefaults: {
+    country: {
+      renderer: (ctx) => h('span', `🌍 ${ctx.value}`),
+      editor: (ctx) => {
+        const select = document.createElement('select');
+        ['USA', 'UK', 'Germany', 'France'].forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c;
+          opt.textContent = c;
+          select.appendChild(opt);
+        });
+        select.value = ctx.value;
+        select.onchange = () => ctx.commit(select.value);
+        return select;
+      },
+    },
+    priority: {
+      renderer: (ctx) => h('span', { class: `priority-${ctx.value}` }, ctx.value),
+    },
+  },
+};
+</script>
+
+<template>
+  <TbwGrid :rows="data" :gridConfig="gridConfig" editing="dblclick" style="height: 400px">
+    <TbwGridColumn field="name" header="Name" editable />
+    <TbwGridColumn field="country" header="Country" type="country" editable />
+    <TbwGridColumn field="priority" header="Priority" type="priority" />
+  </TbwGrid>
+</template>
+```
+  </TabItem>
   <TabItem label="Angular">
 ```typescript
 // Feature import - enables the [editing] input
@@ -532,7 +578,7 @@ import '@toolbox-web/grid-angular/features/editing';
 
 import { Component } from '@angular/core';
 import { Grid } from '@toolbox-web/grid-angular';
-import type { ColumnConfig, TypeDefaultsMap } from '@toolbox-web/grid';
+import type { ColumnConfig, TypeDefault } from '@toolbox-web/grid';
 
 @Component({
   imports: [Grid],
@@ -545,7 +591,7 @@ export class MyGridComponent {
     { field: 'country', header: 'Country', type: 'country', editable: true },
   ];
 
-  typeDefaults: TypeDefaultsMap = {
+  typeDefaults: Record<string, TypeDefault> = {
     country: {
       renderer: (ctx) => {
         const span = document.createElement('span');
@@ -564,6 +610,10 @@ export class MyGridComponent {
 For defaults that apply across **all grids** in your application, use the framework adapter's type registry:
 
 <Tabs syncKey="framework">
+  <TabItem label="Vanilla JS">
+Vanilla JS does not have an app-level provider — use `gridConfig.typeDefaults` on each grid instance
+as shown in the [Grid-Level Type Defaults](#grid-level-type-defaults) section above.
+  </TabItem>
   <TabItem label="React">
 ```tsx
 // app.tsx
@@ -605,6 +655,54 @@ function Dashboard() {
     />
   );
 }
+```
+  </TabItem>
+  <TabItem label="Vue">
+```html
+<!-- App.vue -->
+<script setup>
+import { GridTypeProvider, type TypeDefaultsMap } from '@toolbox-web/grid-vue';
+import { h } from 'vue';
+import CountryBadge from './components/CountryBadge.vue';
+import CountryEditor from './components/CountryEditor.vue';
+
+const typeDefaults: TypeDefaultsMap = {
+  country: {
+    renderer: (ctx) => h(CountryBadge, { code: ctx.value }),
+    editor: (ctx) => h(CountryEditor, {
+      modelValue: ctx.value,
+      'onUpdate:modelValue': ctx.commit,
+    }),
+  },
+  currency: {
+    renderer: (ctx) => h('span', `$${ctx.value.toFixed(2)}`),
+  },
+};
+</script>
+
+<template>
+  <GridTypeProvider :defaults="typeDefaults">
+    <Dashboard />
+  </GridTypeProvider>
+</template>
+```
+
+```html
+<!-- Dashboard.vue — type defaults automatically apply -->
+<script setup>
+import '@toolbox-web/grid-vue/features/editing';
+import { TbwGrid, TbwGridColumn } from '@toolbox-web/grid-vue';
+
+const employees = [...];
+</script>
+
+<template>
+  <TbwGrid :rows="employees" editing="dblclick" style="height: 400px">
+    <TbwGridColumn field="name" header="Name" />
+    <TbwGridColumn field="country" header="Country" type="country" editable />
+    <TbwGridColumn field="salary" header="Salary" type="currency" />
+  </TbwGrid>
+</template>
 ```
   </TabItem>
   <TabItem label="Angular">
@@ -763,6 +861,8 @@ receive the new value automatically. The grid does this for built-in editors out
 
 For custom editors, use `onValueChange` to keep your inputs in sync:
 
+<Tabs syncKey="framework">
+  <TabItem label="Vanilla JS">
 ```ts
 {
   field: 'total',
@@ -782,10 +882,127 @@ For custom editors, use `onValueChange` to keep your inputs in sync:
   },
 }
 ```
+  </TabItem>
+  <TabItem label="React">
+```tsx
+import { useState, useEffect } from 'react';
+
+// Custom editor component that stays in sync with cascade updates
+function TotalEditor({ value, onValueChange, commit }) {
+  const [total, setTotal] = useState(value ?? 0);
+
+  // Stay in sync when another cell updates this field
+  useEffect(() => {
+    onValueChange?.((newValue) => setTotal(newValue ?? 0));
+  }, [onValueChange]);
+
+  return (
+    <input
+      type="number"
+      value={total}
+      onChange={(e) => {
+        const num = Number(e.target.value);
+        setTotal(num);
+        commit(num);
+      }}
+    />
+  );
+}
+
+// Use in column config
+const columns = [
+  {
+    field: 'total',
+    editable: true,
+    editor: (ctx) => (
+      <TotalEditor
+        value={ctx.value}
+        onValueChange={ctx.onValueChange}
+        commit={ctx.commit}
+      />
+    ),
+  },
+];
+```
+  </TabItem>
+  <TabItem label="Vue">
+```html
+<!-- In TbwGridColumn #editor slot -->
+<TbwGridColumn field="total" header="Total" editable>
+  <template #editor="{ value, onValueChange, commit }">
+    <TotalEditor
+      :value="value"
+      :on-value-change="onValueChange"
+      @commit="commit"
+    />
+  </template>
+</TbwGridColumn>
+```
+
+```html
+<!-- TotalEditor.vue -->
+<script setup>
+import { ref, onMounted } from 'vue';
+
+const props = defineProps(['value', 'onValueChange']);
+const emit = defineEmits(['commit']);
+const total = ref(props.value ?? 0);
+
+onMounted(() => {
+  props.onValueChange?.((newValue) => {
+    total.value = newValue ?? 0;
+  });
+});
+</script>
+
+<template>
+  <input
+    type="number"
+    :value="total"
+    @change="(e) => { total = Number(e.target.value); emit('commit', total); }"
+  />
+</template>
+```
+  </TabItem>
+  <TabItem label="Angular">
+```typescript
+// Angular editors receive onValueChange in the editor context
+// BaseGridEditor handles it automatically for ControlValueAccessor editors.
+// For manual editors, subscribe in your component:
+
+import { Component, OnInit } from '@angular/core';
+import { BaseGridEditor } from '@toolbox-web/grid-angular';
+
+@Component({
+  template: `<input type="number" [value]="total" (change)="onInput($event)" />`
+})
+export class TotalEditorComponent extends BaseGridEditor<number> implements OnInit {
+  total = 0;
+
+  ngOnInit() {
+    this.total = this.context.value ?? 0;
+
+    // Stay in sync when another cell updates this field
+    this.context.onValueChange?.((newValue) => {
+      this.total = newValue ?? 0;
+    });
+  }
+
+  onInput(event: Event) {
+    const num = Number((event.target as HTMLInputElement).value);
+    this.total = num;
+    this.context.commit(num);
+  }
+}
+```
+  </TabItem>
+</Tabs>
 
 This is especially useful when fields are interdependent — for example, updating `quantity`
 recalculates `total`:
 
+<Tabs syncKey="framework">
+  <TabItem label="Vanilla JS">
 ```ts
 grid.addEventListener('cell-commit', (e) => {
   if (e.detail.field === 'quantity') {
@@ -794,13 +1011,61 @@ grid.addEventListener('cell-commit', (e) => {
   }
 });
 ```
+  </TabItem>
+  <TabItem label="React">
+```tsx
+<DataGrid
+  rows={data}
+  columns={columns}
+  editing="dblclick"
+  onCellCommit={(e) => {
+    if (e.detail.field === 'quantity') {
+      const price = e.detail.row.price;
+      e.detail.updateRow({ total: price * e.detail.value });
+    }
+  }}
+/>
+```
+  </TabItem>
+  <TabItem label="Vue">
+```html
+<TbwGrid
+  :rows="data"
+  editing="dblclick"
+  @cell-commit="(e) => {
+    if (e.detail.field === 'quantity') {
+      const price = e.detail.row.price;
+      e.detail.updateRow({ total: price * e.detail.value });
+    }
+  }"
+>
+  <!-- columns -->
+</TbwGrid>
+```
+  </TabItem>
+  <TabItem label="Angular">
+```typescript
+@Component({
+  template: `<tbw-grid [rows]="data" [columns]="columns" [editing]="true" (cellCommit)="onCommit($event)" />`
+})
+export class MyGridComponent {
+  onCommit(event: CustomEvent) {
+    if (event.detail.field === 'quantity') {
+      const price = event.detail.row.price;
+      event.detail.updateRow({ total: price * event.detail.value });
+    }
+  }
+}
+```
+  </TabItem>
+</Tabs>
 
 ## Keyboard Shortcuts
 
 | Key | Action |
 | --- | ------ |
-| **Enter** | Start editing focused cell |
-| **Enter** | Commit edit and move down |
+| **Enter** (not editing) | Start editing focused row |
+| **Enter** (while editing) | Commit edit and move down |
 | **Tab** | Commit and move to next editable cell |
 | **Shift+Tab** | Commit and move to previous editable cell |
 | **Escape** | Cancel edit, restore original value |
@@ -819,12 +1084,12 @@ then press Enter or click away to see the events:
 | Event | Type | Description |
 | ----- | ---- | ----------- |
 | `edit-open` | `EditOpenDetail` | Fired when a row enters edit mode (row mode only) |
-| `before-edit-close` | [`BeforeEditCloseDetail`](/grid/plugins/editing-interfaces-beforeeditclosedetail/) | Fires synchronously before edit state is cleared on commit (row mode only). Managed editors (e.g. Angular Material overlay, MUI Popover) can flush pending values. Does **not** fire on revert. |
-| `edit-close` | `EditCloseDetail` | Fired when a row exits edit mode — commit or cancel (row mode only) |
-| `cell-commit` | [`CellCommitDetail`](/grid/plugins/editing-interfaces-cellcommitdetail/) | Fired when a cell value is committed (cancelable) |
-| `row-commit` | [`RowCommitDetail`](/grid/plugins/editing-interfaces-rowcommitdetail/) | Fired when a row editing session ends (cancelable) |
-| `changed-rows-reset` | [`ChangedRowsResetDetail`](/grid/plugins/editing-interfaces-changedrowsresetdetail/) | Fired when `resetChangedRows()` is called |
-| `dirty-change` | [`DirtyChangeDetail`](/grid/plugins/editing-interfaces-dirtychangedetail/) | Fired when a row's dirty state changes (requires `dirtyTracking: true`) |
+| `before-edit-close` | [`BeforeEditCloseDetail`](/grid/plugins/editing/interfaces/beforeeditclosedetail/) | Fires synchronously before edit state is cleared on commit (row mode only). Managed editors (e.g. Angular Material overlay, MUI Popover) can flush pending values. Does **not** fire on revert. |
+| `edit-close` | [`EditCloseDetail`](/grid/plugins/editing/interfaces/editclosedetail/) | Fired when a row exits edit mode — commit or cancel (row mode only) |
+| `cell-commit` | [`CellCommitDetail`](/grid/plugins/editing/interfaces/cellcommitdetail/) | Fired when a cell value is committed (cancelable) |
+| `row-commit` | [`RowCommitDetail`](/grid/plugins/editing/interfaces/rowcommitdetail/) | Fired when a row editing session ends (cancelable) |
+| `changed-rows-reset` | [`ChangedRowsResetDetail`](/grid/plugins/editing/interfaces/changedrowsresetdetail/) | Fired when `resetChangedRows()` is called |
+| `dirty-change` | [`DirtyChangeDetail`](/grid/plugins/editing/interfaces/dirtychangedetail/) | Fired when a row's dirty state changes (requires `dirtyTracking: true`) |
 
 ## Cell Validation
 
@@ -905,20 +1170,23 @@ Custom editors that append elements to `<body>` (e.g., datepicker overlays, drop
 panels) should register with the grid so focus inside them doesn't close the editor:
 
 ```ts
-// In your editor function
+// In your editor function — get the grid element from the DOM
 editor: (ctx) => {
   const input = document.createElement('input');
   const overlay = document.createElement('div');
   overlay.className = 'my-overlay';
   document.body.appendChild(overlay);
 
-  // Register so grid treats the overlay as "inside"
-  ctx.grid.registerExternalFocusContainer(overlay);
+  // Get the grid element to register the overlay
+  const grid = input.closest('tbw-grid');
+  grid?.registerExternalFocusContainer(overlay);
 
   // When done, unregister
+  const origCancel = ctx.cancel;
   ctx.cancel = () => {
-    ctx.grid.unregisterExternalFocusContainer(overlay);
+    grid?.unregisterExternalFocusContainer(overlay);
     overlay.remove();
+    origCancel();
   };
 
   return input;
@@ -972,7 +1240,7 @@ The `dirty-change` event fires whenever a row's dirty state changes:
 ```ts
 grid.addEventListener('dirty-change', (e: CustomEvent<DirtyChangeDetail>) => {
   const { rowId, row, original, type } = e.detail;
-  // type: 'modified' | 'pristine' | 'reverted'
+  // type: 'modified' | 'new' | 'reverted' | 'pristine'
   console.log(`Row ${rowId}: ${type}`);
 });
 ```
@@ -1025,8 +1293,8 @@ edit session is automatically canceled to prevent stale state.
 
 ## See Also
 
-- **[Undo/Redo](../?path=/grid/plugins/undo-redo/)** — Track edit history with Ctrl+Z/Y
-- **[Clipboard](../?path=/grid/plugins/clipboard/)** — Copy/paste with Ctrl+C/V
-- **[Selection](../?path=/grid/plugins/selection/)** — Cell and row selection
+- **[Undo/Redo](/grid/plugins/undo-redo/)** — Track edit history with Ctrl+Z/Y
+- **[Clipboard](/grid/plugins/clipboard/)** — Copy/paste with Ctrl+C/V
+- **[Selection](/grid/plugins/selection/)** — Cell and row selection
 - **[Common Patterns](/grid/guides/common-patterns/)** — Full application recipes with editing
 - **[Plugins Overview](/grid/plugins/)** — Plugin compatibility and combinations

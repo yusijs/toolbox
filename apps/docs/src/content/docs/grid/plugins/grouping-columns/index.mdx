@@ -91,14 +91,16 @@ const data = [
   { firstName: 'Bob', lastName: 'Smith', email: 'bob@example.com', department: 'Marketing', title: 'Manager', salary: 85000 },
 ];
 
-const columnGroups = [
-  { id: 'personal', header: 'Personal Info', children: ['firstName', 'lastName', 'email'] },
-  { id: 'work', header: 'Work Info', children: ['department', 'title', 'salary'] },
-];
+const gridConfig = {
+  columnGroups: [
+    { id: 'personal', header: 'Personal Info', children: ['firstName', 'lastName', 'email'] },
+    { id: 'work', header: 'Work Info', children: ['department', 'title', 'salary'] },
+  ],
+};
 </script>
 
 <template>
-  <TbwGrid :rows="data" :column-groups="columnGroups" grouping-columns style="height: 400px">
+  <TbwGrid :rows="data" :grid-config="gridConfig" grouping-columns style="height: 400px">
     <TbwGridColumn field="firstName" header="First Name" />
     <TbwGridColumn field="lastName" header="Last Name" />
     <TbwGridColumn field="email" header="Email" />
@@ -116,7 +118,8 @@ import '@toolbox-web/grid-angular/features/grouping-columns';
 
 import { Component } from '@angular/core';
 import { Grid } from '@toolbox-web/grid-angular';
-import type { ColumnConfig, ColumnGroup } from '@toolbox-web/grid';
+import type { ColumnConfig } from '@toolbox-web/grid';
+import type { ColumnGroupDefinition } from '@toolbox-web/grid/plugins/grouping-columns';
 
 @Component({
   selector: 'app-my-grid',
@@ -125,7 +128,8 @@ import type { ColumnConfig, ColumnGroup } from '@toolbox-web/grid';
     <tbw-grid
       [rows]="rows"
       [columns]="columns"
-      [groupingColumns]="{ columnGroups: columnGroups }"
+      [gridConfig]="{ columnGroups: columnGroups }"
+      [groupingColumns]="true"
       style="height: 400px; display: block;">
     </tbw-grid>
   `,
@@ -133,7 +137,7 @@ import type { ColumnConfig, ColumnGroup } from '@toolbox-web/grid';
 export class MyGridComponent {
   rows = [...];
 
-  columnGroups: ColumnGroup[] = [
+  columnGroups: ColumnGroupDefinition[] = [
     { id: 'personal', header: 'Personal Info', children: ['firstName', 'lastName', 'email'] },
     { id: 'work', header: 'Work Info', children: ['department', 'title', 'salary'] },
   ];
@@ -196,38 +200,11 @@ Use `groupHeaderRenderer` to customize the content of group header cells. The re
 
 ## Configuration Options
 
-### Plugin Options
-
-| Option                | Type       | Default | Description                              |
-| --------------------- | ---------- | ------- | ---------------------------------------- |
-| `showGroupBorders`    | `boolean`  | `true`  | Show borders between groups              |
-| `groupHeaderRenderer` | `(params: GroupHeaderRenderParams) => HTMLElement \| string \| void` | —       | Custom renderer for group header content |
-| `lockGroupOrder`      | `boolean`  | `false` | Prevent columns from being reordered outside their group. Works with both header drag-and-drop and visibility panel drag-and-drop. |
-
-#### `GroupHeaderRenderParams`
-
-| Property     | Type             | Description                                  |
-| ------------ | ---------------- | -------------------------------------------- |
-| `id`         | `string`         | The group ID                                 |
-| `label`      | `string`         | The group label (or id if no label)          |
-| `columns`    | `ColumnConfig[]` | Columns in this group                        |
-| `firstIndex` | `number`         | Starting column index                        |
-| `isImplicit` | `boolean`        | Whether this is an implicit (unnamed) group  |
-
-### Grid Config: `columnGroups`
-
-| Property   | Type       | Description                                |
-| ---------- | ---------- | ------------------------------------------ |
-| `id`       | `string`   | Unique group identifier                    |
-| `header`   | `string`   | Display label for the group header         |
-| `children` | `string[]` | Array of column field names in this group  |
-
-### Column Config: `group`
-
-| Type                              | Description                                         |
-| --------------------------------- | --------------------------------------------------- |
-| `string`                          | Simple group ID (used as both id and label)         |
-| `{ id: string; label?: string }`  | Group object with explicit id and optional label    |
+- **Plugin options**: [`GroupingColumnsConfig`](./interfaces/groupingcolumnsconfig/) — `showGroupBorders`, `groupHeaderRenderer`, `lockGroupOrder`
+- **Group header renderer params**: [`GroupHeaderRenderParams`](./interfaces/groupheaderrenderparams/) — passed to `groupHeaderRenderer`
+- **Grid config `columnGroups`**: [`ColumnGroupDefinition`](./interfaces/columngroupdefinition/) — declarative group definitions (`id`, `header`, `children`)
+- **Runtime group data**: [`ColumnGroup`](./interfaces/columngroup/) — computed group objects returned by `getGroups()`
+- **Column config `group`**: `string` (simple group ID used as both id and label) or `{ id: string; label?: string }`
 
 ## Programmatic API
 

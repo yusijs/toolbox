@@ -1,10 +1,10 @@
 ---
-title: Getting Started with Angular
-description: Install and configure @toolbox-web/grid-angular — feature inputs, renderers, editors, events, and programmatic access.
+title: Angular Integration
+description: Install and configure @toolbox-web/grid-angular — feature inputs, renderers, editors, events, inject functions, and Angular-specific patterns.
 ---
 
 
-The `@toolbox-web/grid-angular` package provides seamless Angular integration for the `<tbw-grid>` data grid component. This guide covers the essential patterns for using the grid effectively in your Angular applications.
+The `@toolbox-web/grid-angular` package provides Angular integration for the `<tbw-grid>` data grid component.
 
 ## Installation
 
@@ -45,7 +45,7 @@ import '@toolbox-web/grid-angular/features/editing';
 import '@toolbox-web/grid-angular/features/multi-sort';
 import '@toolbox-web/grid-angular/features/filtering';
 
-import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component } from '@angular/core';
 import { Grid } from '@toolbox-web/grid-angular';
 import type { ColumnConfig } from '@toolbox-web/grid';
 
@@ -59,7 +59,6 @@ interface Employee {
 @Component({
   selector: 'app-employee-grid',
   imports: [Grid],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <tbw-grid
       [rows]="employees"
@@ -88,11 +87,9 @@ export class EmployeeGridComponent {
 }
 ```
 
-> **Note**: The `CUSTOM_ELEMENTS_SCHEMA` is required since `<tbw-grid>` is a web component, not an Angular component.
-
 ## Feature Input Reference
 
-Each feature input enables a specific plugin with simplified configuration:
+Each feature input enables a specific plugin with simplified configuration. See the [Grid directive API](/grid/angular/api/directives/Grid/) for the full input/output reference.
 
 | Feature Input | Feature Import | Description |
 |---------------|----------------|-------------|
@@ -127,47 +124,13 @@ Each feature input enables a specific plugin with simplified configuration:
 | `[filterable]` | `boolean` | Grid-wide filtering toggle (default: true). Requires FilteringPlugin. |
 | `[selectable]` | `boolean` | Grid-wide selection toggle (default: true). Requires SelectionPlugin. |
 
-**Example shortcuts:**
-
-```html
-<!-- Selection modes -->
-<tbw-grid [selection]="'cell'" />
-<tbw-grid [selection]="'row'" />
-<tbw-grid [selection]="'range'" />
-<tbw-grid [selection]="{ mode: 'range', checkbox: true }" />
-
-<!-- Editing triggers -->
-<tbw-grid [editing]="true" />         <!-- default: dblclick -->
-<tbw-grid [editing]="'click'" />
-<tbw-grid [editing]="'dblclick'" />
-<tbw-grid [editing]="'manual'" />
-
-<!-- Sorting -->
-<!-- Single-column sorting is core - columns with sortable: true work without any plugin -->
-<tbw-grid [sortable]="true" />        <!-- enable core sorting (default) -->
-<tbw-grid [sortable]="false" />       <!-- disable ALL sorting grid-wide -->
-
-<!-- Multi-column sorting (requires features/multi-sort import) -->
-<tbw-grid [multiSort]="true" />       <!-- enable multi-column sort -->
-<tbw-grid [multiSort]="'single'" />   <!-- limit to single column -->
-<tbw-grid [multiSort]="{ maxSortColumns: 3 }" />
-
-<!-- Filtering toggle (requires features/filtering import for plugin) -->
-<tbw-grid [filterable]="true" [filtering]="true" />   <!-- enable filtering (default) -->
-<tbw-grid [filterable]="false" [filtering]="true" />  <!-- plugin loaded but disabled -->
-
-<!-- Selection toggle (requires features/selection import for plugin) -->
-<tbw-grid [selectable]="true" [selection]="'range'" />   <!-- enable selection (default) -->
-<tbw-grid [selectable]="false" [selection]="'range'" />  <!-- plugin loaded but disabled -->
-```
-
 ## Custom Cell Renderers
 
-Use the `*tbwRenderer` structural directive to customize how cell values are displayed:
+Use the [`*tbwRenderer`](/grid/angular/api/directives/TbwRenderer/) structural directive to customize how cell values are displayed. The directive context exposes `$implicit` (the cell value), `row`, and `column`.
 
 ```typescript
-import { Component, CUSTOM_ELEMENTS_SCHEMA, input } from '@angular/core';
-import { Grid, TbwRenderer } from '@toolbox-web/grid-angular';
+import { Component, input } from '@angular/core';
+import { Grid, TbwGridColumn, TbwRenderer } from '@toolbox-web/grid-angular';
 
 // Standalone status badge component
 @Component({
@@ -190,8 +153,7 @@ export class StatusBadgeComponent {
 }
 
 @Component({
-  imports: [Grid, TbwRenderer, StatusBadgeComponent],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  imports: [Grid, TbwGridColumn, TbwRenderer, StatusBadgeComponent],
   template: `
     <tbw-grid [rows]="employees" [gridConfig]="config" style="height: 400px; display: block;">
       <!-- Custom renderer for the status column -->
@@ -218,21 +180,13 @@ export class EmployeeGridComponent {
 }
 ```
 
-**Renderer Context Variables:**
-
-| Variable | Type | Description |
-|----------|------|-------------|
-| `$implicit` | `TValue` | The cell value (accessed with `let value`) |
-| `row` | `TRow` | The full row data object |
-| `column` | [`ColumnConfig`](/grid/api/core/interfaces/columnconfig/) | Column configuration |
-
 ## Custom Cell Editors
 
-Use the `*tbwEditor` structural directive for inline cell editing. Editor components just need to emit `commit` and `cancel` events - the adapter handles the rest automatically:
+Use the [`*tbwEditor`](/grid/angular/api/directives/TbwEditor/) structural directive for inline cell editing. Editor components emit `commit` and `cancel` events — the adapter handles wiring automatically.
 
 ```typescript
-import { Component, CUSTOM_ELEMENTS_SCHEMA, input, output } from '@angular/core';
-import { Grid, TbwRenderer, TbwEditor } from '@toolbox-web/grid-angular';
+import { Component, input, output } from '@angular/core';
+import { Grid, TbwGridColumn, TbwRenderer, TbwEditor } from '@toolbox-web/grid-angular';
 import '@toolbox-web/grid-angular/features/editing';
 
 // Editor component - emits 'commit' with new value
@@ -254,8 +208,7 @@ export class StatusEditorComponent {
 }
 
 @Component({
-  imports: [Grid, TbwRenderer, TbwEditor, StatusBadgeComponent, StatusEditorComponent],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  imports: [Grid, TbwGridColumn, TbwRenderer, TbwEditor, StatusBadgeComponent, StatusEditorComponent],
   template: `
     <tbw-grid [rows]="employees" [gridConfig]="config" style="height: 400px; display: block;">
       <tbw-grid-column field="status" editable>
@@ -279,7 +232,7 @@ export class EmployeeGridComponent {
 }
 ```
 
-> **Auto-wiring**: The `TbwEditor` directive listens for `commit` and `cancel` events on your component and automatically calls the grid's edit functions. No manual callback binding needed!
+For complex editors (date pickers, overlays, form-integrated editors), see [Base Classes](/grid/angular/base-classes/).
 
 ## Handling Events
 
@@ -288,7 +241,6 @@ Listen to grid events using standard Angular event binding:
 ```typescript
 @Component({
   imports: [Grid],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <tbw-grid
       [rows]="employees"
@@ -325,39 +277,149 @@ export class EmployeeGridComponent {
 
 ## Programmatic Grid Access
 
-Access the grid element directly for programmatic control:
+### Using `viewChild`
+
+Access the underlying `<tbw-grid>` element via Angular's `viewChild`:
 
 ```typescript
-import { Component, CUSTOM_ELEMENTS_SCHEMA, ElementRef, viewChild } from '@angular/core';
+import { Component, viewChild, ElementRef, effect } from '@angular/core';
 import { Grid } from '@toolbox-web/grid-angular';
 import type { DataGridElement } from '@toolbox-web/grid';
 
 @Component({
+  selector: 'app-employee-grid',
   imports: [Grid],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
-    <button (click)="refreshGrid()">Refresh</button>
-    <button (click)="exportCsv()">Export CSV</button>
-    <tbw-grid #grid [rows]="employees" [gridConfig]="config" />
+    <tbw-grid #grid [rows]="employees" [columns]="columns"></tbw-grid>
   `,
 })
 export class EmployeeGridComponent {
-  grid = viewChild<ElementRef<DataGridElement>>('grid');
+  private gridRef = viewChild<ElementRef<DataGridElement>>('grid');
 
-  refreshGrid() {
-    this.grid()?.nativeElement.forceLayout();
+  constructor() {
+    effect(() => {
+      const grid = this.gridRef()?.nativeElement;
+      if (!grid) return;
+
+      grid.ready().then(() => {
+        console.log('Row count:', grid.sourceRows.length);
+
+        const selection = grid.getPluginByName('selection');
+        selection?.selectRow(0);
+      });
+    });
+  }
+}
+```
+
+### Using `injectGrid`
+
+For a more Angular-idiomatic approach, use [`injectGrid()`](/grid/angular/api/utilities/injectGrid/) which provides a reactive API via signals:
+
+```typescript
+import { Component, effect } from '@angular/core';
+import { Grid, injectGrid } from '@toolbox-web/grid-angular';
+
+@Component({
+  selector: 'app-employee-grid',
+  imports: [Grid],
+  template: `
+    <tbw-grid [rows]="employees" [columns]="columns"></tbw-grid>
+
+    <p>Grid ready: {{ grid.isReady() }}</p>
+    <button (click)="refresh()">Force Layout</button>
+  `,
+})
+export class EmployeeGridComponent {
+  grid = injectGrid();
+
+  employees = [/* ... */];
+  columns = [/* ... */];
+
+  constructor() {
+    effect(() => {
+      if (this.grid.isReady()) {
+        console.log('Grid element:', this.grid.element());
+      }
+    });
   }
 
-  async exportCsv() {
-    const exportPlugin = this.grid()?.nativeElement.getPluginByName('export');
-    await exportPlugin?.exportToCsv({ filename: 'employees.csv' });
+  refresh() {
+    this.grid.forceLayout();
   }
+}
+```
+
+## Feature-Scoped Inject Functions
+
+Feature imports export **scoped inject functions** for type-safe programmatic access to plugin functionality — no direct plugin references needed.
+
+```typescript
+import '@toolbox-web/grid-angular/features/export';
+import { injectGridExport } from '@toolbox-web/grid-angular/features/export';
+import { Component } from '@angular/core';
+import { Grid } from '@toolbox-web/grid-angular';
+
+@Component({
+  imports: [Grid],
+  template: `
+    <div class="toolbar">
+      <button (click)="exportCsv()" [disabled]="gridExport.isExporting()">Export CSV</button>
+    </div>
+    <tbw-grid [rows]="employees" [columns]="columns" [export]="true" />
+  `,
+})
+export class ExportGridComponent {
+  employees = [/* ... */];
+  columns = [/* ... */];
+  gridExport = injectGridExport();
+
+  exportCsv() {
+    this.gridExport.exportToCsv('employees.csv');
+  }
+}
+```
+
+### Available Inject Functions
+
+| Function | Import | Key Methods |
+|----------|--------|-------------|
+| `injectGridSelection()` | `features/selection` | `selectAll`, `clearSelection`, `getSelection`, `selectedRowIndices` (Signal) |
+| `injectGridFiltering()` | `features/filtering` | `setFilter`, `clearAllFilters`, `getFilters`, `getFilteredRowCount` |
+| `injectGridExport()` | `features/export` | `exportToCsv`, `exportToExcel`, `exportToJson`, `isExporting` |
+| `injectGridPrint()` | `features/print` | `print`, `isPrinting` |
+| `injectGridUndoRedo()` | `features/undo-redo` | `undo`, `redo`, `canUndo` (Signal), `canRedo` (Signal) |
+
+### Signal-Based Selection Example
+
+```typescript
+import { Component, computed } from '@angular/core';
+import { Grid } from '@toolbox-web/grid-angular';
+import { injectGridSelection } from '@toolbox-web/grid-angular/features/selection';
+
+@Component({
+  selector: 'app-employee-grid',
+  imports: [Grid],
+  template: `
+    <tbw-grid [rows]="employees" [gridConfig]="gridConfig"></tbw-grid>
+    <p>Selected: {{ selectedCount() }}</p>
+    <button (click)="gridSelection.selectAll()">Select All</button>
+    <button (click)="gridSelection.clearSelection()">Clear</button>
+  `,
+})
+export class EmployeeGridComponent {
+  gridSelection = injectGridSelection();
+  selectedCount = computed(() => this.gridSelection.selectedRowIndices().length);
+
+  gridConfig = {
+    features: { selection: { mode: 'row', checkbox: true } },
+  };
 }
 ```
 
 ## Type-Level Defaults
 
-Register application-wide renderers and editors for specific data types using `provideGridTypeDefaults()`:
+Register application-wide renderers and editors for specific data types using [`provideGridTypeDefaults()`](/grid/angular/api/utilities/provideGridTypeDefaults/):
 
 ```typescript
 // app.config.ts
@@ -368,100 +430,349 @@ import { CurrencyRendererComponent, DateRendererComponent } from './renderers';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideGridTypeDefaults({
-      currency: {
-        renderer: CurrencyRendererComponent,
-      },
-      date: {
-        renderer: DateRendererComponent,
-      },
+      currency: { renderer: CurrencyRendererComponent },
+      date: { renderer: DateRendererComponent },
     }),
   ],
 };
-
-// Now any column with type: 'currency' uses CurrencyRendererComponent automatically
-// config = {
-//   columns: [
-//     { field: 'salary', header: 'Salary', type: 'currency' },  // Uses CurrencyRenderer
-//     { field: 'hireDate', header: 'Hire Date', type: 'date' }, // Uses DateRenderer
-//   ],
-// };
 ```
 
-## Variable Row Heights
-
-The grid supports variable row heights for complex layouts with wrapped text or dynamic content. Configure via `gridConfig.rowHeight`:
+For dynamic registration at runtime, inject [`GridTypeRegistry`](/grid/angular/api/utilities/GridTypeRegistry/):
 
 ```typescript
-import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { inject } from '@angular/core';
+import { GridTypeRegistry } from '@toolbox-web/grid-angular';
+
+export class AppComponent {
+  private registry = inject(GridTypeRegistry);
+
+  ngOnInit() {
+    this.registry.register('currency', {
+      renderer: CurrencyCellComponent,
+    });
+  }
+}
+```
+
+## Custom Icons
+
+Override built-in icons globally using [`provideGridIcons()`](/grid/angular/api/utilities/provideGridIcons/):
+
+```typescript
+// app.config.ts
+import { provideGridIcons } from '@toolbox-web/grid-angular';
+
+export const appConfig = {
+  providers: [
+    provideGridIcons({
+      sortAsc: '<svg>...</svg>',
+      sortDesc: '<svg>...</svg>',
+      filter: '<svg>...</svg>',
+    }),
+  ],
+};
+```
+
+## Manual Plugin Instantiation
+
+While feature inputs are recommended, you can instantiate plugins manually for custom configurations or third-party plugins:
+
+```typescript
+import { Component } from '@angular/core';
 import { Grid } from '@toolbox-web/grid-angular';
+import { SelectionPlugin, EditingPlugin, ClipboardPlugin } from '@toolbox-web/grid/all';
 import type { GridConfig } from '@toolbox-web/grid';
 
 @Component({
+  selector: 'app-employee-grid',
   imports: [Grid],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  template: `
-    <tbw-grid [rows]="employees" [gridConfig]="config" style="height: 400px; display: block;" />
-  `,
+  template: `<tbw-grid [rows]="employees" [gridConfig]="gridConfig"></tbw-grid>`,
 })
-export class VariableHeightGridComponent {
+export class EmployeeGridComponent {
   employees = [/* ... */];
 
-  config: GridConfig = {
-    rowId: 'id', // Required for height caching when rows are recreated
-    rowHeight: (row, index) => {
-      // Return known fixed height when possible (fast)
-      if (row.type === 'header') return 48;
-
-      // Return undefined to auto-measure the row's DOM height (slower)
-      return row.hasLongDescription ? undefined : 28;
-    },
-    columns: [/* ... */],
+  gridConfig: GridConfig = {
+    columns: [
+      { field: 'id', header: 'ID' },
+      { field: 'name', header: 'Name', editable: true },
+    ],
+    plugins: [
+      new SelectionPlugin({ mode: 'range', checkbox: true }),
+      new EditingPlugin({ editOn: 'dblclick' }),
+      new ClipboardPlugin({ includeHeaders: true }),
+    ],
   };
 }
 ```
 
-### Height Caching
+Feature inputs and manual plugins can be mixed — the grid merges them, with manual plugins added first.
 
-The grid caches measured heights to avoid repeated DOM measurements. When rows may be recreated (e.g., from HTTP responses), use `rowId` to maintain cache identity:
+## Angular-Specific Directives
 
-```typescript
-config: GridConfig = {
-  rowId: 'id',  // Use the 'id' field as unique identifier
-  rowHeight: (row) => row.expanded ? undefined : 32,
-};
-```
+### Master-Detail Panels
 
-### Plugin-Provided Heights
-
-Plugins like `GroupingRowsPlugin` provide their own row heights. Configure via the plugin's options:
+Use [`GridDetailView`](/grid/angular/api/directives/GridDetailView/) for expandable detail panels with Angular templates:
 
 ```typescript
-import { GroupingRowsPlugin } from '@toolbox-web/grid/all';
+import { Component } from '@angular/core';
+import { Grid, GridDetailView } from '@toolbox-web/grid-angular';
+import '@toolbox-web/grid-angular/features/master-detail';
+import type { GridConfig } from '@toolbox-web/grid';
 
-config: GridConfig = {
-  plugins: [
-    new GroupingRowsPlugin({
-      field: 'department',
-      groupRowHeight: 36, // Known height for group headers
-    }),
-  ],
-  // Your rowHeight callback handles data rows only -
-  // plugins handle their own synthetic rows automatically
-  rowHeight: (row) => row.hasNotes ? undefined : 28,
-};
+@Component({
+  imports: [Grid, GridDetailView],
+  template: `
+    <tbw-grid [rows]="employees" [gridConfig]="gridConfig">
+      <ng-template tbwDetailView let-row let-toggle="toggle">
+        <div class="detail-panel">
+          <h4>{{ row.name }}</h4>
+          <p>Email: {{ row.email }}</p>
+          <button (click)="toggle()">Close</button>
+        </div>
+      </ng-template>
+    </tbw-grid>
+  `,
+})
+export class EmployeeGridComponent {
+  employees = [/* ... */];
+  gridConfig: GridConfig = {
+    columns: [/* ... */],
+    features: { masterDetail: true },
+  };
+}
 ```
 
-See [Variable Row Heights](/grid/getting-started/#variable-row-heights) for complete documentation.
+### Responsive Card Layout
 
-## Feature-Scoped Inject Functions
+Use [`GridResponsiveCard`](/grid/angular/api/directives/GridResponsiveCard/) for mobile-friendly card layouts:
 
-Feature imports also export **scoped inject functions** for type-safe programmatic access to plugin functionality — no direct plugin references needed.
+```typescript
+import { Component } from '@angular/core';
+import { Grid, GridResponsiveCard } from '@toolbox-web/grid-angular';
+import '@toolbox-web/grid-angular/features/responsive';
+import type { GridConfig } from '@toolbox-web/grid';
 
-See the [Advanced Usage guide](/grid/angular/advanced-usage/#feature-scoped-inject-functions) for full documentation, examples, and available inject functions.
+@Component({
+  imports: [Grid, GridResponsiveCard],
+  template: `
+    <tbw-grid [rows]="employees" [gridConfig]="gridConfig">
+      <ng-template tbwResponsiveCard let-row let-columns="columns">
+        <div class="card">
+          <h3>{{ row.name }}</h3>
+          <p>{{ row.department }} · {{ row.email }}</p>
+        </div>
+      </ng-template>
+    </tbw-grid>
+  `,
+})
+export class EmployeeGridComponent {
+  employees = [/* ... */];
+  gridConfig: GridConfig = {
+    columns: [/* ... */],
+    features: { responsive: { breakpoint: 600, cardTitleField: 'name' } },
+  };
+}
+```
 
-## Next Steps
+### Custom Tool Panels
 
-- **[Advanced Usage](/grid/angular/advanced-usage/)** — Manual plugins, server-side data, responsive layouts, performance tips
-- **[Reactive Forms Integration](/grid/angular/reactive-forms/)** — Bind the grid to Angular FormArray for validation and dirty tracking
-- **[API Reference](/grid/angular/api/)** — Complete API documentation for all directives
-- **[Grid Plugins](/grid/plugins/)** — Explore all available plugins
+Use [`GridToolPanel`](/grid/angular/api/directives/GridToolPanel/) for custom sidebar panels:
+
+```typescript
+import { Component } from '@angular/core';
+import { Grid, GridToolPanel } from '@toolbox-web/grid-angular';
+import type { GridConfig } from '@toolbox-web/grid';
+
+@Component({
+  imports: [Grid, GridToolPanel],
+  template: `
+    <tbw-grid [rows]="employees" [gridConfig]="gridConfig">
+      <ng-template tbwToolPanel="stats" let-rows>
+        <div class="stats-panel">
+          <h3>Statistics</h3>
+          <p>Total rows: {{ rows.length }}</p>
+        </div>
+      </ng-template>
+    </tbw-grid>
+  `,
+})
+export class EmployeeGridComponent {
+  employees = [/* ... */];
+  gridConfig: GridConfig = {
+    columns: [/* ... */],
+    shell: {
+      header: { title: 'Employees' },
+      toolPanels: [{ id: 'stats', label: 'Stats', icon: '📊' }],
+    },
+  };
+}
+```
+
+## Server-Side Data Loading
+
+Angular-specific pattern using `inject(HttpClient)` and signals:
+
+```typescript
+import { Component, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Grid } from '@toolbox-web/grid-angular';
+import '@toolbox-web/grid-angular/features/server-side';
+import type { GridConfig, ServerDataSource } from '@toolbox-web/grid';
+
+@Component({
+  imports: [Grid],
+  template: `<tbw-grid [rows]="employees()" [gridConfig]="gridConfig"></tbw-grid>`,
+})
+export class EmployeeGridComponent {
+  private http = inject(HttpClient);
+  employees = signal<Employee[]>([]);
+
+  private dataSource: ServerDataSource<Employee> = {
+    fetchRows: async (params) => {
+      const queryParams = new URLSearchParams();
+      if (params.sortModel?.length) {
+        queryParams.set('sort', params.sortModel[0].field);
+        queryParams.set('order', params.sortModel[0].direction);
+      }
+      if (params.filterModel) {
+        queryParams.set('filters', JSON.stringify(params.filterModel));
+      }
+      queryParams.set('offset', String(params.startRow));
+      queryParams.set('limit', String(params.endRow - params.startRow));
+
+      const response = await fetch(`/api/employees?${queryParams}`);
+      const data = await response.json();
+      return { rows: data.items, totalRows: data.total };
+    },
+  };
+
+  gridConfig: GridConfig<Employee> = {
+    columns: [
+      { field: 'id', header: 'ID', sortable: true },
+      { field: 'name', header: 'Name', sortable: true },
+      { field: 'department', header: 'Department' },
+    ],
+    features: { serverSide: { dataSource: this.dataSource } },
+  };
+}
+```
+
+See the [Server-Side plugin](/grid/plugins/server-side/) for the full `ServerDataSource` interface.
+
+## Dynamic Row Updates
+
+```typescript
+import { Component, signal } from '@angular/core';
+import { Grid } from '@toolbox-web/grid-angular';
+
+@Component({
+  imports: [Grid],
+  template: `
+    <tbw-grid [rows]="employees()" [columns]="columns"></tbw-grid>
+    <button (click)="addEmployee()">Add</button>
+    <button (click)="removeFirst()">Remove First</button>
+  `,
+})
+export class EmployeeGridComponent {
+  employees = signal([
+    { id: 1, name: 'Alice', department: 'Engineering' },
+    { id: 2, name: 'Bob', department: 'Design' },
+  ]);
+
+  columns = [
+    { field: 'id', header: 'ID' },
+    { field: 'name', header: 'Name' },
+    { field: 'department', header: 'Department' },
+  ];
+
+  private nextId = 3;
+
+  addEmployee() {
+    this.employees.update(rows => [
+      ...rows,
+      { id: this.nextId++, name: 'New Employee', department: 'TBD' },
+    ]);
+  }
+
+  removeFirst() {
+    this.employees.update(rows => rows.slice(1));
+  }
+}
+```
+
+> **Tip**: Use Angular signals for rows. The grid detects the new array reference and re-renders efficiently.
+
+## Performance Tips
+
+### OnPush Change Detection
+
+```typescript
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  // ...
+})
+export class EmployeeGridComponent { }
+```
+
+### Define Columns Once
+
+```typescript
+// ✅ Good — assigned once
+readonly columns: ColumnConfig[] = [
+  { field: 'id', header: 'ID' },
+  { field: 'name', header: 'Name' },
+];
+
+// ❌ Bad — getter creates new array every check
+get columns() {
+  return [{ field: 'id', header: 'ID' }, { field: 'name', header: 'Name' }];
+}
+```
+
+## Troubleshooting
+
+### Feature input not working
+
+Ensure you imported the feature side-effect in your `main.ts`:
+
+```typescript
+// main.ts — must be imported before bootstrap
+import '@toolbox-web/grid-angular/features/selection';
+```
+
+### "is not a known element" errors
+
+The `@toolbox-web/grid-angular` adapter provides directives that register all `<tbw-*>` elements with Angular's template compiler — no `CUSTOM_ELEMENTS_SCHEMA` needed. Import the directive that matches the element used in your template:
+
+```typescript
+import { Grid, TbwGridColumn } from '@toolbox-web/grid-angular';
+
+@Component({
+  imports: [Grid, TbwGridColumn], // Grid → <tbw-grid>, TbwGridColumn → <tbw-grid-column>
+  // ...
+})
+```
+
+### Grid not rendering
+
+The grid needs a defined height for virtualization. See [Troubleshooting → Height & Virtualization](/grid/guides/troubleshooting/#height--virtualization) for solutions.
+
+### Row updates not reflected
+
+The grid detects updates via reference equality. Always assign a new array:
+
+```typescript
+// ✅ New reference — grid re-renders
+this.employees.update(rows => [...rows, newRow]);
+
+// ❌ Same reference — grid won't detect change
+this.employees().push(newRow);
+```
+
+## See Also
+
+- **[Base Classes](/grid/angular/base-classes/)** — `BaseOverlayEditor`, `BaseGridEditorCVA`, `BaseFilterPanel`
+- **[Reactive Forms](/grid/angular/reactive-forms/)** — `FormArray` integration with `GridFormArray` and `GridLazyForm`
+- **[API Reference](/grid/angular/api/)** — Complete API documentation for all directives and types
+- **[Grid Plugins](/grid/plugins/)** — All available plugins
+- **[Core Features](/grid/core/)** — Variable row heights, events, column config

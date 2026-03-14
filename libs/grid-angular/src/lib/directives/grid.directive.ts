@@ -679,7 +679,7 @@ export class Grid implements OnInit, AfterContentInit, OnDestroy {
    *
    * @example
    * ```html
-   * <tbw-grid [groupingColumns]="{ columnGroups: [...] }" />
+   * <tbw-grid [groupingColumns]="true" />
    * ```
    */
   groupingColumns = input<boolean | GroupingColumnsConfig>();

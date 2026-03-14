@@ -3,6 +3,7 @@ title: Plugins Overview
 description: Overview of all @toolbox-web/grid plugins — editing, selection, filtering, grouping, export, and more. Tree-shakeable, individually importable.
 ---
 
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 The `@toolbox-web/grid` plugin architecture allows you to extend the grid with powerful features while keeping the core bundle lightweight. Plugins are tree-shakeable — only import what you need.
 
@@ -82,7 +83,7 @@ Some plugins depend on other plugins to function. Dependencies can be **hard** (
 | Plugin | Depends On | Type | Reason |
 | ------ | ---------- | ---- | ------ |
 | **UndoRedoPlugin** | EditingPlugin | Hard | Tracks cell edit history for undo/redo |
-| **ClipboardPlugin** | SelectionPlugin | Hard | Needs selection to determine what cells to copy |
+| **ClipboardPlugin** | SelectionPlugin | Soft | Enables copy/paste of selected cells instead of entire grid |
 | **VisibilityPlugin** | ReorderPlugin | Soft | Enables drag-to-reorder columns in visibility panel |
 
 ### Plugin Load Order
@@ -105,33 +106,7 @@ plugins: [
 ]
 ```
 
-### Declaring Dependencies in Custom Plugins
-
-Custom plugins can declare their own dependencies using the static `dependencies` property:
-
-```typescript
-import { BaseGridPlugin, type PluginDependency } from '@toolbox-web/grid';
-
-class MyPlugin extends BaseGridPlugin<MyConfig> {
-  // Declare dependencies
-  static override readonly dependencies: PluginDependency[] = [
-    { name: 'selection', required: true, reason: 'MyPlugin needs selection state' },
-    { name: 'filtering', required: false, reason: 'Enables filtered export' },
-  ];
-
-  readonly name = 'myPlugin';
-  // ...
-}
-```
-
-The grid validates dependencies at attachment time and provides helpful error messages:
-
-```
-[tbw-grid] Plugin dependency error: MyPlugin needs selection state.
-  → Add the plugin to your gridConfig.plugins array:
-    import { SelectionPlugin } from '@toolbox-web/grid/plugins/selection';
-    plugins: [new SelectionPlugin(), new MyPlugin(), ...]
-```
+For declaring dependencies in your own custom plugins, see [Custom Plugins → Plugin Dependencies](/grid/guides/custom-plugins/#plugin-dependencies).
 
 ## Using Features (Recommended)
 
@@ -142,7 +117,8 @@ The features API is the simplest and recommended way to enable grid capabilities
 - **Tree-shaking** via side-effect imports — only the features you import are included in your bundle
 - **Framework adapter integration** — React, Vue, and Angular adapters expose features as typed props
 
-### Vanilla JS / Web Components
+<Tabs syncKey="framework">
+  <TabItem label="Vanilla">
 
 ```typescript
 // 1. Import features (side-effect imports for tree-shaking)
@@ -161,7 +137,8 @@ grid.gridConfig = {
 };
 ```
 
-### React
+  </TabItem>
+  <TabItem label="React">
 
 ```tsx
 import '@toolbox-web/grid-react/features/selection';
@@ -177,7 +154,8 @@ import '@toolbox-web/grid-react/features/editing';
 />
 ```
 
-### Vue
+  </TabItem>
+  <TabItem label="Vue">
 
 ```vue
 <script setup>
@@ -195,7 +173,8 @@ import '@toolbox-web/grid-vue/features/editing';
 />
 ```
 
-### Angular
+  </TabItem>
+  <TabItem label="Angular">
 
 ```typescript
 import '@toolbox-web/grid-angular/features/selection';
@@ -207,12 +186,27 @@ import '@toolbox-web/grid-angular/features/editing';
 //   [selection]="'row'" [filtering]="{ debounceMs: 300 }" [editing]="'dblclick'" />
 ```
 
-### Import All Features
+  </TabItem>
+</Tabs>
+
+### Import All Plugins
 
 For rapid prototyping when bundle size is not critical:
 
 ```typescript
-import '@toolbox-web/grid/features/all';
+import { SelectionPlugin, FilteringPlugin, EditingPlugin } from '@toolbox-web/grid/all';
+```
+
+This imports the core grid and all 22 plugin classes. Use the `plugins` array to configure them:
+
+```typescript
+grid.gridConfig = {
+  plugins: [
+    new SelectionPlugin({ mode: 'row' }),
+    new FilteringPlugin(),
+    new EditingPlugin({ editOn: 'dblclick' }),
+  ],
+};
 ```
 
 ### Accessing Plugin Instances
@@ -290,7 +284,7 @@ Each plugin accepts a configuration object:
 new SelectionPlugin({
   mode: 'row',
   multiSelect: true,
-  checkboxColumn: true,
+  checkbox: true,
 });
 
 // Filtering plugin options
@@ -301,8 +295,9 @@ new FilteringPlugin({
 
 // Export plugin options
 new ExportPlugin({
-  formats: ['csv', 'json'],
-  filename: 'grid-export',
+  fileName: 'grid-export',
+  includeHeaders: true,
+  onlyVisible: true,
 });
 ```
 
@@ -321,86 +316,9 @@ Some plugin combinations conflict and should not be used together:
 | PinnedColumnsPlugin | GroupingColumnsPlugin | Pinning reorders columns to edges, which breaks column group header layout |
 | ResponsivePlugin | GroupingRowsPlugin | Card layout doesn't support row grouping; variable row heights cause scroll issues |
 
-## Common Recipes
-
-These recipes cover the most common grid scenarios using the features API. Dependencies are resolved automatically.
-
-### Data Browser (read-only, filterable, sortable)
-
-```typescript
-import '@toolbox-web/grid/features/selection';
-import '@toolbox-web/grid/features/filtering';
-import '@toolbox-web/grid/features/multi-sort';
-import '@toolbox-web/grid/features/visibility';
-
-grid.gridConfig = {
-  columns: [...],
-  features: {
-    selection: 'row',
-    filtering: { debounceMs: 300 },
-    multiSort: true,
-    visibility: true,
-  },
-};
-```
-
-### Editable Grid (with undo/redo and clipboard)
-
-```typescript
-import '@toolbox-web/grid/features/selection';
-import '@toolbox-web/grid/features/editing';
-import '@toolbox-web/grid/features/undo-redo';
-import '@toolbox-web/grid/features/clipboard';
-
-grid.gridConfig = {
-  columns: [...],
-  features: {
-    selection: { mode: 'cell', multiSelect: true },
-    editing: { mode: 'cell', dirtyTracking: true },
-    undoRedo: true,
-    clipboard: true,
-  },
-};
-```
-
-### Server-Side Data (large datasets)
-
-```typescript
-import '@toolbox-web/grid/features/selection';
-import '@toolbox-web/grid/features/filtering';
-import '@toolbox-web/grid/features/multi-sort';
-import '@toolbox-web/grid/features/server-side';
-
-grid.gridConfig = {
-  columns: [...],
-  features: {
-    selection: 'row',
-    filtering: { filterHandler: async (model) => fetchFiltered(model) },
-    multiSort: true,
-    serverSide: { pageSize: 100 },
-  },
-};
-```
-
-### Hierarchical / Grouped Data
-
-```typescript
-import '@toolbox-web/grid/features/grouping-rows';
-import '@toolbox-web/grid/features/selection';
-import '@toolbox-web/grid/features/filtering';
-
-grid.gridConfig = {
-  columns: [...],
-  features: {
-    groupingRows: { groupOn: (row: any) => [row.department], defaultExpanded: true },
-    selection: 'row',
-    filtering: true,
-  },
-};
-```
-
 ## See Also
 
+- [Common Patterns](/grid/guides/common-patterns/) — Real-world recipes combining plugins (all frameworks)
 - [Getting Started](/grid/getting-started/) — Quick setup with features API
 - [Custom Plugin Development](/grid/guides/custom-plugins) — Build your own plugins
 - [Architecture](/grid/architecture) — How the plugin system fits into the grid's internals

@@ -435,16 +435,16 @@ export class FormChangeExample {
 ### Programmatic Access
 
 ```typescript
-import { ViewChild } from '@angular/core';
+import { viewChild } from '@angular/core';
 import { GridLazyForm } from '@toolbox-web/grid-angular';
 
 @Component({ /* ... */ })
 export class MyComponent {
-  @ViewChild(GridLazyForm) lazyForm!: GridLazyForm<Employee>;
+  lazyForm = viewChild.required(GridLazyForm<Employee>);
 
   validateBeforeSave() {
     // Validate all currently cached FormGroups
-    if (!this.lazyForm.validateAll()) {
+    if (!this.lazyForm().validateAll()) {
       console.log('Some rows are invalid');
       return false;
     }
@@ -453,14 +453,14 @@ export class MyComponent {
 
   getEditedRows() {
     // Get all rows that have been edited
-    const formGroups = this.lazyForm.getAllFormGroups();
+    const formGroups = this.lazyForm().getAllFormGroups();
     console.log('Edited rows:', formGroups.size);
     return formGroups;
   }
 
   resetAfterSave() {
     // Clear all cached FormGroups after successful save
-    this.lazyForm.clearAllFormGroups();
+    this.lazyForm().clearAllFormGroups();
   }
 }
 ```

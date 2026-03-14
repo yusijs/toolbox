@@ -338,7 +338,7 @@ const grid = createGrid({
     selection: 'row',
     editing: 'dblclick',
     filtering: true,
-    sorting: 'multi',
+    multiSort: 'multi',
   },
 });
 grid.rows = employees;
@@ -1670,7 +1670,7 @@ Angular adapter provides base classes to reduce boilerplate when creating custom
 **Overlay editor example:**
 
 ```typescript
-import { Component, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, ElementRef, effect, viewChild } from '@angular/core';
 import { BaseOverlayEditor } from '@toolbox-web/grid-angular';
 
 @Component({
@@ -1684,18 +1684,24 @@ import { BaseOverlayEditor } from '@toolbox-web/grid-angular';
     </div>
   `
 })
-export class DateEditorComponent extends BaseOverlayEditor<MyRow, string> implements AfterViewInit {
-  @ViewChild('panel') panelRef!: ElementRef<HTMLElement>;
-  @ViewChild('inlineInput') inputRef!: ElementRef<HTMLInputElement>;
+export class DateEditorComponent extends BaseOverlayEditor<MyRow, string> {
+  panelRef = viewChild<ElementRef<HTMLElement>>('panel');
+  inputRef = viewChild<ElementRef<HTMLInputElement>>('inlineInput');
 
   protected override overlayPosition = 'below' as const;
 
-  ngAfterViewInit(): void {
-    this.initOverlay(this.panelRef.nativeElement);
-    if (this.isCellFocused()) this.showOverlay();
+  constructor() {
+    super();
+    effect(() => {
+      const panel = this.panelRef();
+      if (panel) {
+        this.initOverlay(panel.nativeElement);
+        if (this.isCellFocused()) this.showOverlay();
+      }
+    });
   }
 
-  protected getInlineInput() { return this.inputRef?.nativeElement ?? null; }
+  protected getInlineInput() { return this.inputRef()?.nativeElement ?? null; }
   protected onOverlayOutsideClick() { this.hideOverlay(); }
 
   selectAndClose(date: string): void {
@@ -1726,7 +1732,7 @@ export class DatePickerComponent extends BaseGridEditorCVA<MyRow, string> {}
 **Filter panel example:**
 
 ```typescript
-import { Component, ViewChild, ElementRef } from '@angular/core';
+import { Component, ElementRef, viewChild } from '@angular/core';
 import { BaseFilterPanel } from '@toolbox-web/grid-angular';
 
 @Component({
@@ -1738,9 +1744,9 @@ import { BaseFilterPanel } from '@toolbox-web/grid-angular';
   `
 })
 export class TextFilterComponent extends BaseFilterPanel {
-  @ViewChild('input') input!: ElementRef<HTMLInputElement>;
+  input = viewChild<ElementRef<HTMLInputElement>>('input');
   applyFilter(): void {
-    this.params().applyTextFilter('contains', this.input.nativeElement.value);
+    this.params().applyTextFilter('contains', this.input()!.nativeElement.value);
   }
 }
 ```

@@ -14,9 +14,11 @@ import ShowSource from '@components/ShowSource.astro';
 
 
 
-The Clipboard plugin brings familiar copy/cut/paste functionality to your grid with full keyboard shortcut support (Ctrl+C, Ctrl+X, Ctrl+V). It handles single cells, multi-cell selections, and integrates seamlessly with Excel and other spreadsheet applications via tab-delimited output.
+The Clipboard plugin brings familiar copy/paste functionality to your grid with full keyboard shortcut support (Ctrl+C, Ctrl+V). It handles single cells, multi-cell selections, and integrates seamlessly with Excel and other spreadsheet applications via tab-delimited output.
 
-> 💡 **Optional Dependency:** Works best with [SelectionPlugin](/grid/plugins/selection/) for copying/pasting selected cells. Without SelectionPlugin, copies the entire grid and pastes at row 0, column 0.
+:::tip
+Works best with [SelectionPlugin](/grid/plugins/selection/) for copying/pasting selected cells. Without it, copies the entire grid and pastes at row 0, column 0.
+:::
 
 ## Installation
 
@@ -224,7 +226,9 @@ columns: [
 
 If you paste `"1\t2\t3"` into this grid, only the `name` and `email` columns receive values (`2` and `3`). The `id` column remains unchanged.
 
-> 💡 **Tip:** This works independently of the EditingPlugin. You can use `editable: true` to control paste behavior even without enabling inline editing.
+:::tip
+This works independently of the EditingPlugin. You can use `editable: true` to control paste behavior even without enabling inline editing.
+:::
 
 ### Selection Bounds
 
@@ -243,7 +247,6 @@ If you paste `"1\t2\t3"` into this grid, only the `name` and `email` columns rec
 | ------------------ | ------------------------- |
 | `Ctrl+C` / `Cmd+C` | Copy selected cells       |
 | `Ctrl+V` / `Cmd+V` | Paste into selected cells |
-| `Ctrl+X` / `Cmd+X` | Cut selected cells        |
 
 ## Programmatic API
 
@@ -335,6 +338,6 @@ The clipboard plugin doesn't add visible UI elements. Selection styling is handl
 
 ## See Also
 
-- **[Selection](../?path=/grid/plugins/selection/)** — Cell and row selection
-- **[Editing](../?path=/grid/plugins/editing/)** — Inline cell editing
-- **[Export](../?path=/grid/plugins/export/)** — Export to CSV/JSON
+- [Selection](/grid/plugins/selection/) — Cell and row selection
+- [Editing](/grid/plugins/editing/) — Inline cell editing
+- [Export](/grid/plugins/export/) — Export to CSV/JSON

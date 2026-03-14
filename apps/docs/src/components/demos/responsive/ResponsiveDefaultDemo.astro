@@ -8,6 +8,10 @@ import DemoControls from '@components/DemoControls.astro';
       min: 200, max: 1000, step: 50, default: 500, description: 'Width threshold for card layout' },
     { section: 'RESPONSIVE', name: 'hideHeader', label: 'Hide header', type: 'boolean',
       default: true, description: 'Hide column headers in card layout' },
+    { section: 'RESPONSIVE', name: 'animate', label: 'Animate', type: 'boolean',
+      default: true, description: 'Smooth transitions between modes' },
+    { section: 'RESPONSIVE', name: 'hiddenColumns', label: 'Hidden columns', type: 'check-group',
+      options: ['email', 'startDate', 'salary'], default: [], description: 'Columns to hide in card mode' },
     { section: 'RESPONSIVE', name: 'debounceMs', label: 'Debounce (ms)', type: 'number',
       min: 0, max: 500, step: 50, default: 100, description: 'Resize debounce delay' },
   ]} />
@@ -48,11 +52,11 @@ if (container) {
   const status = container.querySelector('.responsive-status')!;
   let currentBreakpoint = 500;
 
-  function rebuild(breakpoint = 500, hideHeader = true, debounceMs = 100) {
+  function rebuild(breakpoint = 500, hideHeader = true, animate = true, hiddenColumns: string[] = [], debounceMs = 100) {
     currentBreakpoint = breakpoint;
     grid.gridConfig = {
       columns,
-      features: { responsive: { breakpoint, hideHeader, debounceMs } },
+      features: { responsive: { breakpoint, hideHeader, animate, hiddenColumns, debounceMs } },
     };
     grid.rows = sampleData;
   }
@@ -61,7 +65,7 @@ if (container) {
 
   container.addEventListener('control-change', ((e: CustomEvent) => {
     const v = e.detail.allValues;
-    rebuild(v.breakpoint as number, v.hideHeader as boolean, v.debounceMs as number);
+    rebuild(v.breakpoint as number, v.hideHeader as boolean, v.animate as boolean, v.hiddenColumns as string[], v.debounceMs as number);
   }) as EventListener);
 
   grid.addEventListener('responsive-change', ((e: any) => {

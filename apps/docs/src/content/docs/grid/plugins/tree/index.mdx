@@ -5,8 +5,6 @@ description: "Display hierarchical data as an expandable tree."
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import TreeDefaultDemo from '@components/demos/tree/TreeDefaultDemo.astro';
-import TreeExpandedByDefaultDemo from '@components/demos/tree/TreeExpandedByDefaultDemo.astro';
-import TreeWideIndentationDemo from '@components/demos/tree/TreeWideIndentationDemo.astro';
 import ShowSource from '@components/ShowSource.astro';
 
 
@@ -140,9 +138,9 @@ export class FileExplorerComponent {
   </TabItem>
 </Tabs>
 
-## Demos
+## Demo
 
-### Default Tree View
+Toggle the controls to explore animation, indentation, and expand behavior.
 
 <ShowSource file="demos/tree/TreeDefaultDemo.astro">
   <TreeDefaultDemo />
@@ -150,33 +148,9 @@ export class FileExplorerComponent {
 
 
 
-
-### Expanded by Default
-
-<ShowSource file="demos/tree/TreeExpandedByDefaultDemo.astro">
-  <TreeExpandedByDefaultDemo />
-</ShowSource>
-
-
-
-### Wide Indentation
-
-<ShowSource file="demos/tree/TreeWideIndentationDemo.astro">
-  <TreeWideIndentationDemo />
-</ShowSource>
-
-
-
 ## Configuration Options
 
-| Option            | Type                         | Default      | Description                              |
-| ----------------- | ---------------------------- | ------------ | ---------------------------------------- |
-| `childrenField`   | `string`                     | `'children'` | Field containing child array             |
-| `autoDetect`      | `boolean`                    | `true`       | Auto-detect tree structure               |
-| `defaultExpanded` | `boolean`                    | `false`      | Expand all initially                     |
-| `indentWidth`     | `number`                     | `20`         | Indent per level in pixels               |
-| `showExpandIcons` | `boolean`                    | `true`       | Show expand/collapse icons               |
-| `animation`       | `false \| 'slide' \| 'fade'` | `'slide'`    | Animation style for expanding/collapsing |
+See [`TreeConfig`](./Interfaces/TreeConfig/) for the full list of options and defaults.
 
 ### Animation Options
 
@@ -202,12 +176,42 @@ Animation respects the grid-level `animation.mode` setting.
 ```ts
 const plugin = grid.getPluginByName('tree');
 
-plugin.expand(nodeId);
-plugin.collapse(nodeId);
-plugin.toggle(nodeId);
-plugin.expandAll();
-plugin.collapseAll();
-const expanded = plugin.getExpandedNodes();
+plugin.expand(key);              // Expand a node by key
+plugin.collapse(key);            // Collapse a node by key
+plugin.toggle(key);              // Toggle a node's expanded state
+plugin.expandAll();              // Expand all nodes
+plugin.collapseAll();            // Collapse all nodes
+plugin.expandToKey(key);         // Expand all ancestors to reveal a node
+const keys = plugin.getExpandedKeys();   // Get currently expanded node keys
+const expanded = plugin.isExpanded(key); // Check if a node is expanded
+const rows = plugin.getFlattenedRows();  // Get flattened tree rows with metadata
+const row = plugin.getRowByKey(key);     // Find a row by its key
+```
+
+## Events
+
+### tree-expand
+
+Fired when a node is expanded or collapsed (via click or keyboard):
+
+```ts
+grid.addEventListener('tree-expand', (e) => {
+  const { key, row, expanded, depth } = e.detail;
+  console.log(`${expanded ? 'Expanded' : 'Collapsed'} node ${key} at depth ${depth}`);
+});
+```
+
+See [`TreeExpandDetail`](./Interfaces/TreeExpandDetail/) for the full event payload type.
+
+### tree-state-change
+
+Fired when the overall expansion state changes (via `toggle()`, `expandAll()`, or `collapseAll()`):
+
+```ts
+grid.addEventListener('tree-state-change', (e) => {
+  const { expandedKeys } = e.detail;
+  console.log(`${expandedKeys.length} nodes expanded`);
+});
 ```
 
 ## Styling
@@ -255,6 +259,6 @@ The tree plugin uses these class names:
 
 ## See Also
 
-- **[Row Grouping](..//grid/plugins/grouping-rows/)** — Group rows by field values
-- **[Master-Detail](../?path=/grid/plugins/master-detail/)** — Expandable detail panels
-- **[Pivot](../?path=/grid/plugins/pivot/)** — Pivot table with row grouping
+- **[Row Grouping](../grouping-rows/)** — Group rows by field values
+- **[Master-Detail](/grid/plugins/master-detail/)** — Expandable detail panels
+- **[Pivot](/grid/plugins/pivot/)** — Pivot table with row grouping

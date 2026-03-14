@@ -153,7 +153,7 @@ Base class for editors that display a **floating overlay panel** (date pickers, 
 | Member | Type | Description |
 |--------|------|-------------|
 | `overlayPosition` | `OverlayPosition` | Position relative to cell: `'below'` (default), `'above'`, `'below-right'`, `'over-top-left'`, `'over-bottom-left'` |
-| `initOverlay(panel)` | Method | Initialize with the panel element. Call in `ngAfterViewInit`. |
+| `initOverlay(panel)` | Method | Initialize with the panel element. Call in an `effect()` or `afterNextRender()`. |
 | `showOverlay()` | Method | Show the overlay panel |
 | `hideOverlay(suppressTab?)` | Method | Hide the overlay panel |
 | `reopenOverlay()` | Method | Close and re-open (repositions after content change) |
@@ -169,7 +169,7 @@ Base class for editors that display a **floating overlay panel** (date pickers, 
 ### Example
 
 ```typescript
-import { Component, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, viewChild, ElementRef, effect } from '@angular/core';
 import { BaseOverlayEditor } from '@toolbox-web/grid-angular';
 
 @Component({
@@ -194,22 +194,23 @@ import { BaseOverlayEditor } from '@toolbox-web/grid-angular';
     </div>
   `
 })
-export class DateEditorComponent
-  extends BaseOverlayEditor<MyRow, string>
-  implements AfterViewInit
-{
-  @ViewChild('panel') panelRef!: ElementRef<HTMLElement>;
-  @ViewChild('inlineInput') inputRef!: ElementRef<HTMLInputElement>;
+export class DateEditorComponent extends BaseOverlayEditor<MyRow, string> {
+  panelRef = viewChild.required<ElementRef<HTMLElement>>('panel');
+  inputRef = viewChild.required<ElementRef<HTMLInputElement>>('inlineInput');
 
   protected override overlayPosition = 'below' as const;
 
-  ngAfterViewInit(): void {
-    this.initOverlay(this.panelRef.nativeElement);
-    if (this.isCellFocused()) this.showOverlay();
+  constructor() {
+    super();
+    effect(() => {
+      const panel = this.panelRef().nativeElement;
+      this.initOverlay(panel);
+      if (this.isCellFocused()) this.showOverlay();
+    });
   }
 
   protected getInlineInput(): HTMLInputElement | null {
-    return this.inputRef?.nativeElement ?? null;
+    return this.inputRef()?.nativeElement ?? null;
   }
 
   protected onOverlayOutsideClick(): void {
@@ -278,7 +279,7 @@ The `params` input provides these members:
 ### Example: Text Filter
 
 ```typescript
-import { Component, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, viewChild, ElementRef, afterNextRender } from '@angular/core';
 import { BaseFilterPanel } from '@toolbox-web/grid-angular';
 
 @Component({
@@ -297,15 +298,18 @@ import { BaseFilterPanel } from '@toolbox-web/grid-angular';
     </div>
   `
 })
-export class TextFilterComponent extends BaseFilterPanel implements AfterViewInit {
-  @ViewChild('input') input!: ElementRef<HTMLInputElement>;
+export class TextFilterComponent extends BaseFilterPanel {
+  input = viewChild.required<ElementRef<HTMLInputElement>>('input');
 
-  ngAfterViewInit(): void {
-    this.input.nativeElement.focus();
+  constructor() {
+    super();
+    afterNextRender(() => {
+      this.input().nativeElement.focus();
+    });
   }
 
   applyFilter(): void {
-    this.params().applyTextFilter('contains', this.input.nativeElement.value);
+    this.params().applyTextFilter('contains', this.input().nativeElement.value);
   }
 }
 ```

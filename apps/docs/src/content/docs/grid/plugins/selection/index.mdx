@@ -154,14 +154,7 @@ grid.gridConfig = {
 
 ### Plugin Options
 
-| Option | Type | Default | Description |
-| ------ | ---- | ------- | ----------- |
-| `mode` | `'cell' \| 'row' \| 'range'` | `'cell'` | Selection behavior mode |
-| `multiSelect` | `boolean` | `true` | Allow multiple items selected at once |
-| `enabled` | `boolean` | `true` | Plugin-level enable/disable |
-| `triggerOn` | `'click' \| 'dblclick'` | `'click'` | Selection trigger type |
-| `checkbox` | `boolean` | `false` | Show checkbox column (row mode only) |
-| `isSelectable` | `(row, rowIndex, column?, colIndex?) => boolean` | `undefined` | Callback to conditionally disable selection |
+See [`SelectionConfig`](./Interfaces/SelectionConfig/) for the full list of options and defaults.
 
 ### Double-Click Selection Trigger
 
@@ -255,12 +248,7 @@ Use `getSelectedRows()` to retrieve actual row data objects rather than resolvin
 
 ### `selection-change` Detail
 
-```ts
-interface SelectionChangeDetail {
-  mode: SelectionMode;  // 'cell' | 'row' | 'range'
-  ranges: CellRange[];
-}
-```
+See [`SelectionChangeDetail`](./Interfaces/SelectionChangeDetail/) and [`CellRange`](./Interfaces/CellRange/) for the full event payload types.
 
 ## Styling
 

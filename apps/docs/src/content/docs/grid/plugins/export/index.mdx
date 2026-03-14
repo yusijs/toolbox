@@ -34,8 +34,7 @@ grid.gridConfig = {
   ],
   features: {
     export: {
-      filename: 'employees',
-      format: 'csv',
+      fileName: 'employees',
       includeHeaders: true,
     },
   },
@@ -54,24 +53,24 @@ import '@toolbox-web/grid-react/features/export';
 import { DataGrid, useGrid } from '@toolbox-web/grid-react';
 
 function EmployeeGrid({ data }) {
-  const { gridRef } = useGrid();
+  const { ref, element } = useGrid();
 
   const handleExport = () => {
-    gridRef.current?.getPluginByName('export')?.exportCsv();
+    element?.getPluginByName('export')?.exportCsv();
   };
 
   return (
     <>
       <button onClick={handleExport}>Export CSV</button>
       <DataGrid
-        ref={gridRef}
+        ref={ref}
         rows={data}
         columns={[
           { field: 'name', header: 'Name' },
           { field: 'email', header: 'Email' },
           { field: 'department', header: 'Department' },
         ]}
-        export={{ filename: 'employees', format: 'csv', includeHeaders: true }}
+        export={{ fileName: 'employees', includeHeaders: true }}
       />
     </>
   );
@@ -100,7 +99,7 @@ const handleExport = () => {
 <template>
   <div>
     <button @click="handleExport">Export CSV</button>
-    <TbwGrid ref="gridRef" :rows="data" :export="{ filename: 'employees', format: 'csv', includeHeaders: true }">
+    <TbwGrid ref="gridRef" :rows="data" :export="{ fileName: 'employees', includeHeaders: true }">
 
       <TbwGridColumn field="name" header="Name" />
       <TbwGridColumn field="email" header="Email" />
@@ -128,7 +127,7 @@ import type { ColumnConfig, GridElement } from '@toolbox-web/grid';
       #grid
       [rows]="rows"
       [columns]="columns"
-      [exportFeature]="{ filename: 'employees', format: 'csv', includeHeaders: true }"
+      [exportFeature]="{ fileName: 'employees', includeHeaders: true }"
       style="height: 400px; display: block;">
     </tbw-grid>
   `,
@@ -176,12 +175,12 @@ When combined with SelectionPlugin, export only selected rows.
 
 ## Configuration Options
 
-| Option           | Type              | Default         | Description                       |
-| ---------------- | ----------------- | --------------- | --------------------------------- |
-| `filename`       | `string`          | `'grid-export'` | Base filename (without extension) |
-| `format`         | `'csv' \| 'json'` | `'csv'`         | Export format                     |
-| `includeHeaders` | `boolean`         | `true`          | Include column headers in export  |
-| `delimiter`      | `string`          | `','`           | CSV delimiter character           |
+| Option           | Type      | Default   | Description                                              |
+| ---------------- | --------- | --------- | -------------------------------------------------------- |
+| `fileName`       | `string`  | `'export'`| Base filename (without extension)                        |
+| `includeHeaders` | `boolean` | `true`    | Include column headers in export                         |
+| `onlyVisible`    | `boolean` | `true`    | Export only visible columns                              |
+| `onlySelected`   | `boolean` | `false`   | Export only selected rows (requires SelectionPlugin)     |
 
 ## Programmatic API
 
@@ -241,6 +240,6 @@ exportPlugin.exportExcel({
 
 ## See Also
 
-- **[Clipboard](../?path=/grid/plugins/clipboard/)** — Copy cells to clipboard
-- **[Print](../?path=/grid/plugins/print/)** — Print the grid
-- **[Server-Side Data](..//grid/plugins/server-side-data/)** — Export with server data
+- **[Clipboard](/grid/plugins/clipboard/)** — Copy cells to clipboard
+- **[Print](/grid/plugins/print/)** — Print the grid
+

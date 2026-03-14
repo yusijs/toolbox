@@ -9,7 +9,7 @@ import DemoControls from '@components/DemoControls.astro';
     { section: 'ROW REORDER', name: 'enableKeyboard', label: 'Keyboard enabled', type: 'boolean',
       default: true, description: 'Allow reorder with keyboard shortcuts' },
     { section: 'ROW REORDER', name: 'animation', label: 'Animation', type: 'select',
-      options: ['flip', 'slide', 'fade', 'none'], default: 'flip', description: 'Reorder animation style' },
+      options: ['flip', 'false'], default: 'flip', description: 'Reorder animation style' },
   ]} />
   <tbw-grid style="display: block; height: 350px;"></tbw-grid>
 </div>
@@ -40,7 +40,7 @@ if (container) {
   function rebuild(dragHandlePosition = 'left', enableKeyboard = true, animation = 'flip') {
     grid.gridConfig = {
       columns,
-      features: { reorderRows: { dragHandlePosition, enableKeyboard, animation } as any },
+      features: { reorderRows: { dragHandlePosition, enableKeyboard, animation: animation === 'false' ? false : animation } as any },
     };
     grid.rows = sampleData;
   }

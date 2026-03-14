@@ -1,7 +1,20 @@
 ---
 // PrintBasicDemo.astro
+import DemoControls from '@components/DemoControls.astro';
 ---
 <div class="grid-demo not-content" id="print-basic-demo">
+  <DemoControls controls={[
+    { section: 'PRINT', name: 'orientation', label: 'Orientation', type: 'select',
+      options: ['landscape', 'portrait'], default: 'landscape', description: 'Page orientation' },
+    { section: 'PRINT', name: 'button', label: 'Toolbar button', type: 'boolean',
+      default: false, description: 'Show print button in grid toolbar' },
+    { section: 'PRINT', name: 'includeTitle', label: 'Include title', type: 'boolean',
+      default: true, description: 'Show title in print header' },
+    { section: 'PRINT', name: 'includeTimestamp', label: 'Include timestamp', type: 'boolean',
+      default: true, description: 'Show timestamp in print footer' },
+    { section: 'PRINT', name: 'isolate', label: 'Isolate', type: 'boolean',
+      default: true, description: 'Hide non-grid content when printing' },
+  ]} />
   <div style="margin-bottom: 12px;">
     <button id="print-basic-btn" style="padding: 8px 16px; cursor: pointer;">🖨️ Print Grid</button>
   </div>
@@ -16,7 +29,7 @@ import '@toolbox-web/grid/features/print';
 
 const container = document.getElementById('print-basic-demo');
 if (container) {
-  const grid = queryGrid('tbw-grid', container);
+  const grid = queryGrid('tbw-grid', container)!;
   const btn = container.querySelector('#print-basic-btn');
 
   const employeeData = [
@@ -32,29 +45,45 @@ if (container) {
     { id: 10, name: 'Jack Thomas', department: 'Engineering', salary: 95000, status: 'Active', email: 'jack@company.com' },
   ];
 
-  grid.gridConfig = {
-    fitMode: 'stretch',
-    columns: [
-      { field: 'id', header: 'ID', width: 60 },
-      { field: 'name', header: 'Name', minWidth: 150 },
-      { field: 'department', header: 'Department', width: 120 },
-      { field: 'email', header: 'Email', minWidth: 200 },
-      { field: 'salary', header: 'Salary', width: 100, align: 'right' },
-      { field: 'status', header: 'Status', width: 100 },
-    ],
-    features: {
-      print: {
-        title: 'Employee Report',
-        includeTitle: true,
-        includeTimestamp: true,
-      },
-    },
+  let opts: Record<string, unknown> = {
+    orientation: 'landscape', button: false, includeTitle: true, includeTimestamp: true, isolate: true,
   };
-  grid.rows = employeeData;
+
+  function applyConfig() {
+    grid.gridConfig = {
+      fitMode: 'stretch',
+      ...(opts.button ? { shell: { header: { title: 'Employee Report' } } } : {}),
+      columns: [
+        { field: 'id', header: 'ID', width: 60 },
+        { field: 'name', header: 'Name', minWidth: 150 },
+        { field: 'department', header: 'Department', width: 120 },
+        { field: 'email', header: 'Email', minWidth: 200 },
+        { field: 'salary', header: 'Salary', width: 100, align: 'right' },
+        { field: 'status', header: 'Status', width: 100 },
+      ],
+      features: {
+        print: {
+          orientation: opts.orientation as string,
+          button: opts.button as boolean,
+          title: 'Employee Report',
+          includeTitle: opts.includeTitle as boolean,
+          includeTimestamp: opts.includeTimestamp as boolean,
+        },
+      },
+    };
+    grid.rows = employeeData;
+  }
+
+  applyConfig();
+
+  container.addEventListener('control-change', ((e: CustomEvent) => {
+    opts = e.detail.allValues;
+    applyConfig();
+  }) as EventListener);
 
   btn?.addEventListener('click', () => {
     const plugin = grid.getPluginByName('print');
-    plugin?.print({ isolate: true });
+    plugin?.print({ isolate: opts.isolate as boolean });
   });
 }
 </script>

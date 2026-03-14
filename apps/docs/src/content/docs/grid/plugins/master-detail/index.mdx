@@ -62,7 +62,6 @@ function OrderGrid({ orders }) {
         { field: 'customer', header: 'Customer' },
         { field: 'total', header: 'Total', type: 'currency' }
       ]}
-      masterDetail
     >
       <GridDetailPanel>
         {({ row }) => (
@@ -187,14 +186,7 @@ export class OrderGridComponent {
 
 ## Configuration Options
 
-| Option                   | Type                             | Default   | Description                                      |
-| ------------------------ | -------------------------------- | --------- | ------------------------------------------------ |
-| `detailRenderer`         | `(row) => HTMLElement \| string` | required  | Render function                                  |
-| `expandOnRowClick`       | `boolean`                        | `false`   | Expand on row click                              |
-| `detailHeight`           | `number \| 'auto'`               | `'auto'`  | Detail row height                                |
-| `collapseOnClickOutside` | `boolean`                        | `false`   | Collapse on click outside                        |
-| `showExpandColumn`       | `boolean`                        | `true`    | Show expand/collapse column                      |
-| `animation`              | `false \| 'slide' \| 'fade'`     | `'slide'` | Animation style for expanding/collapsing details |
+See [`MasterDetailConfig`](./interfaces/masterdetailconfig/) for the full list of options and their defaults.
 
 ### Animation Options
 
@@ -233,15 +225,17 @@ features: {
 
 ## Programmatic API
 
+See [`MasterDetailPlugin`](./classes/masterdetailplugin/) for the full list of methods.
+
 ```ts
 const plugin = grid.getPluginByName('masterDetail');
 
-plugin.expandRow(rowIndex);
-plugin.collapseRow(rowIndex);
-plugin.toggleRow(rowIndex);
+plugin.expand(rowIndex);
+plugin.collapse(rowIndex);
+plugin.toggle(rowIndex);
 plugin.expandAll();
 plugin.collapseAll();
-const isExpanded = plugin.isRowExpanded(rowIndex);
+plugin.isExpanded(rowIndex); // boolean
 ```
 
 ## Styling
@@ -286,6 +280,6 @@ The master-detail plugin uses these class names:
 
 ## See Also
 
-- **[Tree](../?path=/grid/plugins/tree/)** — Hierarchical tree data
-- **[Row Grouping](..//grid/plugins/grouping-rows/)** — Group rows by field values
-- **[Selection](../?path=/grid/plugins/selection/)** — Row and cell selection
+- **[Tree](/grid/plugins/tree/)** — Hierarchical tree data
+- **[Row Grouping](../grouping-rows/)** — Group rows by field values
+- **[Selection](/grid/plugins/selection/)** — Row and cell selection

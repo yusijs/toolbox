@@ -5,9 +5,13 @@ import DemoControls from '@components/DemoControls.astro';
 <div class="grid-demo not-content" id="pinned-rows-default-demo">
   <DemoControls controls={[
     { section: 'OPTIONS', name: 'position', label: 'Position', type: 'radio',
-      options: ['top', 'bottom'], default: 'bottom', description: 'Position of the info bar' },
+      options: ['top', 'bottom'], default: 'bottom', description: 'Position of the status bar' },
     { section: 'OPTIONS', name: 'showRowCount', label: 'Show row count', type: 'boolean',
       default: true, description: 'Show total row count in info bar' },
+    { section: 'OPTIONS', name: 'multipleRows', label: 'Multiple aggregation rows', type: 'boolean',
+      default: false, description: 'Show sum, average, and min/max rows' },
+    { section: 'OPTIONS', name: 'fullWidth', label: 'Full width', type: 'boolean',
+      default: false, description: 'Render aggregation rows as single spanning cell' },
   ]} />
   <tbw-grid style="display: block; height: 400px;"></tbw-grid>
 </div>
@@ -38,25 +42,56 @@ if (container) {
   const sampleData = generateData(100);
   const grid = queryGrid('tbw-grid', container)!;
 
-  function rebuild(position: 'top' | 'bottom' = 'bottom', showRowCount = true) {
+  function rebuild(
+    position: 'top' | 'bottom' = 'bottom',
+    showRowCount = true,
+    multipleRows = false,
+    fullWidth = false,
+  ) {
+    const singleRow = [
+      {
+        id: 'totals',
+        position,
+        aggregators: {
+          name: (rows: any[]) => `${new Set(rows.map((r) => r.name)).size} unique`,
+          quantity: 'sum',
+          price: { aggFunc: 'sum', formatter: formatCurrency },
+        },
+        cells: { id: 'Totals:' },
+      },
+    ];
+    const multiRows = [
+      {
+        id: 'sum',
+        position,
+        aggregators: { quantity: 'sum', price: { aggFunc: 'sum', formatter: formatCurrency } },
+        cells: { id: 'Sum:', name: '' },
+      },
+      {
+        id: 'avg',
+        position,
+        aggregators: {
+          quantity: { aggFunc: 'avg', formatter: (v: number) => v.toFixed(1) },
+          price: { aggFunc: 'avg', formatter: formatCurrency },
+        },
+        cells: { id: 'Avg:', name: '' },
+      },
+      {
+        id: 'minmax',
+        position,
+        aggregators: { quantity: 'min', price: { aggFunc: 'max', formatter: formatCurrency } },
+        cells: { id: 'Min/Max:', name: '' },
+      },
+    ];
+
     grid.gridConfig = {
       columns,
       features: {
         pinnedRows: {
           position,
           showRowCount,
-          aggregationRows: [
-            {
-              id: 'totals',
-              position,
-              aggregators: {
-                name: (rows) => `${new Set(rows.map((r) => r.name)).size} unique`,
-                quantity: 'sum',
-                price: { aggFunc: 'sum', formatter: formatCurrency },
-              },
-              cells: { id: 'Totals:' },
-            },
-          ],
+          fullWidth,
+          aggregationRows: multipleRows ? multiRows : singleRow,
         },
       },
     };
@@ -67,7 +102,12 @@ if (container) {
 
   container.addEventListener('control-change', ((e: CustomEvent) => {
     const v = e.detail.allValues;
-    rebuild(v.position as 'top' | 'bottom', v.showRowCount as boolean);
+    rebuild(
+      v.position as 'top' | 'bottom',
+      v.showRowCount as boolean,
+      v.multipleRows as boolean,
+      v.fullWidth as boolean,
+    );
   }) as EventListener);
 }
 </script>

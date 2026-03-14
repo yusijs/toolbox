@@ -12,7 +12,7 @@ import type { FilterPanel } from './angular-column-config';
  * ## Usage
  *
  * ```typescript
- * import { Component } from '@angular/core';
+ * import { Component, viewChild, ElementRef } from '@angular/core';
  * import { BaseFilterPanel } from '@toolbox-web/grid-angular';
  *
  * @Component({
@@ -24,10 +24,10 @@ import type { FilterPanel } from './angular-column-config';
  *   `
  * })
  * export class TextFilterComponent extends BaseFilterPanel {
- *   @ViewChild('input') input!: ElementRef<HTMLInputElement>;
+ *   input = viewChild.required<ElementRef<HTMLInputElement>>('input');
  *
  *   applyFilter(): void {
- *     this.params().applyTextFilter('contains', this.input.nativeElement.value);
+ *     this.params().applyTextFilter('contains', this.input().nativeElement.value);
  *   }
  * }
  * ```

@@ -37,8 +37,7 @@ grid.gridConfig = {
   features: {
     contextMenu: {
       items: [
-        { id: 'copy', name: 'Copy Cell', action: (ctx) => navigator.clipboard.writeText(ctx.value) },
-        { id: 'edit', name: 'Edit Row', action: (ctx) => grid.startEditing(ctx.rowIndex, ctx.colIndex) },
+        { id: 'copy', name: 'Copy Cell', action: (ctx) => navigator.clipboard.writeText(String(ctx.value)) },
         { id: 'sep1', name: '', separator: true },
         { id: 'delete', name: 'Delete Row', action: (ctx) => removeRow(ctx.rowIndex) },
       ],
@@ -58,8 +57,7 @@ function MyGrid({ data, onDelete }) {
 
   const contextMenu: ContextMenuConfig = {
     items: [
-      { id: 'copy', name: 'Copy Cell', action: (ctx) => navigator.clipboard.writeText(ctx.value) },
-      { id: 'edit', name: 'Edit Row', action: (ctx) => element?.startEditing(ctx.rowIndex, ctx.colIndex) },
+      { id: 'copy', name: 'Copy Cell', action: (ctx) => navigator.clipboard.writeText(String(ctx.value)) },
       { id: 'sep1', name: '', separator: true },
       { id: 'delete', name: 'Delete Row', action: (ctx) => onDelete(ctx.rowIndex) },
     ],
@@ -97,7 +95,6 @@ const gridRef = ref(null);
 const contextMenuConfig = {
   items: [
     { id: 'copy', name: 'Copy Cell', action: (ctx) => navigator.clipboard.writeText(String(ctx.value)) },
-    { id: 'edit', name: 'Edit Row', action: (ctx) => gridRef.value?.element?.startEditing(ctx.rowIndex, ctx.colIndex) },
     { id: 'sep1', name: '', separator: true },
     { id: 'delete', name: 'Delete Row', action: (ctx) => console.log('Delete row:', ctx.rowIndex) },
   ],
@@ -148,8 +145,7 @@ export class MyGridComponent {
 
   contextMenuConfig = {
     items: [
-      { id: 'copy', name: 'Copy Cell', action: (ctx: any) => navigator.clipboard.writeText(ctx.value) },
-      { id: 'edit', name: 'Edit Row', action: (ctx: any) => (document.querySelector('tbw-grid') as any).startEditing(ctx.rowIndex, ctx.colIndex) },
+      { id: 'copy', name: 'Copy Cell', action: (ctx: any) => navigator.clipboard.writeText(String(ctx.value)) },
       { id: 'sep1', name: '', separator: true },
       { id: 'delete', name: 'Delete Row', action: (ctx: any) => this.deleteRow.emit(ctx.rowIndex) },
     ] as ContextMenuItem[],
@@ -206,42 +202,13 @@ Plugins like FilteringPlugin, VisibilityPlugin, and PinnedColumnsPlugin can cont
 
 | Option  | Type         | Default | Description           |
 | ------- | ------------ | ------- | --------------------- |
-| `items` | `ContextMenuItem[]` | `[]`    | Menu items to display |
+| `items` | `ContextMenuItem[]` | Copy + Export CSV | Menu items to display |
 
 ## TypeScript Interfaces
 
-```ts
-interface ContextMenuItem {
-  id: string;
-  name: string;
-  icon?: string;      // Icon HTML, emoji, or class
-  shortcut?: string;  // Display-only shortcut hint
-  action?: (params: ContextMenuParams) => void;
-  disabled?: boolean | ((params: ContextMenuParams) => boolean);
-  hidden?: boolean | ((params: ContextMenuParams) => boolean);
-  subMenu?: ContextMenuItem[];  // Nested submenu items
-  separator?: boolean;          // Renders a separator line
-  cssClass?: string;            // Optional CSS class
-}
-```
-
-### Menu Context
-
-The action callback receives context about the clicked cell:
-
-```ts
-interface ContextMenuParams {
-  row: unknown;
-  rowIndex: number;       // -1 for header clicks
-  column: unknown;
-  columnIndex: number;
-  field: string;
-  value: unknown;
-  isHeader: boolean;
-  event: MouseEvent;
-  selectedRows: number[]; // Currently selected row indices
-}
-```
+- [`ContextMenuItem`](/grid/plugins/context-menu/interfaces/contextmenuitem/) — Menu item definition (id, label, icon, action, submenus, etc.)
+- [`ContextMenuParams`](/grid/plugins/context-menu/interfaces/contextmenuparams/) — Context passed to action callbacks (row, column, value, selection, etc.)
+- [`ContextMenuConfig`](/grid/plugins/context-menu/interfaces/contextmenuconfig/) — Plugin configuration options
 
 ### Selection Sync
 
@@ -333,6 +300,6 @@ The menu uses these class names for advanced customization:
 
 ## See Also
 
-- **[Selection](../?path=/grid/plugins/selection/)** — Row and cell selection
-- **[Editing](../?path=/grid/plugins/editing/)** — Inline cell editing
-- **[Clipboard](../?path=/grid/plugins/clipboard/)** — Copy/paste cells
+- **[Selection](/grid/plugins/selection/)** — Row and cell selection
+- **[Editing](/grid/plugins/editing/)** — Inline cell editing
+- **[Clipboard](/grid/plugins/clipboard/)** — Copy/paste cells

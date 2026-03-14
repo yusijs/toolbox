@@ -134,21 +134,25 @@ Use the **Column Count** slider to add up to 1000 columns, and toggle **Auto Ena
 
 ## Requirements
 
-- `fitMode: 'fixed'` is required
-- Columns must have explicit widths
-- Grid must have fixed height
+- `fitMode: 'fixed'` — the plugin is designed for fixed-width column layouts
+- Columns should have explicit widths (columns without widths default to 100px)
 
 ## Programmatic API
 
 ```ts
 const plugin = grid.getPluginByName('columnVirtualization');
 
-const isEnabled = plugin.isEnabled();
-plugin.setEnabled(true);
-const range = plugin.getVisibleRange();
+// Check if virtualization is currently active
+const active = plugin.getIsVirtualized();
+
+// Get the visible column index range
+const { start, end } = plugin.getVisibleColumnRange();
+
+// Scroll a specific column into view
+plugin.scrollToColumn(42);
 ```
 
 ## See Also
 
-- **[Performance](..//grid/performance/)** — Performance optimization tips
-- **[Pinned Columns](../?path=/grid/plugins/pinned-columns/)** — Sticky columns (excluded from virtualization)
+- **[Performance](/grid/guides/performance/)** — Performance optimization tips
+- **[Pinned Columns](/grid/plugins/pinned-columns/)** — Sticky columns (excluded from virtualization)

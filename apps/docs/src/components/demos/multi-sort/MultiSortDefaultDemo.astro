@@ -8,6 +8,8 @@ import DemoControls from '@components/DemoControls.astro';
       min: 1, max: 5, step: 1, default: 3, description: 'Maximum number of sort levels' },
     { section: 'SORT', name: 'showSortIndex', label: 'Show sort index', type: 'boolean',
       default: true, description: 'Display sort priority number on headers' },
+    { section: 'SORT', name: 'initialSort', label: 'Apply initial sort', type: 'boolean',
+      default: false, description: 'Pre-sort by Department ↑ then Salary ↓' },
   ]} />
   <tbw-grid style="display: block; height: 350px;"></tbw-grid>
 </div>
@@ -37,19 +39,28 @@ if (container) {
 
   const grid = queryGrid('tbw-grid', container)!;
 
-  function rebuild(maxSortColumns = 3, showSortIndex = true) {
+  function rebuild(maxSortColumns = 3, showSortIndex = true, initialSort = false) {
     grid.gridConfig = {
       columns,
       features: { multiSort: { maxSortColumns, showSortIndex } },
     };
     grid.rows = sampleData;
+
+    if (initialSort) {
+      grid.ready().then(() => {
+        grid.getPluginByName('multiSort')?.setSortModel([
+          { field: 'department', direction: 'asc' },
+          { field: 'salary', direction: 'desc' },
+        ]);
+      });
+    }
   }
 
   rebuild();
 
   container.addEventListener('control-change', ((e: CustomEvent) => {
     const v = e.detail.allValues;
-    rebuild(v.maxSortColumns as number, v.showSortIndex as boolean);
+    rebuild(v.maxSortColumns as number, v.showSortIndex as boolean, v.initialSort as boolean);
   }) as EventListener);
 }
 </script>

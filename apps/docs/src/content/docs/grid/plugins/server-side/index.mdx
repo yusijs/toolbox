@@ -257,35 +257,17 @@ Return the sorted array directly or a Promise that resolves to it.
 ### Server-Side Filtering
 
 For server-side filtering, use the FilteringPlugin's async handlers.
-See the [Filtering Plugin documentation](?path=/grid/plugins/filtering/#async-handlers-for-server-side-filtering) for details on `valuesHandler` and `filterHandler`.
+See the [Filtering Plugin documentation](/grid/plugins/filtering/#async-filtering-server-side) for details on `valuesHandler` and `filterHandler`.
 
 ## Configuration Options
 
-| Option                  | Type     | Default    | Description                |
-| ----------------------- | -------- | ---------- | -------------------------- |
-| `pageSize`              | `number` | `100`      | Rows per block             |
-| `cacheBlockSize`        | `number` | `pageSize` | Cache block size           |
-| `maxConcurrentRequests` | `number` | `2`        | Max parallel data requests |
+See [`ServerSideConfig`](./Interfaces/ServerSideConfig/) for the full list of options and defaults.
 
 ## TypeScript Interfaces
 
-```ts
-interface ServerSideDataSource {
-  getRows(params: GetRowsParams): Promise<GetRowsResult>;
-}
-
-interface GetRowsParams {
-  startRow: number;
-  endRow: number;
-  sortModel?: { field: string; direction: 'asc' | 'desc' }[];
-  filterModel?: Record<string, FilterCondition>;
-}
-
-interface GetRowsResult {
-  rows: any[];
-  totalRowCount: number;
-}
-```
+- [`ServerSideDataSource`](./Interfaces/ServerSideDataSource/) — Data source contract with `getRows()` method
+- [`GetRowsParams`](./Interfaces/GetRowsParams/) — Parameters passed to `getRows()` (startRow, endRow, sortModel, filterModel)
+- [`GetRowsResult`](./Interfaces/GetRowsResult/) — Return type with `rows` and `totalRowCount`
 
 ## Programmatic API
 
@@ -330,11 +312,12 @@ Rows that haven't loaded yet are represented with placeholder objects:
 { __loading: true, __index: 42 }
 ```
 
-You can style loading rows with CSS:
-```css
-.data-grid-row:has([data-loading]) {
-  opacity: 0.5;
-}
+You can detect loading rows via a custom cell renderer and style them accordingly:
+```ts
+columns: [{
+  field: 'name',
+  renderer: (value, row) => row.__loading ? '<span class="loading">Loading…</span>' : value,
+}]
 ```
 
 ## Combining with Other Plugins
@@ -353,8 +336,8 @@ The ServerSidePlugin works well with:
 
 ## See Also
 
-- **[Filtering](../?path=/grid/plugins/filtering/)** — Client-side filtering
-- **[Multi-Sort](../?path=/grid/plugins/multi-sort/)** — Client-side multi-sort
-- **[Export](../?path=/grid/plugins/export/)** — Export grid data
+- **[Filtering](/grid/plugins/filtering/)** — Client-side filtering
+- **[Multi-Sort](/grid/plugins/multi-sort/)** — Client-side multi-sort
+- **[Export](/grid/plugins/export/)** — Export grid data
 - **[Common Patterns](/grid/guides/common-patterns/)** — Full application recipes
 - **[Plugins Overview](/grid/plugins/)** — Plugin compatibility and combinations

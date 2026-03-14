@@ -108,7 +108,7 @@ let anchorCounter = 0;
  * ## Usage
  *
  * ```typescript
- * import { Component, ViewChild, ElementRef } from '@angular/core';
+ * import { Component, viewChild, ElementRef, effect } from '@angular/core';
  * import { BaseOverlayEditor } from '@toolbox-web/grid-angular';
  *
  * @Component({
@@ -131,18 +131,22 @@ let anchorCounter = 0;
  *   `
  * })
  * export class DateEditorComponent extends BaseOverlayEditor<MyRow, string> {
- *   @ViewChild('panel') panelRef!: ElementRef<HTMLElement>;
- *   @ViewChild('inlineInput') inputRef!: ElementRef<HTMLInputElement>;
+ *   panelRef = viewChild.required<ElementRef<HTMLElement>>('panel');
+ *   inputRef = viewChild.required<ElementRef<HTMLInputElement>>('inlineInput');
  *
  *   protected override overlayPosition = 'below' as const;
  *
- *   ngAfterViewInit(): void {
- *     this.initOverlay(this.panelRef.nativeElement);
- *     if (this.isCellFocused()) this.showOverlay();
+ *   constructor() {
+ *     super();
+ *     effect(() => {
+ *       const panel = this.panelRef().nativeElement;
+ *       this.initOverlay(panel);
+ *       if (this.isCellFocused()) this.showOverlay();
+ *     });
  *   }
  *
  *   protected getInlineInput(): HTMLInputElement | null {
- *     return this.inputRef?.nativeElement ?? null;
+ *     return this.inputRef()?.nativeElement ?? null;
  *   }
  *
  *   protected onOverlayOutsideClick(): void {
@@ -218,7 +222,7 @@ export abstract class BaseOverlayEditor<TRow = unknown, TValue = unknown> extend
   /**
    * Initialise the overlay with the panel element.
    *
-   * Call this in `ngAfterViewInit` with your `@ViewChild` panel reference.
+   * Call this in an `effect()` or `afterNextRender()` with your `viewChild` panel reference.
    * The panel is moved to `<body>` and hidden until {@link showOverlay} is called.
    *
    * @param panel - The overlay panel DOM element

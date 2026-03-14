@@ -354,7 +354,7 @@ import '@toolbox-web/grid/features/selection';
     statusEl.textContent = 'Testing: Horizontal scroll performance...';
     await new Promise((r) => setTimeout(r, 100));
     const hScrollContainer = grid.querySelector('.tbw-scroll-area');
-    const colVirtPlugin = (grid as any).getPlugin?.(ColumnVirtualizationPlugin);
+    const colVirtPlugin = (grid as any).getPluginByName?.('columnVirtualization');
     if (hScrollContainer && colCount >= 20) {
       const totalWidth = hScrollContainer.scrollWidth;
       const viewportWidth = hScrollContainer.clientWidth;
@@ -389,7 +389,7 @@ import '@toolbox-web/grid/features/selection';
     statusEl.textContent = 'Testing: Sort operation...';
     if (scrollContainer) scrollContainer.scrollTop = 0;
     await new Promise((r) => setTimeout(r, 50));
-    const sortPlugin = (grid as any).getPlugin?.(MultiSortPlugin) as { setSortModel: (m: unknown[]) => void; clearSort: () => void } | undefined;
+    const sortPlugin = (grid as any).getPluginByName?.('multiSort') as { setSortModel: (m: unknown[]) => void; clearSort: () => void } | undefined;
     if (sortPlugin) {
       const sortTarget = Math.round(150 * (Math.log2(rowCount) / Math.log2(10000)));
       const sortTime = await measure(() => { sortPlugin.setSortModel([{ field: 'id', direction: 'asc' }]); });
@@ -408,7 +408,7 @@ import '@toolbox-web/grid/features/selection';
 
     // Filter
     statusEl.textContent = 'Testing: Filter operation...';
-    const filterPlugin = (grid as any).getPlugin?.(FilteringPlugin) as { setFilter: (f: string, v: unknown) => void } | undefined;
+    const filterPlugin = (grid as any).getPluginByName?.('filtering') as { setFilter: (f: string, v: unknown) => void } | undefined;
     if (filterPlugin) {
       const filterTime = await measure(() => { filterPlugin.setFilter('col1', { type: 'text', operator: 'contains', value: 'R1' }); });
       allResults.push({ name: 'Filter (to ~10%)', category: 'operation', time: filterTime, unit: 'ms', target: scaledByRows(50), passed: filterTime < scaledByRows(50) });
@@ -427,7 +427,7 @@ import '@toolbox-web/grid/features/selection';
 
     // Selection
     statusEl.textContent = 'Testing: Selection...';
-    const selectionPlugin = (grid as any).getPlugin?.(SelectionPlugin) as { setRanges: (r: unknown[]) => void; clearSelection: () => void } | undefined;
+    const selectionPlugin = (grid as any).getPluginByName?.('selection') as { setRanges: (r: unknown[]) => void; clearSelection: () => void } | undefined;
     if (selectionPlugin) {
       const selectAllTime = await measure(() => {
         selectionPlugin.setRanges([{ from: { row: 0, col: 0 }, to: { row: rowCount - 1, col: colCount - 1 } }]);

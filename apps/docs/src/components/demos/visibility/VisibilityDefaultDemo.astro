@@ -1,7 +1,18 @@
 ---
 // VisibilityDefaultDemo.astro
+import DemoControls from '@components/DemoControls.astro';
 ---
 <div class="grid-demo not-content" id="visibility-default-demo">
+  <DemoControls controls={[
+    { section: 'VISIBILITY', name: 'allowHideAll', label: 'Allow hide all', type: 'boolean',
+      default: false, description: 'Allow hiding every column' },
+    { section: 'COLUMNS', name: 'hiddenColumns', label: 'Initially hidden', type: 'check-group',
+      options: ['email', 'department', 'salary'], default: ['email'],
+      description: 'Columns hidden by default' },
+    { section: 'COLUMNS', name: 'lockedColumns', label: 'Locked (non-toggleable)', type: 'check-group',
+      options: ['id', 'name', 'email', 'department', 'salary'], default: ['id'],
+      description: 'Columns that cannot be hidden' },
+  ]} />
   <tbw-grid style="display: block; height: 400px;"></tbw-grid>
 </div>
 
@@ -12,25 +23,43 @@ import '@toolbox-web/grid/features/visibility';
 
 const container = document.getElementById('visibility-default-demo');
 if (container) {
-  const grid = queryGrid('tbw-grid', container);
+  const allColumns = [
+    { field: 'id', header: 'ID', type: 'number' as const },
+    { field: 'name', header: 'Name' },
+    { field: 'email', header: 'Email' },
+    { field: 'department', header: 'Department' },
+    { field: 'salary', header: 'Salary', type: 'number' as const },
+  ];
 
-      grid.gridConfig = {
-        columns: [
-          { field: 'id', header: 'ID', type: 'number', lockVisible: true },
-          { field: 'name', header: 'Name' },
-          { field: 'email', header: 'Email', hidden: true },
-          { field: 'department', header: 'Department' },
-          { field: 'salary', header: 'Salary', type: 'number' },
-        ],
-        features: { visibility: true },
-      };
+  const sampleData = [
+    { id: 1, name: 'Alice', email: 'alice@example.com', department: 'Engineering', salary: 95000 },
+    { id: 2, name: 'Bob', email: 'bob@example.com', department: 'Marketing', salary: 75000 },
+    { id: 3, name: 'Carol', email: 'carol@example.com', department: 'Engineering', salary: 105000 },
+    { id: 4, name: 'David', email: 'david@example.com', department: 'Sales', salary: 65000 },
+    { id: 5, name: 'Eve', email: 'eve@example.com', department: 'HR', salary: 70000 },
+  ];
 
-      grid.rows = [
-        { id: 1, name: 'Alice', email: 'alice@example.com', department: 'Engineering', salary: 95000 },
-        { id: 2, name: 'Bob', email: 'bob@example.com', department: 'Marketing', salary: 75000 },
-        { id: 3, name: 'Carol', email: 'carol@example.com', department: 'Engineering', salary: 105000 },
-        { id: 4, name: 'David', email: 'david@example.com', department: 'Sales', salary: 65000 },
-        { id: 5, name: 'Eve', email: 'eve@example.com', department: 'HR', salary: 70000 },
-      ];
+  const grid = queryGrid('tbw-grid', container)!;
+
+  function rebuild(opts: Record<string, unknown>) {
+    const hiddenArr = (opts.hiddenColumns as string[]) ?? ['email'];
+    const lockedArr = (opts.lockedColumns as string[]) ?? ['id'];
+
+    grid.gridConfig = {
+      columns: allColumns.map((col) => ({
+        ...col,
+        hidden: hiddenArr.includes(col.field),
+        lockVisible: lockedArr.includes(col.field),
+      })),
+      features: { visibility: { allowHideAll: (opts.allowHideAll as boolean) ?? false } },
+    };
+    grid.rows = sampleData;
+  }
+
+  rebuild({ allowHideAll: false, hiddenColumns: ['email'], lockedColumns: ['id'] });
+
+  container.addEventListener('control-change', ((e: CustomEvent) => {
+    rebuild(e.detail.allValues);
+  }) as EventListener);
 }
 </script>

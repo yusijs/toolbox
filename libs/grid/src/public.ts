@@ -307,7 +307,7 @@ export type {
   ToolPanelConfig,
   ToolPanelDefinition,
   TypeDefault,
-  UpdateSource
+  UpdateSource,
 } from './lib/core/types';
 
 // Re-export FitModeEnum for runtime usage
@@ -325,9 +325,10 @@ export type {
   AfterRowRenderContext,
   CellMouseEvent,
   EventDefinition,
+  PluginDependency,
   PluginManifest,
   PluginQuery,
-  QueryDefinition
+  QueryDefinition,
 } from './lib/core/plugin';
 
 // DOM constants - for querying grid elements and styling

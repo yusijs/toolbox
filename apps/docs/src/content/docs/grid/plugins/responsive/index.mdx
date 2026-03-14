@@ -5,8 +5,6 @@ description: "Automatically adapt the grid layout for different screen sizes."
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ResponsiveDefaultDemo from '@components/demos/responsive/ResponsiveDefaultDemo.astro';
-import ResponsiveCardModeDemo from '@components/demos/responsive/ResponsiveCardModeDemo.astro';
-import ResponsiveHiddenColumnsDemo from '@components/demos/responsive/ResponsiveHiddenColumnsDemo.astro';
 import ResponsiveManualControlDemo from '@components/demos/responsive/ResponsiveManualControlDemo.astro';
 import ResponsiveCustomCardRendererDemo from '@components/demos/responsive/ResponsiveCustomCardRendererDemo.astro';
 import ResponsiveFixedCardHeightDemo from '@components/demos/responsive/ResponsiveFixedCardHeightDemo.astro';
@@ -147,26 +145,6 @@ Resize the container to see the grid switch between table and card layouts.
 
 
 
-### Card Mode
-
-<ShowSource file="demos/responsive/ResponsiveCardModeDemo.astro">
-  <ResponsiveCardModeDemo />
-</ShowSource>
-
-When the grid width is below the breakpoint, each row becomes a card with header-value pairs stacked vertically.
-
-
-
-### Hidden Columns
-
-<ShowSource file="demos/responsive/ResponsiveHiddenColumnsDemo.astro">
-  <ResponsiveHiddenColumnsDemo />
-</ShowSource>
-
-Use `hiddenColumns` to hide less important columns in card mode, focusing on essential information.
-
-
-
 ### Manual Control
 
 <ShowSource file="demos/responsive/ResponsiveManualControlDemo.astro">
@@ -229,7 +207,10 @@ Smooth animations when transitioning between modes (enabled by default).
 
 ## Light DOM Configuration
 
-The ResponsivePlugin supports declarative configuration via the `<tbw-grid-responsive-card>` element:
+The ResponsivePlugin supports declarative configuration via the `<tbw-grid-responsive-card>` element. Framework adapters provide wrapper components with idiomatic rendering patterns.
+
+<Tabs syncKey="framework">
+  <TabItem label="Vanilla JS">
 
 ```html
 <tbw-grid>
@@ -246,7 +227,74 @@ The ResponsivePlugin supports declarative configuration via the `<tbw-grid-respo
 </tbw-grid>
 ```
 
-### Attributes
+In vanilla JS, the innerHTML of the element is used as a template. Use `{{ row.fieldName }}` syntax for value interpolation.
+
+  </TabItem>
+  <TabItem label="React">
+
+```tsx
+import { DataGrid, GridResponsiveCard } from '@toolbox-web/grid-react';
+
+<DataGrid rows={data} columns={columns} responsive={{ breakpoint: 500 }}>
+  <GridResponsiveCard<Employee> cardRowHeight={80}>
+    {({ row, index }) => (
+      <div className="custom-card">
+        <strong>{row.name}</strong>
+        <span>{row.email}</span>
+      </div>
+    )}
+  </GridResponsiveCard>
+</DataGrid>
+```
+
+React uses a render function as children, receiving `{ row, index }`.
+
+  </TabItem>
+  <TabItem label="Vue">
+
+```html
+<script setup>
+import { TbwGrid, TbwGridResponsiveCard } from '@toolbox-web/grid-vue';
+</script>
+
+<template>
+  <TbwGrid :rows="data" :columns="columns" :responsive="{ breakpoint: 500 }">
+    <TbwGridResponsiveCard>
+      <template #default="{ row, rowIndex }">
+        <div class="custom-card">
+          <strong>{{ row.name }}</strong>
+          <span>{{ row.email }}</span>
+        </div>
+      </template>
+    </TbwGridResponsiveCard>
+  </TbwGrid>
+</template>
+```
+
+Vue uses a scoped slot, receiving `{ row, rowIndex }`.
+
+  </TabItem>
+  <TabItem label="Angular">
+
+```html
+<tbw-grid [rows]="data" [columns]="columns" [responsive]="{ breakpoint: 500 }">
+  <tbw-grid-responsive-card>
+    <ng-template let-row let-index="index">
+      <div class="custom-card">
+        <strong>{{ row.name }}</strong>
+        <span>{{ row.email }}</span>
+      </div>
+    </ng-template>
+  </tbw-grid-responsive-card>
+</tbw-grid>
+```
+
+Angular uses `<ng-template>` with implicit context binding (`let-row`, `let-index="index"`). Import `GridResponsiveCard` from `@toolbox-web/grid-angular`.
+
+  </TabItem>
+</Tabs>
+
+### Vanilla Attributes
 
 | Attribute | Type | Description |
 | --------- | ---- | ----------- |
@@ -256,64 +304,21 @@ The ResponsivePlugin supports declarative configuration via the `<tbw-grid-respo
 | `hide-header` | `'true' \| 'false'` | Hide header row in responsive mode |
 | `debounce-ms` | `number` | Resize debounce delay in ms |
 
-### Template Syntax
-
-The innerHTML of the element is used as a template for card rendering. Use `{{ row.fieldName }}` syntax for value interpolation:
-
-```html
-<tbw-grid-responsive-card breakpoint="500">
-  <div class="employee-card">
-    <img src="{{ row.avatar }}" alt="{{ row.name }}" />
-    <div class="info">
-      <strong>{{ row.name }}</strong>
-      <span>{{ row.department }}</span>
-    </div>
-  </div>
-</tbw-grid-responsive-card>
-```
-
 :::note
-Light DOM attributes override constructor config when both are present. Framework adapters may provide wrapper components with enhanced render prop support (e.g., React's `<GridResponsiveCard>`).
+Light DOM attributes override constructor config when both are present.
 :::
 
 ## Configuration Options
 
-| Option | Type | Default | Description |
-| ------ | ---- | ------- | ----------- |
-| `breakpoint` | `number` | `0` | Width threshold in pixels to trigger responsive mode |
-| `breakpoints` | `BreakpointConfig[]` | - | Multiple breakpoints for progressive degradation |
-| `hideHeader` | `boolean` | `true` | Whether to hide the header row in responsive mode |
-| `debounceMs` | `number` | `100` | Debounce delay for resize events |
-| `hiddenColumns` | `HiddenColumnConfig[]` | `[]` | Columns to hide/modify in responsive mode |
-| `cardRenderer` | `(row, index) => HTMLElement` | - | Custom renderer function for card layout |
-| `cardRowHeight` | `number \| 'auto'` | `'auto'` | Card row height when using cardRenderer |
-| `animate` | `boolean` | `true` | Enable smooth transitions between modes |
-| `animationDuration` | `number` | `200` | Animation duration in milliseconds |
+See [`ResponsivePluginConfig`](./Interfaces/ResponsivePluginConfig/) for the full list of options and defaults.
 
 ### BreakpointConfig
 
-For progressive degradation, use the `breakpoints` array instead of a single `breakpoint`:
-
-```ts
-interface BreakpointConfig {
-  /** Maximum width to activate this breakpoint */
-  maxWidth: number;
-  /** Columns to hide at this breakpoint */
-  hiddenColumns?: HiddenColumnConfig[];
-  /** Whether to switch to card layout at this breakpoint */
-  cardLayout?: boolean;
-}
-```
+For progressive degradation, use the `breakpoints` array instead of a single `breakpoint`. See [`BreakpointConfig`](./Interfaces/BreakpointConfig/) for the full interface.
 
 ### HiddenColumnConfig
 
-The enhanced `hiddenColumns` syntax supports both simple strings and objects:
-
-```ts
-type HiddenColumnConfig =
-  | string                          // Hide entire cell
-  | { field: string; showValue: true }  // Hide label only, show value full-width
-```
+The enhanced `hiddenColumns` syntax supports both simple strings and objects. See [`HiddenColumnConfig`](./Types/HiddenColumnConfig/) for the full type definition.
 
 **Example:**
 ```ts
@@ -584,5 +589,5 @@ Standard keyboard shortcuts still work:
 
 ## See Also
 
-- **[Selection](../?path=/grid/plugins/selection/)** — Row and cell selection
-- **[Theming](..//grid/theming/)** — CSS custom properties for styling
+- **[Selection](../selection/)** — Row and cell selection
+- **[Theming](../../guides/theming/)** — CSS custom properties for styling

@@ -4,14 +4,22 @@ import DemoControls from '@components/DemoControls.astro';
 ---
 <div class="grid-demo not-content" id="pivot-default-demo">
   <DemoControls controls={[
+    { section: 'PIVOT', name: 'active', label: 'Active', type: 'boolean',
+      default: true, description: 'Whether pivot is active' },
+    { section: 'PIVOT', name: 'aggFunc', label: 'Aggregation', type: 'select',
+      options: ['sum', 'avg', 'count', 'min', 'max'], default: 'sum', description: 'Aggregation function' },
     { section: 'PIVOT', name: 'showTotals', label: 'Show totals', type: 'boolean',
       default: true, description: 'Show row group totals' },
     { section: 'PIVOT', name: 'showGrandTotal', label: 'Show grand total', type: 'boolean',
       default: true, description: 'Show grand total row' },
     { section: 'PIVOT', name: 'showToolPanel', label: 'Show tool panel', type: 'boolean',
       default: true, description: 'Show drag-and-drop tool panel' },
+    { section: 'PIVOT', name: 'defaultExpanded', label: 'Default expanded', type: 'boolean',
+      default: true, description: 'Groups expanded by default' },
+    { section: 'PIVOT', name: 'indentWidth', label: 'Indent width', type: 'number',
+      default: 20, min: 0, max: 60, description: 'Indent per depth level (px)' },
     { section: 'PIVOT', name: 'animation', label: 'Animation', type: 'select',
-      options: ['slide', 'expand', 'fade', 'none'], default: 'slide', description: 'Expand/collapse animation' },
+      options: ['slide', 'fade', 'false'], default: 'slide', description: 'Expand/collapse animation' },
   ]} />
   <tbw-grid style="display: block; height: 400px;"></tbw-grid>
 </div>
@@ -47,24 +55,35 @@ if (container) {
   const grid = queryGrid('tbw-grid', container)!;
 
   function rebuild(opts: Record<string, unknown>) {
+    const aggFunc = (opts.aggFunc as string) ?? 'sum';
+    const headerLabel = aggFunc === 'sum' ? 'Total Sales'
+      : aggFunc === 'avg' ? 'Avg Sales'
+      : aggFunc === 'count' ? 'Count'
+      : aggFunc === 'min' ? 'Min Sales'
+      : 'Max Sales';
+    const animRaw = (opts.animation as string) ?? 'slide';
+    const animation = animRaw === 'false' ? false : animRaw;
     grid.gridConfig = {
       columns,
       features: {
         pivot: {
-          animation: (opts.animation as string) ?? 'slide',
+          active: opts.active as boolean ?? true,
+          animation,
           rowGroupFields: ['region', 'product'],
           columnGroupFields: ['quarter'],
-          valueFields: [{ field: 'sales', aggFunc: 'sum', header: 'Total Sales' }],
+          valueFields: [{ field: 'sales', aggFunc, header: headerLabel }],
           showTotals: opts.showTotals as boolean ?? true,
           showGrandTotal: opts.showGrandTotal as boolean ?? true,
           showToolPanel: opts.showToolPanel as boolean ?? true,
+          defaultExpanded: opts.defaultExpanded as boolean ?? true,
+          indentWidth: opts.indentWidth as number ?? 20,
         } as any,
       },
     };
     grid.rows = salesData;
   }
 
-  rebuild({ showTotals: true, showGrandTotal: true, showToolPanel: true, animation: 'slide' });
+  rebuild({ active: true, showTotals: true, showGrandTotal: true, showToolPanel: true, defaultExpanded: true, indentWidth: 20, animation: 'slide', aggFunc: 'sum' });
 
   container.addEventListener('control-change', ((e: CustomEvent) => {
     rebuild(e.detail.allValues);

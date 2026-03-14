@@ -5,8 +5,6 @@ description: "Transform row data into a cross-tabulation (pivot table) layout."
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import PivotDefaultDemo from '@components/demos/pivot/PivotDefaultDemo.astro';
-import PivotNoTotalsDemo from '@components/demos/pivot/PivotNoTotalsDemo.astro';
-import PivotAverageAggregationDemo from '@components/demos/pivot/PivotAverageAggregationDemo.astro';
 import ShowSource from '@components/ShowSource.astro';
 
 
@@ -143,47 +141,19 @@ export class SalesPivotComponent {
   </TabItem>
 </Tabs>
 
-## Demos
-
-### Default Pivot Table
+## Demo
 
 <ShowSource file="demos/pivot/PivotDefaultDemo.astro">
   <PivotDefaultDemo />
 </ShowSource>
 
-
-
-
-### Without Totals
-
-<ShowSource file="demos/pivot/PivotNoTotalsDemo.astro">
-  <PivotNoTotalsDemo />
-</ShowSource>
-
-
-
-### Average Aggregation
-
-<ShowSource file="demos/pivot/PivotAverageAggregationDemo.astro">
-  <PivotAverageAggregationDemo />
-</ShowSource>
+Use the controls to explore the full pivot configuration — toggle active state, totals, grand total, tool panel, default expansion, indent width, aggregation function, and animation style.
 
 
 
 ## Configuration Options
 
-| Option              | Type                         | Default   | Description                                  |
-| ------------------- | ---------------------------- | --------- | -------------------------------------------- |
-| `active`            | `boolean`                    | `true`    | Whether pivot is active on load              |
-| `rowGroupFields`    | `string[]`                   | `[]`      | Row grouping fields                          |
-| `columnGroupFields` | `string[]`                   | `[]`      | Column grouping fields                       |
-| `valueFields`       | `ValueField[]`               | `[]`      | Aggregation fields                           |
-| `showTotals`        | `boolean`                    | `true`    | Show row totals                              |
-| `showGrandTotal`    | `boolean`                    | `true`    | Show grand total                             |
-| `showToolPanel`     | `boolean`                    | `true`    | Show pivot tool panel for interactive config |
-| `defaultExpanded`   | `boolean`                    | `true`    | Whether groups are expanded by default       |
-| `indentWidth`       | `number`                     | `20`      | Indent width per depth level in pixels       |
-| `animation`         | `false \| 'slide' \| 'fade'` | `'slide'` | Animation style for expand/collapse          |
+See [`PivotConfig`](./Interfaces/PivotConfig/) for the full list of options and defaults.
 
 ## Aggregation Functions
 
@@ -229,8 +199,8 @@ reduced motion (`'reduced-motion'` mode with system preference).
 ```ts
 const plugin = grid.getPluginByName('pivot');
 
-plugin.expandGroup(['North', 'Widget A']);
-plugin.collapseGroup(['North']);
+plugin.expand('North__Widget A');  // expand a specific group by key
+plugin.collapse('North');           // collapse a group
 plugin.expandAll();
 plugin.collapseAll();
 ```
@@ -247,8 +217,8 @@ The pivot plugin supports CSS custom properties for theming. Override these on `
 | `--tbw-pivot-group-hover` | `var(--tbw-color-row-hover)` | Group row hover |
 | `--tbw-pivot-leaf-bg` | `var(--tbw-color-bg)` | Leaf row background |
 | `--tbw-pivot-grand-total-bg` | `var(--tbw-color-header-bg)` | Grand total row |
-| `--tbw-pivot-toggle-hover` | `var(--tbw-color-row-hover)` | Toggle button hover |
-| `--tbw-pivot-panel-section-bg` | `var(--tbw-color-panel-bg)` | Panel section background |
+| `--tbw-pivot-toggle-hover-bg` | `var(--tbw-color-row-hover)` | Toggle button hover |
+| `--tbw-pivot-section-bg` | `var(--tbw-color-panel-bg)` | Panel section background |
 | `--tbw-toggle-size` | `1.25em` | Toggle button size |
 | `--tbw-animation-duration` | `200ms` | Expand/collapse animation |
 
@@ -259,7 +229,7 @@ tbw-grid {
   /* Custom pivot styling */
   --tbw-pivot-group-bg: #fff3e0;
   --tbw-pivot-grand-total-bg: #ffcc80;
-  --tbw-pivot-toggle-hover: #ffe0b2;
+  --tbw-pivot-toggle-hover-bg: #ffe0b2;
 }
 ```
 
@@ -274,12 +244,12 @@ The pivot plugin uses these class names:
 | `.pivot-grand-total-row` | Grand total row |
 | `.pivot-grand-total-footer` | Sticky footer container |
 | `.pivot-toggle` | Expand/collapse button |
-| `.pivot-group-label` | Group name display |
+| `.pivot-label` | Group name display |
 | `.tbw-pivot-slide-in` | Row slide animation |
 | `.tbw-pivot-fade-in` | Row fade animation |
 
 ## See Also
 
-- **[Row Grouping](..//grid/plugins/grouping-rows/)** — Simple row grouping
-- **[Multi-Sort](../?path=/grid/plugins/multi-sort/)** — Multi-column sorting
-- **[Tree](../?path=/grid/plugins/tree/)** — Hierarchical tree data
+- **[Row Grouping](../grouping-rows/)** — Simple row grouping
+- **[Multi-Sort](/grid/plugins/multi-sort/)** — Multi-column sorting
+- **[Tree](/grid/plugins/tree/)** — Hierarchical tree data

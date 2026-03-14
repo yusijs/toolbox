@@ -186,8 +186,7 @@ export default defineConfig({
               label: 'Angular',
               collapsed: true,
               items: [
-                { label: 'Getting Started', slug: 'grid/angular/getting-started' },
-                { label: 'Advanced Usage', slug: 'grid/angular/advanced-usage' },
+                { label: 'Angular Integration', slug: 'grid/angular/getting-started' },
                 { label: 'Base Classes', slug: 'grid/angular/base-classes' },
                 { label: 'Reactive Forms', slug: 'grid/angular/reactive-forms' },
                 {
@@ -201,8 +200,7 @@ export default defineConfig({
               label: 'React',
               collapsed: true,
               items: [
-                { label: 'Getting Started', slug: 'grid/react/getting-started' },
-                { label: 'Advanced Usage', slug: 'grid/react/advanced-usage' },
+                { label: 'React Integration', slug: 'grid/react/getting-started' },
                 {
                   label: 'API Reference',
                   autogenerate: { directory: 'grid/react/api' },
@@ -214,8 +212,7 @@ export default defineConfig({
               label: 'Vue',
               collapsed: true,
               items: [
-                { label: 'Getting Started', slug: 'grid/vue/getting-started' },
-                { label: 'Advanced Usage', slug: 'grid/vue/advanced-usage' },
+                { label: 'Vue Integration', slug: 'grid/vue/getting-started' },
                 {
                   label: 'API Reference',
                   autogenerate: { directory: 'grid/vue/api' },

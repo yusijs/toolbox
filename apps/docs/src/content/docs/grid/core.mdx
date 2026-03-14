@@ -17,7 +17,6 @@ import ShellLightDomDemo from '@components/demos/ShellLightDomDemo.astro';
 import ShellMultiPanelsDemo from '@components/demos/ShellMultiPanelsDemo.astro';
 import ShellToolbarButtonsDemo from '@components/demos/ShellToolbarButtonsDemo.astro';
 import LoadingStatesDemo from '@components/demos/LoadingStatesDemo.astro';
-import CoreEventsDemo from '@components/demos/CoreEventsDemo.astro';
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import CustomLoadingRendererDemo from '@components/demos/CustomLoadingRendererDemo.astro';
 import ShowSource from '@components/ShowSource.astro';
@@ -98,8 +97,10 @@ grid.rows = myData; // That's it!
 
 **Declarative configuration** — Define columns in HTML instead of JavaScript.
 
-Use `<tbw-grid-column>` elements to declaratively define columns directly in your markup:
+Use `<tbw-grid-column>` elements (or framework wrapper components) to declaratively define columns directly in your markup:
 
+<Tabs syncKey="framework">
+  <TabItem label="Vanilla JS">
 ```html
 <tbw-grid>
   <tbw-grid-column field="id" header="ID" width="80"></tbw-grid-column>
@@ -107,6 +108,47 @@ Use `<tbw-grid-column>` elements to declaratively define columns directly in you
   <tbw-grid-column field="email" header="Email Address"></tbw-grid-column>
 </tbw-grid>
 ```
+  </TabItem>
+  <TabItem label="React">
+```tsx
+import { DataGrid, GridColumn } from '@toolbox-web/grid-react';
+
+function EmployeeGrid({ rows }) {
+  return (
+    <DataGrid rows={rows}>
+      <GridColumn field="id" header="ID" width={80} />
+      <GridColumn field="name" header="Full Name" sortable />
+      <GridColumn field="email" header="Email Address" />
+    </DataGrid>
+  );
+}
+```
+  </TabItem>
+  <TabItem label="Vue">
+```html
+<script setup lang="ts">
+import { TbwGrid, TbwGridColumn } from '@toolbox-web/grid-vue';
+</script>
+
+<template>
+  <TbwGrid :rows="rows">
+    <TbwGridColumn field="id" header="ID" :width="80" />
+    <TbwGridColumn field="name" header="Full Name" sortable />
+    <TbwGridColumn field="email" header="Email Address" />
+  </TbwGrid>
+</template>
+```
+  </TabItem>
+  <TabItem label="Angular">
+```html
+<tbw-grid [rows]="rows">
+  <tbw-grid-column field="id" header="ID" width="80"></tbw-grid-column>
+  <tbw-grid-column field="name" header="Full Name" sortable></tbw-grid-column>
+  <tbw-grid-column field="email" header="Email Address"></tbw-grid-column>
+</tbw-grid>
+```
+  </TabItem>
+</Tabs>
 
 This approach is ideal for:
 
@@ -256,10 +298,6 @@ You can combine `rowClass` and `cellClass`. When styles conflict, cell styles wi
 <ShowSource file="demos/RowCellStylingDemo.astro">
   <RowCellStylingDemo />
 </ShowSource>
-
-:::caution
-Do not place `<style>` elements as children of `<tbw-grid>` — the grid calls `replaceChildren()` during renders, which removes them. Use `registerStyles()` for runtime-injected styles. External stylesheets are unaffected.
-:::
 
 ### Renderers
 
@@ -947,8 +985,10 @@ import { TbwGrid, TbwGridToolPanel } from '@toolbox-web/grid-vue';
 
 ### Toolbar Buttons
 
-Add custom buttons to the shell toolbar using `<tbw-grid-tool-buttons>` in Light DOM or the `registerToolbarContent()` API:
+Add custom buttons to the shell toolbar using framework wrapper components or the `registerToolbarContent()` API:
 
+<Tabs syncKey="framework">
+  <TabItem label="Vanilla JS">
 ```html
 <tbw-grid>
   <tbw-grid-tool-buttons>
@@ -957,6 +997,50 @@ Add custom buttons to the shell toolbar using `<tbw-grid-tool-buttons>` in Light
   </tbw-grid-tool-buttons>
 </tbw-grid>
 ```
+  </TabItem>
+  <TabItem label="React">
+```tsx
+import { DataGrid, GridToolButtons } from '@toolbox-web/grid-react';
+
+function MyGrid({ rows }) {
+  return (
+    <DataGrid rows={rows} gridConfig={config}>
+      <GridToolButtons>
+        <button onClick={exportData}>📥 Export</button>
+        <button onClick={printGrid}>🖨️ Print</button>
+      </GridToolButtons>
+    </DataGrid>
+  );
+}
+```
+  </TabItem>
+  <TabItem label="Vue">
+```html
+<script setup lang="ts">
+import { TbwGrid, TbwGridToolButtons } from '@toolbox-web/grid-vue';
+</script>
+
+<template>
+  <TbwGrid :rows="rows" :grid-config="config">
+    <TbwGridToolButtons>
+      <button @click="exportData">📥 Export</button>
+      <button @click="printGrid">🖨️ Print</button>
+    </TbwGridToolButtons>
+  </TbwGrid>
+</template>
+```
+  </TabItem>
+  <TabItem label="Angular">
+```html
+<tbw-grid [rows]="rows" [gridConfig]="config">
+  <tbw-grid-tool-buttons>
+    <button (click)="exportData()">📥 Export</button>
+    <button (click)="printGrid()">🖨️ Print</button>
+  </tbw-grid-tool-buttons>
+</tbw-grid>
+```
+  </TabItem>
+</Tabs>
 
 <ShowSource file="demos/ShellToolbarButtonsDemo.astro">
   <ShellToolbarButtonsDemo />
@@ -1023,6 +1107,8 @@ grid.clearAllLoading();               // remove all indicators
 
 Replace the default spinner with a custom element using `loadingRenderer`:
 
+<Tabs syncKey="framework">
+  <TabItem label="Vanilla JS">
 ```typescript
 grid.gridConfig = {
   loadingRenderer: (context) => {
@@ -1035,10 +1121,91 @@ grid.gridConfig = {
   },
 };
 ```
+  </TabItem>
+  <TabItem label="React">
+```tsx
+import { DataGrid } from '@toolbox-web/grid-react';
+import type { GridConfig } from '@toolbox-web/grid-react';
 
-:::tip
-The framework adapters bridge `loadingRenderer` — you can use React JSX, Vue components/render functions, or Angular component classes. Vanilla DOM functions also work. Pass the config via `gridConfig` in React (`<DataGrid gridConfig={config}>`), Vue (`:grid-config="config"`), and Angular (`[gridConfig]="config"`).
-:::
+const config: GridConfig = {
+  loadingRenderer: ({ size }) => (
+    <div
+      className="my-spinner"
+      style={{
+        width: size === 'large' ? '48px' : '16px',
+        height: size === 'large' ? '48px' : '16px',
+      }}
+    />
+  ),
+};
+
+function MyGrid({ rows }) {
+  return <DataGrid rows={rows} gridConfig={config} />;
+}
+```
+  </TabItem>
+  <TabItem label="Vue">
+```html
+<script setup lang="ts">
+import { h } from 'vue';
+import { TbwGrid } from '@toolbox-web/grid-vue';
+import type { GridConfig } from '@toolbox-web/grid-vue';
+
+// Option 1: Render function
+const config: GridConfig = {
+  loadingRenderer: ({ size }) =>
+    h('div', {
+      class: 'my-spinner',
+      style: {
+        width: size === 'large' ? '48px' : '16px',
+        height: size === 'large' ? '48px' : '16px',
+      },
+    }),
+};
+
+// Option 2: Vue component (receives `size` prop)
+// import MySpinner from './MySpinner.vue';
+// const config: GridConfig = { loadingRenderer: MySpinner };
+</script>
+
+<template>
+  <TbwGrid :rows="rows" :grid-config="config" />
+</template>
+```
+  </TabItem>
+  <TabItem label="Angular">
+```typescript
+import { Component, input, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Grid } from '@toolbox-web/grid-angular';
+import type { GridConfig } from '@toolbox-web/grid-angular';
+
+// Loading spinner component (receives `size` input)
+@Component({
+  selector: 'app-spinner',
+  template: `
+    <div class="my-spinner"
+      [style.width]="size() === 'large' ? '48px' : '16px'"
+      [style.height]="size() === 'large' ? '48px' : '16px'">
+    </div>
+  `,
+})
+export class SpinnerComponent {
+  size = input<'large' | 'small'>('large');
+}
+
+@Component({
+  imports: [Grid],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  template: `<tbw-grid [rows]="rows" [gridConfig]="config" />`,
+})
+export class MyGridComponent {
+  config: GridConfig = {
+    loadingRenderer: SpinnerComponent,
+  };
+}
+```
+  </TabItem>
+</Tabs>
 
 The `LoadingContext` provides a `size` property: `'large'` for the grid-wide overlay (up to 48×48 px) and `'small'` for row/cell indicators (sized to the row height).
 
@@ -1097,201 +1264,17 @@ Plugins can override row heights by implementing the `getRowHeight(row, index)` 
 
 ## Events
 
-### Core Grid Events
+The grid dispatches standard `CustomEvent`s for user interactions — clicks, sort changes, column resizes, and more. Plugin-specific events (selection, editing, filtering, etc.) are also available when those plugins are active.
 
-The grid dispatches `CustomEvent`s for user interactions:
-
-<Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
-```typescript
-grid.addEventListener('cell-click', ((e: CustomEvent<CellClickDetail>) => {
-  const { row, field, value } = e.detail;
-  console.log(`Clicked ${field}: ${value}`, row);
-}) as EventListener);
-```
-  </TabItem>
-  <TabItem label="React">
-```tsx
-import { DataGrid, useGridEvent } from '@toolbox-web/grid-react';
-import type { CellClickDetail } from '@toolbox-web/grid';
-
-function MyGrid({ rows }) {
-  const gridRef = useGrid();
-
-  useGridEvent<CellClickDetail>(gridRef, 'cell-click', (e) => {
-    const { row, field, value } = e.detail;
-    console.log(`Clicked ${field}: ${value}`, row);
-  });
-
-  // Or use the event handler prop directly:
-  return (
-    <DataGrid
-      ref={gridRef}
-      rows={rows}
-      onCellClick={(e) => console.log(e.detail)}
-    />
-  );
-}
-```
-  </TabItem>
-  <TabItem label="Vue">
-```html
-<script setup lang="ts">
-import { TbwGrid } from '@toolbox-web/grid-vue';
-import type { CellClickDetail } from '@toolbox-web/grid';
-
-function onCellClick(e: CustomEvent<CellClickDetail>) {
-  const { row, field, value } = e.detail;
-  console.log(`Clicked ${field}: ${value}`, row);
-}
-</script>
-
-<template>
-  <TbwGrid :rows="rows" @cell-click="onCellClick" />
-</template>
-```
-  </TabItem>
-  <TabItem label="Angular">
-```typescript
-import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { Grid } from '@toolbox-web/grid-angular';
-import type { CellClickDetail } from '@toolbox-web/grid';
-
-@Component({
-  imports: [Grid],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  template: `
-    <tbw-grid [rows]="rows" (cell-click)="onCellClick($event)" />
-  `,
-})
-export class MyGridComponent {
-  onCellClick(e: CustomEvent<CellClickDetail>) {
-    const { row, field, value } = e.detail;
-    console.log(`Clicked ${field}: ${value}`, row);
-  }
-}
-```
-  </TabItem>
-</Tabs>
-
-| Event | Detail type | Description |
-|-------|-------------|-------------|
-| `cell-click` | [`CellClickDetail`](/grid/api/core/interfaces/cellclickdetail/) | A cell was clicked. Contains `row`, `rowIndex`, `column`, `field`, `value`, `event`. |
-| `row-click` | [`RowClickDetail`](/grid/api/core/interfaces/rowclickdetail/) | A row was clicked. Contains `row`, `rowIndex`, `event`. |
-| `cell-activate` | [`CellActivateDetail`](/grid/api/core/interfaces/cellactivatedetail/) | A cell was activated via keyboard (Enter). Contains `row`, `rowIndex`, `column`, `field`, `value`. |
-| `sort-change` | [`SortChangeDetail`](/grid/api/core/interfaces/sortchangedetail/) | Sort state changed. Contains `field`, `direction`, `multiSort`. |
-| `column-resize` | [`ColumnResizeDetail`](/grid/api/core/interfaces/columnresizedetail/) | A column was resized. Contains `field`, `width`, `previousWidth`. |
-| `column-state-change` | [`GridColumnState[]`](/grid/api/core/interfaces/gridcolumnstate/) | Column widths, order, sort, or visibility changed. |
-
-<ShowSource file="demos/CoreEventsDemo.astro">
-  <CoreEventsDemo />
-</ShowSource>
-
-:::tip
-Plugin-specific events (e.g., `selection-change`, `cell-commit`, `filter-change`) are documented on each plugin's page.
-:::
+For the complete event reference — including listening patterns per framework, cancelable events, and all plugin events — see the **[Events Reference](/grid/events/)** page.
 
 ---
 
 ## Methods
 
-The `<tbw-grid>` element exposes public methods for programmatic control. Use `createGrid()` or `queryGrid()` for type-safe access.
+The `<tbw-grid>` element exposes public methods for programmatic control — data manipulation, focus management, column state persistence, custom styles, shell control, loading indicators, row animation, and more. Use `createGrid()` or `queryGrid()` for type-safe access.
 
-### Data & Configuration
-
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `ready()` | `→ Promise<void>` | Resolves when the grid has completed its first render |
-| `forceLayout()` | `→ Promise<void>` | Force a full re-render (columns + rows) |
-| `getConfig()` | `→ Promise<`[`GridConfig`](/grid/api/core/interfaces/gridconfig/)`>` | Returns a read-only snapshot of the effective config |
-| `insertRow()` | `(index, row, animate?) → Promise<void>` | Insert a row at the given index (animates by default) |
-| `removeRow()` | `(index, animate?) → Promise<T \| undefined>` | Remove a row (animates by default); returns the removed row |
-| `toggleGroup()` | `(key) → Promise<void>` | Expand/collapse a row group |
-
-### Focus & Navigation
-
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `focusCell()` | `(rowIndex, column) → void` | Focus a specific cell; `column` can be an index or field name |
-| `focusedCell` | `→ { rowIndex, colIndex, field } \| null` | Current focused cell (read-only) |
-| `scrollToRow()` | `(rowIndex, options?) → void` | Scroll a row into view |
-| `scrollToRowById()` | `(rowId, options?) → void` | Scroll a row into view by its ID |
-| `containsFocus()` | `(node?) → boolean` | Whether the grid (or a specific node) currently has focus |
-
-### Column State
-
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `getColumnState()` | `→ `[`GridColumnState[]`](/grid/api/core/interfaces/gridcolumnstate/) | Snapshot of current column widths, sort, order, visibility |
-| `applyColumnState()` | `(state) → void` | Restore a saved column state |
-
-### Custom Styles
-
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `registerStyles()` | `(id, css) → void` | Add CSS via `adoptedStyleSheets` (survives DOM rebuilds) |
-| `unregisterStyles()` | `(id) → void` | Remove previously registered styles |
-| `getRegisteredStyles()` | `→ string[]` | List registered style IDs |
-
-### Plugin System
-
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `getPlugin()` | `(PluginClass) → P \| undefined` | Get a plugin instance by class |
-| `getPluginByName()` | `(name) → Plugin \| undefined` | Get a plugin instance by name string |
-
-### Shell
-
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `registerToolPanel()` | `(def) → void` | Register a new tool panel section |
-| `unregisterToolPanel()` | `(panelId) → void` | Remove a tool panel |
-| `openToolPanel()` | `() → void` | Open the tool panel sidebar |
-| `closeToolPanel()` | `() → void` | Close the tool panel sidebar |
-| `toggleToolPanel()` | `() → void` | Toggle the sidebar open/closed |
-| `toggleToolPanelSection()` | `(sectionId) → void` | Switch to a specific panel section |
-| `refreshShellHeader()` | `() → void` | Re-render shell header content |
-| `registerToolbarContent()` | `(def) → void` | Add content to the toolbar |
-| `registerHeaderContent()` | `(def) → void` | Add content to the header |
-
-### Loading
-
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `loading` | `boolean` | Grid-level loading overlay (property) |
-| `setRowLoading()` | `(rowId, loading) → void` | Show/hide row loading spinner |
-| `setCellLoading()` | `(rowId, field, loading) → void` | Show/hide cell loading spinner |
-| `isRowLoading()` | `(rowId) → boolean` | Check row loading state |
-| `isCellLoading()` | `(rowId, field) → boolean` | Check cell loading state |
-| `clearAllLoading()` | `() → void` | Clear all loading indicators |
-
-### Focus Containers
-
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `registerExternalFocusContainer()` | `(el) → void` | Register an external element (overlay, dropdown) as part of the grid for focus tracking |
-| `unregisterExternalFocusContainer()` | `(el) → void` | Unregister an external focus container |
-
-### Row Animation
-
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `animateRow()` | `(index, type) → Promise<boolean>` | Animate a single row (`'change'`, `'insert'`, `'remove'`) |
-| `animateRowById()` | `(rowId, type) → Promise<boolean>` | Animate a row by its ID |
-| `animateRows()` | `(indices, type) → Promise<number>` | Animate multiple rows at once |
-
-### Factory Functions
-
-```typescript
-import { createGrid, queryGrid } from '@toolbox-web/grid';
-
-// Create a typed grid element
-const grid = createGrid<Employee>({ columns: [...], rows: data });
-document.body.appendChild(grid);
-
-// Query an existing grid in the DOM
-const existing = queryGrid<Employee>('#my-grid');
-```
+For the complete method reference — including signatures, return types, and factory functions — see the **[API Reference](/grid/api-reference/#methods)** page.
 
 ---
 

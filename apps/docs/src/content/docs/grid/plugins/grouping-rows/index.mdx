@@ -168,16 +168,7 @@ Pass a specific key string to `defaultExpanded` to expand only that group initia
 
 ## Configuration Options
 
-| Option            | Type                                   | Default   | Description                                              |
-| ----------------- | -------------------------------------- | --------- | -------------------------------------------------------- |
-| `groupOn`         | `function`                             | -         | Callback returning group path                            |
-| `defaultExpanded` | `boolean \| number \| string \| string[]` | `false`   | Initial expanded state (see below)                       |
-| `showRowCount`    | `boolean`                              | `true`    | Show count in header                                     |
-| `indentWidth`     | `number`                               | `20`      | Indent per level in pixels                               |
-| `fullWidth`       | `boolean`                              | `true`    | Group row spans full width                               |
-| `animation`       | `false \| 'slide' \| 'fade'`           | `'slide'` | Animation style for expanding/collapsing                 |
-| `accordion`       | `boolean`                              | `false`   | Only one group open at a time                            |
-| `aggregators`     | `Record<string, AggregatorRef>`        | `{}`      | Aggregators for group summary values                     |
+See [`GroupingRowsConfig`](./interfaces/groupingrowsconfig/) for the full list of options and their defaults.
 
 ### Default Expanded Options
 
@@ -300,26 +291,19 @@ features: {
 
 ## Programmatic API
 
+See [`GroupingRowsPlugin`](./classes/groupingrowsplugin/) for the full list of methods.
+
 ```ts
 const plugin = grid.getPluginByName('groupingRows');
 
-// Expand/collapse individual groups by key
 plugin.expand('Engineering');
 plugin.collapse('Engineering');
 plugin.toggle('Engineering');
-
-// Expand/collapse all groups
 plugin.expandAll();
 plugin.collapseAll();
-
-// Check group state
-const isExpanded = plugin.isExpanded('Engineering');
-const expandedGroups = plugin.getExpandedGroups();
-
-// Change grouping at runtime
+plugin.isExpanded('Engineering');    // boolean
+plugin.getExpandedGroups();          // string[]
 plugin.setGroupOn((row) => [row.region, row.department]);
-
-// Refresh groups (e.g., after data mutation)
 plugin.refreshGroups();
 ```
 
@@ -372,8 +356,8 @@ The row grouping plugin uses these class names:
 
 ## See Also
 
-- **[Column Groups](..//grid/plugins/column-groups/)** — Group column headers
-- **[Tree](../?path=/grid/plugins/tree/)** — Hierarchical tree data
-- **[Pivot](../?path=/grid/plugins/pivot/)** — Pivot table with grouping
+- **[Column Groups](../grouping-columns/)** — Group column headers
+- **[Tree](/grid/plugins/tree/)** — Hierarchical tree data
+- **[Pivot](/grid/plugins/pivot/)** — Pivot table with grouping
 - **[Common Patterns](/grid/guides/common-patterns/)** — Application recipes using grouping
 - **[Plugins Overview](/grid/plugins/)** — Plugin compatibility and combinations
