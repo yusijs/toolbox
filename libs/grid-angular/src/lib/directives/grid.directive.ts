@@ -466,7 +466,7 @@ export class Grid implements OnInit, AfterContentInit, OnDestroy {
   gridConfig = input<GridConfig<any>>();
 
   /**
-   * @deprecated Use `gridConfig` instead. This input will be removed in a future version.
+   * @deprecated Use `gridConfig` instead. This input will be removed in v2.
    *
    * The `angularConfig` name was inconsistent with React and Vue adapters, which both use `gridConfig`.
    * The `gridConfig` input now accepts `GridConfig` directly.
@@ -586,7 +586,7 @@ export class Grid implements OnInit, AfterContentInit, OnDestroy {
   multiSort = input<boolean | 'single' | 'multi' | MultiSortConfig>();
 
   /**
-   * @deprecated Use `[multiSort]` instead. Will be removed in a future version.
+   * @deprecated Use `[multiSort]` instead. Will be removed in v2.
    *
    * Enable column sorting. This is an alias for `[multiSort]`.
    *
@@ -630,7 +630,7 @@ export class Grid implements OnInit, AfterContentInit, OnDestroy {
   reorderColumns = input<boolean | ReorderConfig>();
 
   /**
-   * @deprecated Use `reorderColumns` instead. Will be removed in v2.0.
+   * @deprecated Use `reorderColumns` instead. Will be removed in v2.
    */
   reorder = input<boolean | ReorderConfig>();
 

@@ -194,17 +194,29 @@ export abstract class BaseGridEditor<TRow = unknown, TValue = unknown> {
   }
 
   private _initEditCloseListener(): void {
-    const grid = this.elementRef.nativeElement.closest('tbw-grid');
+    const grid = this.elementRef.nativeElement.closest('tbw-grid') as
+      | import('@toolbox-web/grid').DataGridElement
+      | null;
     if (!grid) return;
 
-    const beforeHandler = () => this.onBeforeEditClose();
-    grid.addEventListener('before-edit-close', beforeHandler, { once: true });
+    let unsubBefore: (() => void) | undefined;
+    let unsubClose: (() => void) | undefined;
 
-    const handler = () => this.onEditClose();
-    grid.addEventListener('edit-close', handler, { once: true });
+    unsubBefore = grid.on('before-edit-close', () => {
+      this.onBeforeEditClose();
+      unsubBefore?.();
+      unsubBefore = undefined;
+    });
+
+    unsubClose = grid.on('edit-close', () => {
+      this.onEditClose();
+      unsubClose?.();
+      unsubClose = undefined;
+    });
+
     this._editCloseCleanup = () => {
-      grid.removeEventListener('before-edit-close', beforeHandler);
-      grid.removeEventListener('edit-close', handler);
+      unsubBefore?.();
+      unsubClose?.();
     };
   }
 

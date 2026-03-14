@@ -9,8 +9,8 @@
 export { GridAdapter } from './lib/angular-grid-adapter';
 // Deprecated alias
 export {
-  /** @deprecated Use `GridAdapter` instead */
-  AngularGridAdapter
+  /** @deprecated Use `GridAdapter` instead. Will be removed in v2. */
+  AngularGridAdapter,
 } from './lib/angular-grid-adapter';
 
 // Configuration types - use unified names (GridConfig, ColumnConfig, CellRenderer, etc.)
@@ -19,13 +19,13 @@ export type {
   // Deprecated names - use unified names instead
   /** @deprecated Use `CellEditor` instead */
   AngularCellEditor,
-  /** @deprecated Use `CellRenderer` instead */
+  /** @deprecated Use `CellRenderer` instead. Will be removed in v2. */
   AngularCellRenderer,
-  /** @deprecated Use `ColumnConfig` instead */
+  /** @deprecated Use `ColumnConfig` instead. Will be removed in v2. */
   AngularColumnConfig,
-  /** @deprecated Use `GridConfig` instead */
+  /** @deprecated Use `GridConfig` instead. Will be removed in v2. */
   AngularGridConfig,
-  /** @deprecated Use `TypeDefault` instead */
+  /** @deprecated Use `TypeDefault` instead. Will be removed in v2. */
   AngularTypeDefault,
   // Primary exports - use these
   CellEditor,
@@ -33,7 +33,7 @@ export type {
   ColumnConfig,
   FilterPanel,
   GridConfig,
-  TypeDefault
+  TypeDefault,
 } from './lib/angular-column-config';
 
 // Type registry for application-wide type defaults
@@ -54,7 +54,7 @@ export {
   getFeatureFactory,
   getRegisteredFeatures,
   isFeatureRegistered,
-  registerFeature
+  registerFeature,
 } from './lib/feature-registry';
 export type { FeatureName, PluginFactory } from './lib/feature-registry';
 

@@ -73,7 +73,7 @@ export interface ColumnConfig<TRow = unknown> extends Omit<
 }
 
 /**
- * @deprecated Use `ColumnConfig` instead.
+ * @deprecated Use `ColumnConfig` instead. Will be removed in v2.
  * @see {@link ColumnConfig}
  */
 export type ReactColumnConfig<TRow = unknown> = ColumnConfig<TRow>;
@@ -109,7 +109,7 @@ export type GridConfig<TRow = unknown> = Omit<BaseGridConfig<TRow>, 'columns' | 
 };
 
 /**
- * @deprecated Use `GridConfig` instead.
+ * @deprecated Use `GridConfig` instead. Will be removed in v2.
  * @see {@link GridConfig}
  */
 export type ReactGridConfig<TRow = unknown> = GridConfig<TRow>;
@@ -335,7 +335,7 @@ export function processGridConfig<TRow>(config: GridConfig<TRow> | undefined): B
 }
 
 /**
- * @deprecated Use `processGridConfig` instead.
+ * @deprecated Use `processGridConfig` instead. Will be removed in v2.
  * @see {@link processGridConfig}
  */
 export const processReactGridConfig = processGridConfig;

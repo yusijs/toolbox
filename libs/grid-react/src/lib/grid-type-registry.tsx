@@ -56,7 +56,7 @@ export interface TypeDefault<TRow = unknown, TValue = unknown> {
 }
 
 /**
- * @deprecated Use `TypeDefault` instead.
+ * @deprecated Use `TypeDefault` instead. Will be removed in v2.
  * @see {@link TypeDefault}
  */
 export type ReactTypeDefault<TRow = unknown, TValue = unknown> = TypeDefault<TRow, TValue>;
@@ -231,7 +231,7 @@ export function wrapReactFilterPanelRenderer(
 }
 
 /**
- * @deprecated Use `typeDefaultToBaseTypeDefault` instead.
+ * @deprecated Use `typeDefaultToBaseTypeDefault` instead. Will be removed in v2.
  * @see {@link typeDefaultToBaseTypeDefault}
  */
 export const reactTypeDefaultToGridTypeDefault = typeDefaultToBaseTypeDefault;

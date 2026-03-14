@@ -48,7 +48,7 @@ import '@toolbox-web/grid/features/selection';
         grid.gridConfig = { columns, features: { selection: mode as 'cell' | 'row' | 'range' } };
         grid.rows = sampleData;
 
-        grid.addEventListener('selection-change', () => {
+        grid.on('selection-change', () => {
           const plugin = grid.getPluginByName('selection');
           if (!plugin || !output) return;
           const sel = plugin.getSelection();

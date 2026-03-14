@@ -159,9 +159,9 @@ export function getFormArrayContext(gridElement: HTMLElement): FormArrayContext 
 export class GridFormArray implements OnInit, OnDestroy {
   private readonly destroyRef = inject(DestroyRef);
   private elementRef = inject(ElementRef<GridElement>);
-  private cellCommitListener: ((e: Event) => void) | null = null;
-  private cellCancelListener: ((e: Event) => void) | null = null;
-  private rowCommitListener: ((e: Event) => void) | null = null;
+  private cellCommitUnsub: (() => void) | null = null;
+  private cellCancelUnsub: (() => void) | null = null;
+  private rowCommitUnsub: (() => void) | null = null;
   private touchListener: ((e: Event) => void) | null = null;
   private valueChangesSubscription: Subscription | null = null;
   private statusChangesSubscriptions: Subscription[] = [];
@@ -225,26 +225,20 @@ export class GridFormArray implements OnInit, OnDestroy {
     this.#storeFormContext(grid);
 
     // Intercept cell-commit events to update the FormArray
-    this.cellCommitListener = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
+    this.cellCommitUnsub = grid.on('cell-commit', (detail: { rowIndex: number; field: string; value: unknown; oldValue: unknown; rowId: string }) => {
       this.#handleCellCommit(detail);
-    };
-    grid.addEventListener('cell-commit', this.cellCommitListener);
+    });
 
     // Intercept cell-cancel events to revert FormControls (grid mode Escape)
-    this.cellCancelListener = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { rowIndex: number; field: string; previousValue: unknown };
+    this.cellCancelUnsub = grid.on('cell-cancel', (detail: { rowIndex: number; field: string; previousValue: unknown }) => {
       this.#handleCellCancel(detail);
-    };
-    grid.addEventListener('cell-cancel', this.cellCancelListener);
+    });
 
     // Intercept row-commit events to prevent if FormGroup is invalid
-    this.rowCommitListener = (e: Event) => {
+    this.rowCommitUnsub = grid.on('row-commit', (detail: { rowIndex: number; rowId?: string; changed: boolean }, event: CustomEvent) => {
       if (!this.syncValidation()) return;
-      const detail = (e as CustomEvent).detail as { rowIndex: number };
-      this.#handleRowCommit(e, detail);
-    };
-    grid.addEventListener('row-commit', this.rowCommitListener);
+      this.#handleRowCommit(event, detail);
+    });
 
     // Mark FormArray as touched on first interaction
     this.touchListener = () => {
@@ -272,15 +266,9 @@ export class GridFormArray implements OnInit, OnDestroy {
     const grid = this.elementRef.nativeElement;
     if (!grid) return;
 
-    if (this.cellCommitListener) {
-      grid.removeEventListener('cell-commit', this.cellCommitListener);
-    }
-    if (this.cellCancelListener) {
-      grid.removeEventListener('cell-cancel', this.cellCancelListener);
-    }
-    if (this.rowCommitListener) {
-      grid.removeEventListener('row-commit', this.rowCommitListener);
-    }
+    this.cellCommitUnsub?.();
+    this.cellCancelUnsub?.();
+    this.rowCommitUnsub?.();
     if (this.touchListener) {
       grid.removeEventListener('click', this.touchListener);
     }

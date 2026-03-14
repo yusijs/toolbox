@@ -269,7 +269,7 @@ describe('EditingPlugin', () => {
   describe('cell-commit event', () => {
     it('dispatches cell-commit event on value change', async () => {
       const commitHandler = vi.fn();
-      grid.addEventListener('cell-commit', commitHandler);
+      grid.on('cell-commit', commitHandler);
 
       grid.gridConfig = {
         columns: [
@@ -296,7 +296,7 @@ describe('EditingPlugin', () => {
       await nextFrame();
 
       expect(commitHandler).toHaveBeenCalled();
-      const detail = commitHandler.mock.calls[0][0].detail;
+      const detail = commitHandler.mock.calls[0][0];
       expect(detail.field).toBe('name');
       expect(detail.value).toBe('Beta');
       expect(detail.rowIndex).toBe(0);
@@ -304,7 +304,7 @@ describe('EditingPlugin', () => {
 
     it('includes oldValue in event detail for validation', async () => {
       const commitHandler = vi.fn();
-      grid.addEventListener('cell-commit', commitHandler);
+      grid.on('cell-commit', commitHandler);
 
       grid.gridConfig = {
         columns: [
@@ -330,14 +330,14 @@ describe('EditingPlugin', () => {
       await nextFrame();
 
       expect(commitHandler).toHaveBeenCalled();
-      const detail = commitHandler.mock.calls[0][0].detail;
+      const detail = commitHandler.mock.calls[0][0];
       expect(detail.oldValue).toBe('Alpha');
       expect(detail.value).toBe('Beta');
     });
 
     it('prevents value change when event.preventDefault() is called', async () => {
-      const commitHandler = vi.fn((e: Event) => e.preventDefault());
-      grid.addEventListener('cell-commit', commitHandler);
+      const commitHandler = vi.fn((_d: any, e: CustomEvent) => e.preventDefault());
+      grid.on('cell-commit', commitHandler);
 
       grid.gridConfig = {
         columns: [
@@ -371,7 +371,7 @@ describe('EditingPlugin', () => {
 
     it('preserves numeric type for custom column types like currency', async () => {
       const commitHandler = vi.fn();
-      grid.addEventListener('cell-commit', commitHandler);
+      grid.on('cell-commit', commitHandler);
 
       grid.gridConfig = {
         columns: [
@@ -412,7 +412,7 @@ describe('EditingPlugin', () => {
 
     it('preserves numeric type when value is changed', async () => {
       const commitHandler = vi.fn();
-      grid.addEventListener('cell-commit', commitHandler);
+      grid.on('cell-commit', commitHandler);
 
       grid.gridConfig = {
         columns: [
@@ -450,7 +450,7 @@ describe('EditingPlugin', () => {
 
       // Event detail should also have number type
       expect(commitHandler).toHaveBeenCalled();
-      const detail = commitHandler.mock.calls[0][0].detail;
+      const detail = commitHandler.mock.calls[0][0];
       expect(typeof detail.value).toBe('number');
       expect(detail.value).toBe(25000);
     });
@@ -1504,9 +1504,9 @@ describe('EditingPlugin', () => {
       await waitUpgrade(grid);
 
       // Listen for cell-commit on "name" → cascade-update "email"
-      grid.addEventListener('cell-commit', (e: CustomEvent) => {
-        if (e.detail.field === 'name') {
-          e.detail.updateRow({ email: `${e.detail.value.toLowerCase()}@new.com` });
+      grid.on('cell-commit', (detail) => {
+        if (detail.field === 'name') {
+          detail.updateRow({ email: `${detail.value.toLowerCase()}@new.com` });
         }
       });
 
@@ -1563,9 +1563,9 @@ describe('EditingPlugin', () => {
       await waitUpgrade(grid);
 
       // Cascade email update on name commit
-      grid.addEventListener('cell-commit', (e: CustomEvent) => {
-        if (e.detail.field === 'name') {
-          e.detail.updateRow({ email: 'updated@new.com' });
+      grid.on('cell-commit', (detail) => {
+        if (detail.field === 'name') {
+          detail.updateRow({ email: 'updated@new.com' });
         }
       });
 
@@ -1710,11 +1710,11 @@ describe('EditingPlugin', () => {
       // Track events
       const events: string[] = [];
       let activeEditDuringBefore = -99;
-      grid.addEventListener('before-edit-close', () => {
+      grid.on('before-edit-close', () => {
         events.push('before-edit-close');
         activeEditDuringBefore = grid._activeEditRows;
       });
-      grid.addEventListener('edit-close', () => {
+      grid.on('edit-close', () => {
         events.push('edit-close');
       });
 
@@ -1751,7 +1751,7 @@ describe('EditingPlugin', () => {
       await nextFrame();
 
       const beforeHandler = vi.fn();
-      grid.addEventListener('before-edit-close', beforeHandler);
+      grid.on('before-edit-close', beforeHandler);
 
       // Revert via plugin API
       editingPlugin.cancelActiveRowEdit();
@@ -1790,7 +1790,7 @@ describe('EditingPlugin', () => {
       }
 
       // Listen for before-edit-close and simulate a managed editor committing
-      grid.addEventListener('before-edit-close', () => {
+      grid.on('before-edit-close', () => {
         // Simulate what a framework adapter would do:
         // dispatch a commit event from the managed cell
         const commitEvent = new CustomEvent('commit', { detail: 'flushed-value', bubbles: true });
@@ -2244,8 +2244,8 @@ describe('EditingPlugin', () => {
       await waitUpgrade(grid);
 
       const events: any[] = [];
-      grid.addEventListener('dirty-change', (e: CustomEvent) => {
-        events.push(e.detail);
+      grid.on('dirty-change', (detail) => {
+        events.push(detail);
       });
 
       editingPlugin.markAsDirty('1');
@@ -2640,8 +2640,8 @@ describe('EditingPlugin', () => {
         };
 
         const events: any[] = [];
-        grid.addEventListener('baselines-captured', (e: CustomEvent) => {
-          events.push(e.detail);
+        grid.on('baselines-captured', (detail) => {
+          events.push(detail);
         });
 
         grid.rows = [
@@ -2669,8 +2669,8 @@ describe('EditingPlugin', () => {
         await waitUpgrade(grid);
 
         const events: any[] = [];
-        grid.addEventListener('baselines-captured', (e: CustomEvent) => {
-          events.push(e.detail);
+        grid.on('baselines-captured', (detail) => {
+          events.push(detail);
         });
 
         // Add a new row via reassignment
@@ -2700,8 +2700,8 @@ describe('EditingPlugin', () => {
         await waitUpgrade(grid);
 
         const events: any[] = [];
-        grid.addEventListener('baselines-captured', (e: CustomEvent) => {
-          events.push(e.detail);
+        grid.on('baselines-captured', (detail) => {
+          events.push(detail);
         });
 
         // Reassign with same row ID — no new baselines
@@ -2721,8 +2721,8 @@ describe('EditingPlugin', () => {
         };
 
         const events: any[] = [];
-        grid.addEventListener('baselines-captured', (e: CustomEvent) => {
-          events.push(e.detail);
+        grid.on('baselines-captured', (detail) => {
+          events.push(detail);
         });
 
         grid.rows = [{ id: 1, name: 'Alice', age: 30 }];
@@ -2751,8 +2751,8 @@ describe('EditingPlugin', () => {
         await waitUpgrade(grid);
 
         let committed: unknown = undefined;
-        grid.addEventListener('cell-commit', (e: CustomEvent) => {
-          committed = e.detail.value;
+        grid.on('cell-commit', (detail) => {
+          committed = detail.value;
         });
 
         const row = grid.querySelector('.data-grid-row') as HTMLElement;
@@ -2782,8 +2782,8 @@ describe('EditingPlugin', () => {
         await waitUpgrade(grid);
 
         let committed: unknown = undefined;
-        grid.addEventListener('cell-commit', (e: CustomEvent) => {
-          committed = e.detail.value;
+        grid.on('cell-commit', (detail) => {
+          committed = detail.value;
         });
 
         const row = grid.querySelector('.data-grid-row') as HTMLElement;
@@ -2813,7 +2813,7 @@ describe('EditingPlugin', () => {
         await waitUpgrade(grid);
 
         let committed = false;
-        grid.addEventListener('cell-commit', () => {
+        grid.on('cell-commit', () => {
           committed = true;
         });
 
@@ -2853,8 +2853,8 @@ describe('EditingPlugin', () => {
         await waitUpgrade(grid);
 
         let committed: unknown = undefined;
-        grid.addEventListener('cell-commit', (e: CustomEvent) => {
-          committed = e.detail.value;
+        grid.on('cell-commit', (detail) => {
+          committed = detail.value;
         });
 
         const row = grid.querySelector('.data-grid-row') as HTMLElement;
@@ -2891,8 +2891,8 @@ describe('EditingPlugin', () => {
         await waitUpgrade(grid);
 
         let committed: unknown = undefined;
-        grid.addEventListener('cell-commit', (e: CustomEvent) => {
-          committed = e.detail.value;
+        grid.on('cell-commit', (detail) => {
+          committed = detail.value;
         });
 
         const row = grid.querySelector('.data-grid-row') as HTMLElement;
@@ -2922,8 +2922,8 @@ describe('EditingPlugin', () => {
         await waitUpgrade(grid);
 
         let committed: unknown = undefined;
-        grid.addEventListener('cell-commit', (e: CustomEvent) => {
-          committed = e.detail.value;
+        grid.on('cell-commit', (detail) => {
+          committed = detail.value;
         });
 
         const row = grid.querySelector('.data-grid-row') as HTMLElement;
@@ -2966,8 +2966,8 @@ describe('EditingPlugin', () => {
         await waitUpgrade(grid);
 
         let committed: unknown = undefined;
-        grid.addEventListener('cell-commit', (e: CustomEvent) => {
-          committed = e.detail.value;
+        grid.on('cell-commit', (detail) => {
+          committed = detail.value;
         });
 
         const row = grid.querySelector('.data-grid-row') as HTMLElement;
@@ -3105,8 +3105,8 @@ describe('EditingPlugin', () => {
         await waitUpgrade(grid);
 
         let committed: unknown = undefined;
-        grid.addEventListener('cell-commit', (e: CustomEvent) => {
-          committed = e.detail.value;
+        grid.on('cell-commit', (detail) => {
+          committed = detail.value;
         });
 
         const row = grid.querySelector('.data-grid-row') as HTMLElement;
@@ -3143,8 +3143,8 @@ describe('EditingPlugin', () => {
         await waitUpgrade(grid);
 
         let committed: unknown = undefined;
-        grid.addEventListener('cell-commit', (e: CustomEvent) => {
-          committed = e.detail.value;
+        grid.on('cell-commit', (detail) => {
+          committed = detail.value;
         });
 
         const row = grid.querySelector('.data-grid-row') as HTMLElement;
@@ -3174,8 +3174,8 @@ describe('EditingPlugin', () => {
         await waitUpgrade(grid);
 
         let committed: unknown = undefined;
-        grid.addEventListener('cell-commit', (e: CustomEvent) => {
-          committed = e.detail.value;
+        grid.on('cell-commit', (detail) => {
+          committed = detail.value;
         });
 
         const row = grid.querySelector('.data-grid-row') as HTMLElement;
@@ -3210,8 +3210,8 @@ describe('EditingPlugin', () => {
         await waitUpgrade(grid);
 
         let committed: unknown = undefined;
-        grid.addEventListener('cell-commit', (e: CustomEvent) => {
-          committed = e.detail.value;
+        grid.on('cell-commit', (detail) => {
+          committed = detail.value;
         });
 
         const row = grid.querySelector('.data-grid-row') as HTMLElement;

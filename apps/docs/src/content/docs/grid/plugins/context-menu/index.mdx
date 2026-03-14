@@ -9,6 +9,7 @@ import ContextMenuWithSubmenusDemo from '@components/demos/context-menu/ContextM
 import ContextMenuConditionalItemsDemo from '@components/demos/context-menu/ContextMenuConditionalItemsDemo.astro';
 import PluginContributedItemsDemo from '@components/demos/context-menu/PluginContributedItemsDemo.astro';
 import ShowSource from '@components/ShowSource.astro';
+import ContextMenuEventsDemo from '@components/demos/context-menu/ContextMenuEventsDemo.astro';
 
 
 
@@ -247,8 +248,12 @@ features: {
 
 ## Events
 
-| Event               | Detail              | Description |     |
-| ------------------- | ------------------- | ----------- | --- |
+<ShowSource>
+  <ContextMenuEventsDemo />
+</ShowSource>
+
+| Event               | Detail              | Description |
+| ------------------- | ------------------- | ----------- |
 | `context-menu-open` | `{ params, items }` | Menu opened |
 
 ## Styling

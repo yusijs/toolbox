@@ -65,8 +65,8 @@ export const ROW_DRAG_HANDLE_FIELD = '__tbw_row_drag';
  *   plugins: [new RowReorderPlugin()],
  * };
  *
- * grid.addEventListener('row-move', (e) => {
- *   console.log('Row moved from', e.detail.fromIndex, 'to', e.detail.toIndex);
+ * grid.on('row-move', ({ fromIndex, toIndex }) => {
+ *   console.log('Row moved from', fromIndex, 'to', toIndex);
  * });
  * ```
  *

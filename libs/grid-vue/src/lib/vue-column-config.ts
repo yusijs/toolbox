@@ -37,7 +37,7 @@ export type CellRenderer<TRow = unknown, TValue = unknown> =
   | Component;
 
 /**
- * @deprecated Use `CellRenderer` instead.
+ * @deprecated Use `CellRenderer` instead. Will be removed in v2.
  * @see {@link CellRenderer}
  */
 export type VueCellRenderer<TRow = unknown, TValue = unknown> = CellRenderer<TRow, TValue>;
@@ -67,7 +67,7 @@ export type CellEditor<TRow = unknown, TValue = unknown> =
   | Component;
 
 /**
- * @deprecated Use `CellEditor` instead.
+ * @deprecated Use `CellEditor` instead. Will be removed in v2.
  * @see {@link CellEditor}
  */
 export type VueCellEditor<TRow = unknown, TValue = unknown> = CellEditor<TRow, TValue>;
@@ -129,7 +129,7 @@ export interface ColumnConfig<TRow = unknown, TValue = unknown> extends Omit<
 }
 
 /**
- * @deprecated Use `ColumnConfig` instead.
+ * @deprecated Use `ColumnConfig` instead. Will be removed in v2.
  * @see {@link ColumnConfig}
  */
 export type VueColumnConfig<TRow = unknown, TValue = unknown> = ColumnConfig<TRow, TValue>;
@@ -175,7 +175,7 @@ export interface GridConfig<TRow = unknown> extends Omit<BaseGridConfig<TRow>, '
 }
 
 /**
- * @deprecated Use `GridConfig` instead.
+ * @deprecated Use `GridConfig` instead. Will be removed in v2.
  * @see {@link GridConfig}
  */
 export type VueGridConfig<TRow = unknown> = GridConfig<TRow>;

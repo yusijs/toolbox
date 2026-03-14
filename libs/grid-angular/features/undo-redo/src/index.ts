@@ -184,14 +184,10 @@ export function injectGridUndoRedo(): UndoRedoMethods {
     if (listenerAttached) return;
     listenerAttached = true;
 
-    grid.addEventListener('undo', syncSignals);
-    grid.addEventListener('redo', syncSignals);
-    grid.addEventListener('cell-commit', syncSignals);
+    const unsubs = [grid.on('undo', syncSignals), grid.on('redo', syncSignals), grid.on('cell-commit', syncSignals)];
 
     destroyRef.onDestroy(() => {
-      grid.removeEventListener('undo', syncSignals);
-      grid.removeEventListener('redo', syncSignals);
-      grid.removeEventListener('cell-commit', syncSignals);
+      unsubs.forEach((fn) => fn());
     });
   };
 

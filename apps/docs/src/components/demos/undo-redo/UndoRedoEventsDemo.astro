@@ -1,0 +1,116 @@
+---
+// UndoRedoEventsDemo.astro — Shows undo/redo events with a live log panel
+---
+<div class="grid-demo not-content" id="undo-redo-events-demo">
+  <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+    <button id="undo-events-btn" style="padding: 4px 12px; cursor: pointer;">⟲ Undo</button>
+    <button id="redo-events-btn" style="padding: 4px 12px; cursor: pointer;">⟳ Redo</button>
+    <span style="font-size: 0.85em; color: var(--sl-color-gray-3); align-self: center;">
+      Double-click a cell to edit, then undo/redo.
+    </span>
+  </div>
+  <tbw-grid style="display: block; height: 240px;"></tbw-grid>
+  <div class="log-panel">
+    <div class="log-header">
+      <strong>Event Log:</strong>
+      <button id="clear-undo-redo-events-log">Clear</button>
+    </div>
+    <div class="event-log" id="undo-redo-events-log"></div>
+  </div>
+</div>
+
+<style>
+  #undo-redo-events-demo .log-panel {
+    border: 1px solid var(--sl-color-gray-5);
+    padding: 12px;
+    border-radius: 4px;
+    background: var(--sl-color-gray-6);
+    overflow-y: auto;
+    max-height: 200px;
+    margin-top: 8px;
+  }
+  #undo-redo-events-demo .log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  #undo-redo-events-demo .log-header button {
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  #undo-redo-events-demo .event-log {
+    font-family: monospace;
+    font-size: 11px;
+    color: var(--sl-color-gray-2);
+  }
+  #undo-redo-events-demo .event-log > div {
+    padding: 2px 0;
+    border-bottom: 1px solid var(--sl-color-gray-5);
+  }
+  #undo-redo-events-demo .event-log .event-type {
+    color: var(--sl-color-accent);
+  }
+</style>
+
+<script>
+import '@toolbox-web/grid';
+import { queryGrid } from '@toolbox-web/grid';
+import '@toolbox-web/grid/features/editing';
+import '@toolbox-web/grid/features/undo-redo';
+
+const container = document.getElementById('undo-redo-events-demo');
+if (container) {
+  const grid = queryGrid('tbw-grid', container);
+
+  grid.gridConfig = {
+    columns: [
+      { field: 'name', header: 'Name', editable: true },
+      { field: 'department', header: 'Department', editable: true },
+      { field: 'salary', header: 'Salary', type: 'number', editable: true },
+    ],
+    features: {
+      editing: 'dblclick',
+      undoRedo: true,
+    },
+  };
+
+  grid.rows = [
+    { name: 'Alice Johnson', department: 'Engineering', salary: 95000 },
+    { name: 'Bob Smith', department: 'Marketing', salary: 75000 },
+    { name: 'Carol White', department: 'Sales', salary: 68000 },
+  ];
+
+  const log = container.querySelector('#undo-redo-events-log');
+  const clearBtn = container.querySelector('#clear-undo-redo-events-log');
+  const undoBtn = container.querySelector('#undo-events-btn');
+  const redoBtn = container.querySelector('#redo-events-btn');
+
+  function addLog(type: string, detail: string) {
+    if (!log) return;
+    const msg = document.createElement('div');
+    msg.innerHTML = `<span class="event-type">[${type}]</span> ${detail}`;
+    log.insertBefore(msg, log.firstChild);
+    while (log.children.length > 15) log.lastChild?.remove();
+  }
+
+  clearBtn?.addEventListener('click', () => { if (log) log.innerHTML = ''; });
+
+  undoBtn?.addEventListener('click', () => {
+    grid.getPluginByName('undoRedo')?.undo();
+  });
+
+  redoBtn?.addEventListener('click', () => {
+    grid.getPluginByName('undoRedo')?.redo();
+  });
+
+  grid.on('undo', (d) => {
+    addLog('undo', `field: ${d.field}, restored: "${d.oldValue}"`);
+  });
+
+  grid.on('redo', (d) => {
+    addLog('redo', `field: ${d.field}, reapplied: "${d.value}"`);
+  });
+}
+</script>

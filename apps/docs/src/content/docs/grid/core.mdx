@@ -811,8 +811,7 @@ The `column-state-change` event fires whenever the user resizes, reorders, sorts
 <Tabs syncKey="framework">
   <TabItem label="Vanilla JS">
 ```typescript
-grid.addEventListener('column-state-change', (e) => {
-  const state = e.detail; // GridColumnState[]
+grid.on('column-state-change', (state) => {
   localStorage.setItem('my-grid-state', JSON.stringify(state));
 });
 ```

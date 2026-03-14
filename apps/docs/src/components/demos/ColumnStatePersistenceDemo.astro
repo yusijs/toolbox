@@ -18,7 +18,7 @@
 
 <script>
   import '@toolbox-web/grid';
-  import type { ColumnConfig, GridColumnState } from '@toolbox-web/grid';
+import type { ColumnConfig, GridColumnState } from '@toolbox-web/grid';
 
   const STORAGE_KEY = 'tbw-demo-column-state';
 
@@ -66,9 +66,9 @@
       log.scrollTop = log.scrollHeight;
     }
 
-    grid.addEventListener('column-state-change', ((e: CustomEvent) => {
-      appendLog(`State changed: ${JSON.stringify(e.detail).slice(0, 120)}…`);
-    }) as EventListener);
+    grid.on('column-state-change', (detail) => {
+      appendLog(`State changed: ${JSON.stringify(detail).slice(0, 120)}…`);
+    });
 
     container.querySelector('[data-save]')!.addEventListener('click', () => {
       const state = grid.getColumnState();

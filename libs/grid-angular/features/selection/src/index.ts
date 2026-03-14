@@ -196,8 +196,7 @@ export function injectGridSelection<TRow = unknown>(): SelectionMethods<TRow> {
    * Handle selection-change events from the grid.
    * Updates both reactive signals.
    */
-  const onSelectionChange = (e: Event): void => {
-    const detail = (e as CustomEvent<SelectionChangeDetail>).detail;
+  const onSelectionChange = (detail: SelectionChangeDetail): void => {
     const plugin = getPlugin();
     if (plugin) {
       selectionSignal.set(plugin.getSelection());
@@ -214,10 +213,10 @@ export function injectGridSelection<TRow = unknown>(): SelectionMethods<TRow> {
     if (listenerAttached) return;
     listenerAttached = true;
 
-    grid.addEventListener('selection-change', onSelectionChange);
+    const unsub = grid.on('selection-change', onSelectionChange);
 
     destroyRef.onDestroy(() => {
-      grid.removeEventListener('selection-change', onSelectionChange);
+      unsub();
     });
   };
 

@@ -335,7 +335,7 @@ export class UndoRedoPlugin extends BaseGridPlugin<UndoRedoConfig> {
    * **Typical usage** — group a user edit with its cascaded side-effects:
    *
    * ```ts
-   * grid.addEventListener('cell-commit', (e) => {
+   * grid.on('cell-commit', () => {
    *   const undoRedo = grid.getPluginByName('undoRedo');
    *   undoRedo.beginTransaction();
    *

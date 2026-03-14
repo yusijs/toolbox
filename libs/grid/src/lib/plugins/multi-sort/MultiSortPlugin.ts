@@ -71,8 +71,8 @@ import type { MultiSortConfig, SortModel } from './types';
  *   plugins: [new MultiSortPlugin({ maxSortColumns: 3, showSortIndex: true })],
  * };
  *
- * grid.addEventListener('sort-change', (e) => {
- *   console.log('Active sorts:', e.detail.sortModel);
+ * grid.on('sort-change', ({ sortModel }) => {
+ *   console.log('Active sorts:', sortModel);
  * });
  * ```
  *

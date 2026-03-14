@@ -6,6 +6,7 @@ description: "Sort by multiple columns with shift-click support."
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import MultiSortDefaultDemo from '@components/demos/multi-sort/MultiSortDefaultDemo.astro';
 import ShowSource from '@components/ShowSource.astro';
+import MultiSortEventsDemo from '@components/demos/multi-sort/MultiSortEventsDemo.astro';
 
 
 
@@ -41,8 +42,8 @@ grid.gridConfig = {
 };
 
 // Listen for sort changes
-grid.addEventListener('sort-change', (e) => {
-  console.log('Active sorts:', e.detail.sortModel);
+grid.on('sort-change', ({ sortModel }) => {
+  console.log('Active sorts:', sortModel);
 });
 ```
   </TabItem>
@@ -174,11 +175,15 @@ plugin.setSortModel([
 
 ## Events
 
+<ShowSource>
+  <MultiSortEventsDemo />
+</ShowSource>
+
 The grid fires a `sort-change` event whenever the sort model changes:
 
 ```ts
-grid.addEventListener('sort-change', (e) => {
-  console.log('Sort model:', e.detail.sortModel);
+grid.on('sort-change', ({ sortModel }) => {
+  console.log('Sort model:', sortModel);
   // [{ field: 'name', direction: 'asc' }, { field: 'salary', direction: 'desc' }]
 });
 ```

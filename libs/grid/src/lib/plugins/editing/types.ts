@@ -78,9 +78,9 @@ export interface CellCommitDetail<TRow = unknown> {
    *
    * @example
    * ```typescript
-   * grid.addEventListener('cell-commit', (e) => {
-   *   if (e.detail.field === 'email' && !isValidEmail(e.detail.value)) {
-   *     e.detail.setInvalid('Please enter a valid email address');
+   * grid.on('cell-commit', (detail) => {
+   *   if (detail.field === 'email' && !isValidEmail(detail.value)) {
+   *     detail.setInvalid('Please enter a valid email address');
    *   }
    * });
    * ```
@@ -100,9 +100,9 @@ export interface CellCommitDetail<TRow = unknown> {
  *
  * @example
  * ```typescript
- * grid.addEventListener('row-commit', (e) => {
+ * grid.on('row-commit', (detail, e) => {
  *   const editingPlugin = grid.getPluginByName('editing');
- *   if (editingPlugin?.hasInvalidCells(e.detail.rowId)) {
+ *   if (editingPlugin?.hasInvalidCells(detail.rowId)) {
  *     e.preventDefault(); // Revert row to original values
  *     alert('Please fix validation errors before leaving the row');
  *   }

@@ -39,8 +39,7 @@ if (container) {
       ];
 
       // Mark invalid cells (but don't cancel the edit)
-      grid.addEventListener('cell-commit', (e) => {
-        const { field, value, setInvalid } = e.detail;
+      grid.on('cell-commit', ({ field, value, setInvalid }) => {
 
         if (field === 'email' && typeof value === 'string' && !value.includes('@')) {
           setInvalid('Email must contain @');
@@ -52,8 +51,7 @@ if (container) {
       });
 
       // Reject row commit if there are invalid cells
-      grid.addEventListener('row-commit', (e) => {
-        const { rowId } = e.detail;
+      grid.on('row-commit', ({ rowId }, e) => {
         if (editingPlugin.hasInvalidCells(rowId)) {
           e.preventDefault(); // Reverts entire row to original values
           // In real app, show a toast or inline message instead of alert

@@ -67,7 +67,7 @@ if (container) {
     }
   };
 
-  grid.addEventListener('responsive-change', updateStatus);
+  grid.on('responsive-change', updateStatus);
   requestAnimationFrame(updateStatus);
 }
 </script>

@@ -18,8 +18,12 @@
 
 // Re-export core registry — all adapters share the same registry Map
 export {
-  clearFeatureRegistry, createPluginFromFeature, getFeatureFactory,
-  getRegisteredFeatures, isFeatureRegistered, registerFeature
+  clearFeatureRegistry,
+  createPluginFromFeature,
+  getFeatureFactory,
+  getRegisteredFeatures,
+  isFeatureRegistered,
+  registerFeature,
 } from '@toolbox-web/grid/features/registry';
 
 export type { PluginFactory } from '@toolbox-web/grid/features/registry';
@@ -33,16 +37,16 @@ export type FeatureName =
   | 'clipboard'
   | 'contextMenu'
   | 'multiSort'
-  | 'sorting' // @deprecated - use 'multiSort' instead
+  | 'sorting' // @deprecated - use 'multiSort' instead. Will be removed in v2.
   | 'filtering'
   | 'reorderColumns'
-  | 'reorder' // @deprecated - use 'reorderColumns' instead
+  | 'reorder' // @deprecated - use 'reorderColumns' instead. Will be removed in v2.
   | 'visibility'
   | 'pinnedColumns'
   | 'groupingColumns'
   | 'columnVirtualization'
   | 'reorderRows'
-  | 'rowReorder' // @deprecated - use 'reorderRows' instead
+  | 'rowReorder' // @deprecated - use 'reorderRows' instead. Will be removed in v2.
   | 'groupingRows'
   | 'pinnedRows'
   | 'tree'

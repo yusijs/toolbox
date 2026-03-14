@@ -103,7 +103,7 @@ const props = defineProps({
     type: [Boolean, String, Object] as PropType<boolean | 'single' | 'multi' | MultiSortConfig>,
     default: undefined,
   },
-  /** @deprecated Use multiSort instead */
+  /** @deprecated Use multiSort instead. Will be removed in v2. */
   sorting: {
     type: [Boolean, String, Object] as PropType<boolean | 'single' | 'multi' | MultiSortConfig>,
     default: undefined,
@@ -118,7 +118,7 @@ const props = defineProps({
     type: [Boolean, Object] as PropType<boolean | ReorderConfig>,
     default: undefined,
   },
-  /** @deprecated Use `reorderColumns` instead */
+  /** @deprecated Use `reorderColumns` instead. Will be removed in v2. */
   reorder: {
     type: [Boolean, Object] as PropType<boolean | ReorderConfig>,
     default: undefined,
@@ -148,7 +148,7 @@ const props = defineProps({
     type: [Boolean, Object] as PropType<boolean | RowReorderConfig>,
     default: undefined,
   },
-  /** @deprecated Use `reorderRows` instead */
+  /** @deprecated Use `reorderRows` instead. Will be removed in v2. */
   rowReorder: {
     type: [Boolean, Object] as PropType<boolean | RowReorderConfig>,
     default: undefined,
@@ -308,38 +308,8 @@ const mergedConfig = computed<GridConfig<TRow> | undefined>(() => {
   } as GridConfig<TRow>;
 });
 
-// Event handlers
-function handleCellCommit(event: Event) {
-  emit('cell-commit', event as CustomEvent);
-}
-
-function handleRowCommit(event: Event) {
-  emit('row-commit', event as CustomEvent);
-}
-
-function handleCellClick(event: Event) {
-  emit('cell-click', event as CustomEvent);
-}
-
-function handleCellDblclick(event: Event) {
-  emit('cell-dblclick', event as CustomEvent);
-}
-
-function handleSelectionChange(event: Event) {
-  emit('selection-change', event as CustomEvent);
-}
-
-function handleRowToggle(event: Event) {
-  emit('row-toggle', event as CustomEvent);
-}
-
-function handleSortChange(event: Event) {
-  emit('sort-change', event as CustomEvent);
-}
-
-function handleReady(event: Event) {
-  emit('ready', event as CustomEvent);
-}
+// Unsubscribe functions for grid event listeners
+const eventCleanups: (() => void)[] = [];
 
 /**
  * Intercepts the element's `gridConfig` property so ALL writes
@@ -403,15 +373,17 @@ onMounted(() => {
   // (including direct custom element bindings) go through processGridConfig.
   interceptElementGridConfig(grid, adapter);
 
-  // Add event listeners
-  grid.addEventListener('cell-commit', handleCellCommit);
-  grid.addEventListener('row-commit', handleRowCommit);
-  grid.addEventListener('cell-click', handleCellClick);
-  grid.addEventListener('cell-dblclick', handleCellDblclick);
-  grid.addEventListener('selection-change', handleSelectionChange);
-  grid.addEventListener('row-toggle', handleRowToggle);
-  grid.addEventListener('sort-change', handleSortChange);
-  grid.addEventListener('ready', handleReady);
+  // Subscribe to grid events and store unsubscribe functions
+  eventCleanups.push(
+    grid.on('cell-commit', (_d, e) => emit('cell-commit', e)),
+    grid.on('row-commit', (_d, e) => emit('row-commit', e)),
+    grid.on('cell-click', (_d, e) => emit('cell-click', e)),
+    grid.on('cell-dblclick', (_d, e) => emit('cell-dblclick', e)),
+    grid.on('selection-change', (_d, e) => emit('selection-change', e)),
+    grid.on('row-toggle', (_d, e) => emit('row-toggle', e)),
+    grid.on('sort-change', (_d, e) => emit('sort-change', e)),
+    grid.on('ready', (_d, e) => emit('ready', e)),
+  );
 
   // Set initial data
   if (props.rows.length > 0) {
@@ -433,15 +405,9 @@ onBeforeUnmount(() => {
   // Remove the gridConfig setter interceptor
   removeGridConfigInterceptor(grid);
 
-  // Remove event listeners
-  grid.removeEventListener('cell-commit', handleCellCommit);
-  grid.removeEventListener('row-commit', handleRowCommit);
-  grid.removeEventListener('cell-click', handleCellClick);
-  grid.removeEventListener('cell-dblclick', handleCellDblclick);
-  grid.removeEventListener('selection-change', handleSelectionChange);
-  grid.removeEventListener('row-toggle', handleRowToggle);
-  grid.removeEventListener('sort-change', handleSortChange);
-  grid.removeEventListener('ready', handleReady);
+  // Unsubscribe all grid event listeners
+  eventCleanups.forEach((fn) => fn());
+  eventCleanups.length = 0;
 });
 
 // Watch for prop changes

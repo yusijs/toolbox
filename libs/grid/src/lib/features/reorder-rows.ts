@@ -16,7 +16,7 @@ declare module '../core/types' {
   interface FeatureConfig {
     /** Enable row drag-to-reorder. */
     reorderRows?: boolean | RowReorderConfig;
-    /** @deprecated Use `reorderRows` instead. */
+    /** @deprecated Use `reorderRows` instead. Will be removed in v2.*/
     rowReorder?: boolean | RowReorderConfig;
   }
 }

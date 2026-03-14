@@ -1,7 +1,7 @@
 /**
  * @deprecated Use `import '@toolbox-web/grid-angular/features/multi-sort'` instead.
  *
- * This module is kept for backward compatibility and will be removed in a future version.
+ * This module is kept for backward compatibility and will be removed in v2.
  * It re-exports the multi-sort feature.
  *
  * @example

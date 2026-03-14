@@ -102,8 +102,7 @@ import type {
  *   plugins: [new EditingPlugin({ editOn: 'dblclick' })],
  * };
  *
- * grid.addEventListener('cell-commit', (e) => {
- *   const { field, oldValue, newValue } = e.detail;
+ * grid.on('cell-commit', ({ field, oldValue, newValue }) => {
  *   console.log(`${field}: ${oldValue} → ${newValue}`);
  * });
  * ```
@@ -1370,9 +1369,9 @@ export class EditingPlugin<T = unknown> extends BaseGridPlugin<EditingConfig> {
    * @example
    * ```typescript
    * // In cell-commit handler:
-   * grid.addEventListener('cell-commit', (e) => {
-   *   if (e.detail.field === 'email' && !isValidEmail(e.detail.value)) {
-   *     e.detail.setInvalid('Invalid email format');
+   * grid.on('cell-commit', (detail, e) => {
+   *   if (detail.field === 'email' && !isValidEmail(detail.value)) {
+   *     detail.setInvalid('Invalid email format');
    *   }
    * });
    *

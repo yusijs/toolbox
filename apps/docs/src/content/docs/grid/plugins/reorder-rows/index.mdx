@@ -42,8 +42,8 @@ grid.gridConfig = {
 };
 
 // Listen for row moves
-grid.addEventListener('row-move', (e) => {
-  console.log(`Moved row from ${e.detail.fromIndex} to ${e.detail.toIndex}`);
+grid.on('row-move', ({ fromIndex, toIndex }) => {
+  console.log(`Moved row from ${fromIndex} to ${toIndex}`);
   // Optionally persist the new order to your backend
 });
 ```

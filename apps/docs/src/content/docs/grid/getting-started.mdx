@@ -190,8 +190,8 @@ if (existingGrid) {
 }
 
 // Listen for cell edits
-grid.addEventListener('cell-commit', (e: CustomEvent) => {
-  console.log('Edited:', e.detail);
+grid.on('cell-commit', (detail) => {
+  console.log('Edited:', detail);
 });
 ```
 
@@ -450,8 +450,7 @@ grid.gridConfig = {
 };
 
 // Type-safe event handling
-grid.addEventListener('cell-commit', (e: CustomEvent<CellCommitDetail>) => {
-  const { row, field, value, oldValue } = e.detail;
+grid.on('cell-commit', ({ row, field, value, oldValue }) => {
   console.log(`Changed ${field} from ${oldValue} to ${value}`);
 });
 ```

@@ -139,9 +139,9 @@ export class GridLazyForm<TRow = unknown> implements OnInit, OnDestroy {
   // Track which row is currently being edited
   private editingRowIndex: number | null = null;
 
-  private cellCommitListener: ((e: Event) => void) | null = null;
-  private rowCommitListener: ((e: Event) => void) | null = null;
-  private rowsChangeListener: ((e: Event) => void) | null = null;
+  private cellCommitUnsub: (() => void) | null = null;
+  private rowCommitUnsub: (() => void) | null = null;
+  private rowsChangeUnsub: (() => void) | null = null;
 
   /**
    * Factory function to create a FormGroup for a row.
@@ -194,24 +194,19 @@ export class GridLazyForm<TRow = unknown> implements OnInit, OnDestroy {
     this.#storeFormContext(grid);
 
     // Listen for cell-commit to update FormControl and sync validation
-    this.cellCommitListener = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
+    this.cellCommitUnsub = grid.on('cell-commit', (detail: { rowIndex: number; field: string; value: unknown; oldValue: unknown; rowId: string }) => {
       this.#handleCellCommit(detail);
-    };
-    grid.addEventListener('cell-commit', this.cellCommitListener);
+    });
 
     // Listen for row-commit to sync FormGroup values back to row and cleanup
-    this.rowCommitListener = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { rowIndex: number; rowId?: string };
-      this.#handleRowCommit(e, detail);
-    };
-    grid.addEventListener('row-commit', this.rowCommitListener);
+    this.rowCommitUnsub = grid.on('row-commit', (detail: { rowIndex: number; rowId?: string }, event: CustomEvent) => {
+      this.#handleRowCommit(event, detail);
+    });
 
     // Listen for rows-change to update row index mappings
-    this.rowsChangeListener = () => {
+    this.rowsChangeUnsub = grid.on('rows-change', () => {
       this.#updateRowIndexMap();
-    };
-    grid.addEventListener('rows-change', this.rowsChangeListener);
+    });
 
     // Initial row index mapping
     this.#updateRowIndexMap();
@@ -221,15 +216,9 @@ export class GridLazyForm<TRow = unknown> implements OnInit, OnDestroy {
     const grid = this.elementRef.nativeElement;
     if (!grid) return;
 
-    if (this.cellCommitListener) {
-      grid.removeEventListener('cell-commit', this.cellCommitListener);
-    }
-    if (this.rowCommitListener) {
-      grid.removeEventListener('row-commit', this.rowCommitListener);
-    }
-    if (this.rowsChangeListener) {
-      grid.removeEventListener('rows-change', this.rowsChangeListener);
-    }
+    this.cellCommitUnsub?.();
+    this.rowCommitUnsub?.();
+    this.rowsChangeUnsub?.();
 
     this.#clearFormContext(grid);
     this.formGroupCache.clear();

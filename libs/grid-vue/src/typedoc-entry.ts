@@ -18,7 +18,7 @@ export type { ToolPanelContext } from './lib/tool-panel-registry';
 
 // Vue grid adapter
 export { GridAdapter } from './lib/vue-grid-adapter';
-/** @deprecated Use `GridAdapter` instead */
+/** @deprecated Use `GridAdapter` instead. Will be removed in v2. */
 export { VueGridAdapter } from './lib/vue-grid-adapter';
 
 // Composables
@@ -35,13 +35,13 @@ export type {
   ColumnConfig,
   GridConfig,
   // Vue-specific config types - deprecated aliases
-  /** @deprecated Use `CellEditor` instead */
+  /** @deprecated Use `CellEditor` instead. Will be removed in v2. */
   VueCellEditor,
-  /** @deprecated Use `CellRenderer` instead */
+  /** @deprecated Use `CellRenderer` instead. Will be removed in v2. */
   VueCellRenderer,
-  /** @deprecated Use `ColumnConfig` instead */
+  /** @deprecated Use `ColumnConfig` instead. Will be removed in v2. */
   VueColumnConfig,
-  /** @deprecated Use `GridConfig` instead */
+  /** @deprecated Use `GridConfig` instead. Will be removed in v2. */
   VueGridConfig,
 } from './lib/vue-column-config';
 

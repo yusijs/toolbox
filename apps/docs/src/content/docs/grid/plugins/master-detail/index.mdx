@@ -8,6 +8,7 @@ import MasterDetailDefaultDemo from '@components/demos/master-detail/MasterDetai
 import MasterDetailExpandOnRowClickDemo from '@components/demos/master-detail/MasterDetailExpandOnRowClickDemo.astro';
 import MasterDetailFixedDetailHeightDemo from '@components/demos/master-detail/MasterDetailFixedDetailHeightDemo.astro';
 import ShowSource from '@components/ShowSource.astro';
+import MasterDetailEventsDemo from '@components/demos/master-detail/MasterDetailEventsDemo.astro';
 
 
 
@@ -277,6 +278,16 @@ The master-detail plugin uses these class names:
 | `.master-detail-row.tbw-expanding` | Row during expand animation |
 | `.master-detail-row.tbw-collapsing` | Row during collapse animation |
 | `.master-detail-cell` | Detail content wrapper |
+
+## Events
+
+<ShowSource>
+  <MasterDetailEventsDemo />
+</ShowSource>
+
+| Event           | Detail                                         | Description                          |
+| --------------- | ---------------------------------------------- | ------------------------------------ |
+| `detail-expand` | `{ rowIndex, row, expanded }`                  | Fired when a detail row is expanded/collapsed |
 
 ## See Also
 

@@ -245,11 +245,11 @@ The plugin emits events during the print lifecycle:
 Fired when print preparation begins:
 
 ```typescript
-grid.addEventListener('print-start', (event) => {
-  console.log('Preparing rows:', event.detail.rowCount);
-  console.log('Limit applied:', event.detail.limitApplied);
-  if (event.detail.limitApplied) {
-    console.log('Original count:', event.detail.originalRowCount);
+grid.on('print-start', ({ rowCount, limitApplied, originalRowCount }) => {
+  console.log('Preparing rows:', rowCount);
+  console.log('Limit applied:', limitApplied);
+  if (limitApplied) {
+    console.log('Original count:', originalRowCount);
   }
 });
 ```
@@ -259,9 +259,9 @@ grid.addEventListener('print-start', (event) => {
 Fired when the print dialog closes:
 
 ```typescript
-grid.addEventListener('print-complete', (event) => {
-  console.log('Dialog open for:', event.detail.duration, 'ms');
-  console.log('Rows prepared:', event.detail.rowCount);
+grid.on('print-complete', ({ duration, rowCount }) => {
+  console.log('Dialog open for:', duration, 'ms');
+  console.log('Rows prepared:', rowCount);
 });
 ```
 

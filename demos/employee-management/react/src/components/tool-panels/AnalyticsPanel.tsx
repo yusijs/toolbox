@@ -30,12 +30,12 @@ export function AnalyticsPanel({ grid }: AnalyticsPanelProps) {
       }
     };
 
-    grid.addEventListener('data-change', handleDataChange);
-    grid.addEventListener('filter-change', handleDataChange);
+    const unsubData = grid.on('data-change', handleDataChange);
+    const unsubFilter = grid.on('filter-change', handleDataChange);
 
     return () => {
-      grid.removeEventListener('data-change', handleDataChange);
-      grid.removeEventListener('filter-change', handleDataChange);
+      unsubData();
+      unsubFilter();
     };
   }, [grid]);
 

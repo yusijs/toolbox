@@ -97,8 +97,7 @@ if (container) {
     if (log) log.innerHTML = '';
   });
 
-  grid.addEventListener('filter-change', (e) => {
-    const d = e.detail;
+  grid.on('filter-change', (d) => {
     const filterCount = d.filters?.length || 0;
     const fields = d.filters?.map((f: { field: string }) => f.field).join(', ') || 'none';
     addLog('filter-change', `${filterCount} filter(s) on: ${fields}`);

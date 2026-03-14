@@ -11,6 +11,7 @@ import ClipboardCopyPasteDemo from '@components/demos/clipboard/ClipboardCopyPas
 import ClipboardCustomPasteHandlerDemo from '@components/demos/clipboard/ClipboardCustomPasteHandlerDemo.astro';
 import ClipboardSingleCellModeDemo from '@components/demos/clipboard/ClipboardSingleCellModeDemo.astro';
 import ShowSource from '@components/ShowSource.astro';
+import ClipboardEventsDemo from '@components/demos/clipboard/ClipboardEventsDemo.astro';
 
 
 
@@ -331,6 +332,17 @@ features: {
   },
 },
 ```
+
+## Events
+
+<ShowSource>
+  <ClipboardEventsDemo />
+</ShowSource>
+
+| Event   | Detail                                     | Description                   |
+| ------- | ------------------------------------------ | ----------------------------- |
+| `copy`  | `{ text, rowCount, columnCount }`          | Fired after cells are copied  |
+| `paste` | `{ rows, text, target, fields }`           | Fired after data is pasted    |
 
 ## Styling
 

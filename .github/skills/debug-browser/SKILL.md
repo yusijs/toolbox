@@ -340,8 +340,8 @@ For operations that need to wait for render cycles:
    () => {
      window.__eventLogs = [];
      const grid = document.querySelector('tbw-grid');
-     grid.addEventListener('cell-commit', (e) => {
-       window.__eventLogs.push({ type: e.type, detail: e.detail });
+     grid.on('cell-commit', (detail) => {
+       window.__eventLogs.push({ type: 'cell-commit', detail });
      });
      return { listening: true };
    };

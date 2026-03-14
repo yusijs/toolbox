@@ -37,7 +37,7 @@ grid.gridConfig = {
 };
 
 // React to selected rows
-grid.addEventListener('selection-change', () => {
+grid.on('selection-change', () => {
   const sel = grid.getPluginByName('selection');
   const rows = sel?.getSelectedRows<Employee>() ?? [];
   console.log('Selected:', rows);
@@ -172,15 +172,15 @@ grid.gridConfig = {
 };
 
 // Validate before committing
-grid.addEventListener('cell-commit', (e: CustomEvent) => {
-  const { field, value } = e.detail;
+grid.on('cell-commit', (detail, e) => {
+  const { field, value } = detail;
   if (field === 'email' && !value.includes('@')) {
     e.preventDefault(); // Reject invalid edit
   }
 });
 
 // Track dirty state
-grid.addEventListener('dirty-change', () => {
+grid.on('dirty-change', () => {
   const editing = grid.getPluginByName('editing');
   const dirtyRows = editing?.getDirtyRows() ?? [];
   saveButton.disabled = dirtyRows.length === 0;

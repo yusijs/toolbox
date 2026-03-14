@@ -188,12 +188,12 @@ describe('Employee Grid', () => {
 Track grid interactions for performance and usage analytics:
 
 ```typescript
-grid.addEventListener('sort-change', (e) => {
-  analytics.track('grid_sort', { column: e.detail.column });
+grid.on('sort-change', ({ column }) => {
+  analytics.track('grid_sort', { column });
 });
 
-grid.addEventListener('filter-change', (e) => {
-  analytics.track('grid_filter', { model: e.detail.filterModel });
+grid.on('filter-change', ({ filterModel }) => {
+  analytics.track('grid_filter', { model: filterModel });
 });
 ```
 

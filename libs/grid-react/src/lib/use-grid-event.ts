@@ -19,7 +19,7 @@ export type GridEventMap<TRow = unknown> = {
 let hasShownDeprecationWarning = false;
 
 /**
- * @deprecated Use event props directly on DataGrid instead of useGridEvent.
+ * @deprecated Use event props directly on DataGrid instead of useGridEvent. Will be removed in v2.
  *
  * ## Migration Guide
  *

@@ -80,10 +80,10 @@ import '@toolbox-web/grid/features/visibility';
             const span = document.createElement('span');
             span.style.cssText = 'font-size:13px;color:var(--sl-color-gray-3);padding:4px 8px;background:var(--sl-color-gray-6);border-radius:4px;';
             const update = () => { span.textContent = `${grid.rows.length} rows`; };
-            grid.addEventListener('data-change', update);
+            const unsub = grid.on('data-change', update);
             el.appendChild(span);
             return () => {
-              grid.removeEventListener('data-change', update);
+              unsub();
               span.remove();
             };
           },

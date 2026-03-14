@@ -41,7 +41,7 @@ export interface CellRenderer<TRow = unknown, TValue = unknown> {
 }
 
 /**
- * @deprecated Use `CellRenderer` instead.
+ * @deprecated Use `CellRenderer` instead. Will be removed in v2.
  * @see {@link CellRenderer}
  */
 export type AngularCellRenderer<TRow = unknown, TValue = unknown> = CellRenderer<TRow, TValue>;
@@ -85,7 +85,7 @@ export interface CellEditor<TRow = unknown, TValue = unknown> extends CellRender
 }
 
 /**
- * @deprecated Use `CellEditor` instead.
+ * @deprecated Use `CellEditor` instead. Will be removed in v2.
  * @see {@link CellEditor}
  */
 export type AngularCellEditor<TRow = unknown, TValue = unknown> = CellEditor<TRow, TValue>;
@@ -176,7 +176,7 @@ export interface TypeDefault<TRow = unknown> {
 }
 
 /**
- * @deprecated Use `TypeDefault` instead.
+ * @deprecated Use `TypeDefault` instead. Will be removed in v2.
  * @see {@link TypeDefault}
  */
 export type AngularTypeDefault<TRow = unknown> = TypeDefault<TRow>;
@@ -240,7 +240,7 @@ export interface ColumnConfig<TRow = unknown> extends Omit<
 }
 
 /**
- * @deprecated Use `ColumnConfig` instead.
+ * @deprecated Use `ColumnConfig` instead. Will be removed in v2.
  * @see {@link ColumnConfig}
  */
 export type AngularColumnConfig<TRow = unknown> = ColumnConfig<TRow>;
@@ -279,7 +279,7 @@ export interface GridConfig<TRow = unknown> extends Omit<
 }
 
 /**
- * @deprecated Use `GridConfig` instead.
+ * @deprecated Use `GridConfig` instead. Will be removed in v2.
  * @see {@link GridConfig}
  */
 export type AngularGridConfig<TRow = unknown> = GridConfig<TRow>;

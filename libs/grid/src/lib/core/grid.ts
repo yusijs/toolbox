@@ -214,6 +214,7 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
   // #endregion
 
   // #region Static Methods - Observed Attributes
+  /** @internal Web component lifecycle - not part of public API */
   static get observedAttributes(): string[] {
     return ['rows', 'columns', 'grid-config', 'fit-mode', 'loading'];
   }
@@ -1962,8 +1963,13 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
   on<K extends keyof DataGridEventMap<T>>(
     type: K,
     listener: (detail: DataGridEventMap<T>[K], event: CustomEvent<DataGridEventMap<T>[K]>) => void,
+  ): () => void;
+  on(type: string, listener: (detail: unknown, event: CustomEvent) => void): () => void;
+  on(
+    type: string,
+    listener: (detail: unknown, event: CustomEvent) => void,
   ): () => void {
-    const handler = ((e: CustomEvent<DataGridEventMap<T>[K]>) => {
+    const handler = ((e: CustomEvent) => {
       listener(e.detail, e);
     }) as EventListener;
     this.addEventListener(type, handler);
@@ -2740,7 +2746,7 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
    * const responses = grid.queryPlugins<boolean>({ type: 'canMoveColumn', context: column });
    * const canMove = !responses.includes(false);
    *
-   * @deprecated Use the simplified `query<T>(type, context)` method instead.
+   * @deprecated Use the simplified `query<T>(type, context)` method instead. Will be removed in v2.
    */
   queryPlugins<T>(query: PluginQuery): T[] {
     return this.#pluginManager?.queryPlugins<T>(query) ?? [];
@@ -3312,7 +3318,7 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
    *
    * @deprecated This method is a no-op. Use {@link insertRow} or {@link removeRow}
    * instead, which correctly preserve the current sort/filter view while adding
-   * or removing individual rows.
+   * or removing individual rows. Will be removed in v2.
    *
    * @group Lifecycle
    */

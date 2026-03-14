@@ -375,11 +375,7 @@ grid.updateRows(updates, 'api');
 The `cell-change` event fires whenever row data is updated via the Row Update API:
 
 ```typescript
-import type { CellChangeDetail } from '@toolbox-web/grid';
-
-grid.addEventListener('cell-change', (e: CustomEvent<CellChangeDetail>) => {
-  const { rowId, changes, source, row } = e.detail;
-
+grid.on('cell-change', ({ rowId, changes, source, row }) => {
   console.log(`Row ${rowId} updated via ${source}:`);
   console.log('Changes:', changes); // { status: 'active' }
   console.log('Full row:', row);    // Complete row object after update
@@ -713,18 +709,17 @@ The grid dispatches standard `CustomEvent`s that bubble up the DOM. All events u
   <TabItem label="Vanilla JS">
 ```typescript
 import { queryGrid } from '@toolbox-web/grid';
-import type { CellClickDetail, CellCommitDetail } from '@toolbox-web/grid';
 
 const grid = queryGrid<Employee>('#my-grid');
 
 // Type-safe event listening
-grid.addEventListener('cell-click', (e: CustomEvent<CellClickDetail<Employee>>) => {
-  console.log(e.detail.row, e.detail.field);
+grid.on('cell-click', ({ row, field }) => {
+  console.log(row, field);
 });
 
 // Cancelable events — call preventDefault() to reject the action
-grid.addEventListener('cell-commit', (e: CustomEvent<CellCommitDetail<Employee>>) => {
-  if (!isValid(e.detail.value)) {
+grid.on('cell-commit', (detail, e) => {
+  if (!isValid(detail.value)) {
     e.preventDefault(); // Rejects the edit
   }
 });

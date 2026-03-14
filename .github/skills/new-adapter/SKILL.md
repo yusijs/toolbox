@@ -349,7 +349,7 @@ The main wrapper component should:
 
 - Accept the same props as `<tbw-grid>` (`rows`, `gridConfig`, `columns`, `fitMode`)
 - Accept **feature props** (e.g., `selection`, `editing`, `filtering`) — look them up in the feature registry to create plugin instances
-- Accept **event props** (e.g., `onCellClick`, `onSelectionChange`) — forward to `addEventListener` on the grid element
+- Accept **event props** (e.g., `onCellClick`, `onSelectionChange`) — forward to `grid.on()` on the grid element (returns unsubscribe functions for cleanup)
 - Create the underlying `<tbw-grid>` element and register the adapter on it
 - Provide a context/injection mechanism so child components and composables can access the grid element (React: `Context`, Vue: `provide/inject`, Svelte: `setContext/getContext`, etc.)
 - Process `GridColumn` child components that register renderers/editors in the column registry

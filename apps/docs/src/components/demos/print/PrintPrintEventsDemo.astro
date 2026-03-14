@@ -48,19 +48,19 @@ if (container) {
   };
   grid.rows = employeeData;
 
-  grid.addEventListener('print-start', ((e: CustomEvent) => {
+  grid.on('print-start', ({ rowCount }) => {
     if (!log) return;
     const msg = document.createElement('div');
-    msg.textContent = `[print-start] Preparing ${e.detail.rowCount} rows...`;
+    msg.textContent = `[print-start] Preparing ${rowCount} rows...`;
     log.appendChild(msg);
-  }) as EventListener);
+  });
 
-  grid.addEventListener('print-complete', ((e: CustomEvent) => {
+  grid.on('print-complete', ({ duration }) => {
     if (!log) return;
     const msg = document.createElement('div');
-    msg.textContent = `[print-complete] Dialog closed after ${e.detail.duration}ms`;
+    msg.textContent = `[print-complete] Dialog closed after ${duration}ms`;
     log.appendChild(msg);
-  }) as EventListener);
+  });
 
   btn?.addEventListener('click', () => {
     const plugin = grid.getPluginByName('print');

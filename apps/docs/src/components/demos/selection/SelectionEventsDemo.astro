@@ -51,13 +51,11 @@ if (container) {
     logEl.prepend(entry);
   }
 
-  grid.addEventListener('selection-change', (e: Event) => {
-    const detail = (e as CustomEvent).detail;
+  grid.on('selection-change', (detail) => {
     addLog(`selection-change — ${detail.selectedCount ?? 0} cell(s) selected`);
   });
 
-  grid.addEventListener('row-select', (e: Event) => {
-    const detail = (e as CustomEvent).detail;
+  grid.on('row-select', (detail) => {
     addLog(`row-select — row ${detail.rowIndex}`);
   });
 

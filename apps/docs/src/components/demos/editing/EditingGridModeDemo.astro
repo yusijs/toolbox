@@ -72,11 +72,11 @@ if (container) {
     { id: 4, product: 'Gadget Y', quantity: 8, price: 19.99 },
   ];
 
-  grid.addEventListener('cell-commit', (e) => {
+  grid.on('cell-commit', ({ field, value }) => {
     const log = container.querySelector('.event-log');
     if (log) {
       const entry = document.createElement('div');
-      entry.textContent = `${e.detail.field} = ${JSON.stringify(e.detail.value)}`;
+      entry.textContent = `${field} = ${JSON.stringify(value)}`;
       log.insertBefore(entry, log.firstChild);
       while (log.children.length > 5) {
         log.removeChild(log.lastChild!);

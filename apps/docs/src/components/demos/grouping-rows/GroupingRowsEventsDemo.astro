@@ -1,0 +1,102 @@
+---
+// GroupingRowsEventsDemo.astro — Shows group-toggle events with a live log panel
+---
+<div class="grid-demo not-content" id="grouping-rows-events-demo">
+  <p style="font-size: 0.85em; color: var(--sl-color-gray-3); margin: 0 0 8px;">
+    Click group headers to expand/collapse groups.
+  </p>
+  <tbw-grid style="display: block; height: 300px;"></tbw-grid>
+  <div class="log-panel">
+    <div class="log-header">
+      <strong>Event Log:</strong>
+      <button id="clear-grouping-events-log">Clear</button>
+    </div>
+    <div class="event-log" id="grouping-events-log"></div>
+  </div>
+</div>
+
+<style>
+  #grouping-rows-events-demo .log-panel {
+    border: 1px solid var(--sl-color-gray-5);
+    padding: 12px;
+    border-radius: 4px;
+    background: var(--sl-color-gray-6);
+    overflow-y: auto;
+    max-height: 200px;
+    margin-top: 8px;
+  }
+  #grouping-rows-events-demo .log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  #grouping-rows-events-demo .log-header button {
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  #grouping-rows-events-demo .event-log {
+    font-family: monospace;
+    font-size: 11px;
+    color: var(--sl-color-gray-2);
+  }
+  #grouping-rows-events-demo .event-log > div {
+    padding: 2px 0;
+    border-bottom: 1px solid var(--sl-color-gray-5);
+  }
+  #grouping-rows-events-demo .event-log .event-type {
+    color: var(--sl-color-accent);
+  }
+</style>
+
+<script>
+import '@toolbox-web/grid';
+import { queryGrid } from '@toolbox-web/grid';
+import '@toolbox-web/grid/features/grouping-rows';
+
+const container = document.getElementById('grouping-rows-events-demo');
+if (container) {
+  const grid = queryGrid('tbw-grid', container);
+
+  grid.gridConfig = {
+    columns: [
+      { field: 'name', header: 'Name' },
+      { field: 'department', header: 'Department' },
+      { field: 'salary', header: 'Salary', type: 'number', align: 'right' },
+    ],
+    features: {
+      groupingRows: {
+        groupOn: (row: Record<string, unknown>) => [String(row['department'])],
+        defaultExpanded: true,
+      },
+    },
+  };
+
+  grid.rows = [
+    { name: 'Alice Johnson', department: 'Engineering', salary: 95000 },
+    { name: 'Bob Smith', department: 'Marketing', salary: 75000 },
+    { name: 'Carol White', department: 'Engineering', salary: 105000 },
+    { name: 'David Brown', department: 'Sales', salary: 85000 },
+    { name: 'Eve Davis', department: 'Marketing', salary: 72000 },
+    { name: 'Frank Miller', department: 'Engineering', salary: 98000 },
+  ];
+
+  const log = container.querySelector('#grouping-events-log');
+  const clearBtn = container.querySelector('#clear-grouping-events-log');
+
+  function addLog(type: string, detail: string) {
+    if (!log) return;
+    const msg = document.createElement('div');
+    msg.innerHTML = `<span class="event-type">[${type}]</span> ${detail}`;
+    log.insertBefore(msg, log.firstChild);
+    while (log.children.length > 15) log.lastChild?.remove();
+  }
+
+  clearBtn?.addEventListener('click', () => { if (log) log.innerHTML = ''; });
+
+  grid.on('group-toggle', (d) => {
+    addLog('group-toggle', `key: "${d.key}", expanded: ${d.expanded}, depth: ${d.depth}`);
+  });
+}
+</script>

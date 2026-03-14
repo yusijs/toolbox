@@ -1224,7 +1224,7 @@ export abstract class BaseGridPlugin<TConfig = unknown> implements GridPlugin {
    *   }
    * }
    * ```
-   * @deprecated Use `handleQuery` instead for new plugins.
+   * @deprecated Use `handleQuery` instead for new plugins. Will be removed in v2.
    */
   onPluginQuery?(query: PluginQuery): unknown;
 

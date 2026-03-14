@@ -112,7 +112,7 @@ describe('Row Update API', () => {
       const grid = await createGrid(rows);
 
       const changes: any[] = [];
-      grid.addEventListener('cell-change', (e: CustomEvent) => changes.push(e.detail));
+      grid.on('cell-change', (detail: any) => changes.push(detail));
 
       grid.updateRow('r1', { status: 'inactive', count: 15 });
 
@@ -133,7 +133,7 @@ describe('Row Update API', () => {
       const grid = await createGrid(rows);
 
       const changes: any[] = [];
-      grid.addEventListener('cell-change', (e: CustomEvent) => changes.push(e.detail));
+      grid.on('cell-change', (detail: any) => changes.push(detail));
 
       grid.updateRow('r1', { status: 'active' }); // Same value
 
@@ -152,7 +152,7 @@ describe('Row Update API', () => {
       const grid = await createGrid(rows);
 
       const changes: any[] = [];
-      grid.addEventListener('cell-change', (e: CustomEvent) => changes.push(e.detail));
+      grid.on('cell-change', (detail: any) => changes.push(detail));
 
       grid.updateRow('r1', { status: 'cascade-updated' }, 'cascade');
 
@@ -198,7 +198,7 @@ describe('Row Update API', () => {
       const grid = await createGrid(rows);
 
       const changes: any[] = [];
-      grid.addEventListener('cell-change', (e: CustomEvent) => changes.push(e.detail));
+      grid.on('cell-change', (detail: any) => changes.push(detail));
 
       grid.updateRows([
         { id: 'r1', changes: { status: 'shipped' } },
@@ -230,8 +230,7 @@ describe('Row Update API', () => {
       const userChanges: any[] = [];
       const cascadeChanges: any[] = [];
 
-      grid.addEventListener('cell-change', (e: CustomEvent) => {
-        const detail = e.detail;
+      grid.on('cell-change', (detail: any) => {
         if (detail.source === 'user') {
           userChanges.push(detail);
         } else if (detail.source === 'cascade') {

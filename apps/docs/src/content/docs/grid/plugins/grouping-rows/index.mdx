@@ -11,6 +11,7 @@ import GroupingRowsAccordionModeDemo from '@components/demos/grouping-rows/Group
 import GroupingRowsWithAggregatorsDemo from '@components/demos/grouping-rows/GroupingRowsWithAggregatorsDemo.astro';
 import GroupingRowsDefaultExpandedByKeyDemo from '@components/demos/grouping-rows/GroupingRowsDefaultExpandedByKeyDemo.astro';
 import ShowSource from '@components/ShowSource.astro';
+import GroupingRowsEventsDemo from '@components/demos/grouping-rows/GroupingRowsEventsDemo.astro';
 
 
 
@@ -353,6 +354,16 @@ The row grouping plugin uses these class names:
 | `.tbw-group-slide-in` | Child row slide animation |
 | `.tbw-group-fade-in` | Child row fade animation |
 | `[data-group-depth="N"]` | Group nesting level (0-4) |
+
+## Events
+
+<ShowSource>
+  <GroupingRowsEventsDemo />
+</ShowSource>
+
+| Event          | Detail                                         | Description                        |
+| -------------- | ---------------------------------------------- | ---------------------------------- |
+| `group-toggle` | `{ key, expanded, value, depth }`              | Fired when a group is expanded/collapsed |
 
 ## See Also
 

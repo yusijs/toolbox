@@ -41,9 +41,8 @@ if (container) {
         { name: 'Carol', score: 91, role: 'guest' },
       ];
 
-      grid.addEventListener('cell-commit', (e) => {
-        const detail = (e).detail;
-        console.log('Edited:', detail.field, '→', detail.newValue);
+      grid.on('cell-commit', ({ field, newValue }) => {
+        console.log('Edited:', field, '→', newValue);
       });
 }
 </script>

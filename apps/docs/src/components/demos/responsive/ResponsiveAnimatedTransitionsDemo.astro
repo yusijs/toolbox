@@ -47,8 +47,8 @@ if (container) {
     { id: 6, name: 'Frank Miller', department: 'Engineering', salary: 98000 },
   ];
 
-  grid.addEventListener('responsive-change', ((e: CustomEvent) => {
-    if (status) status.textContent = e.detail.isResponsive ? '📱 Card mode - watch the fade-in animation!' : '📊 Table mode';
-  }) as EventListener);
+  grid.on('responsive-change', ({ isResponsive }) => {
+    if (status) status.textContent = isResponsive ? '📱 Card mode - watch the fade-in animation!' : '📊 Table mode';
+  });
 }
 </script>

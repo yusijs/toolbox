@@ -744,18 +744,14 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps>(function DataGrid
     const grid = gridRef.current;
     if (!grid) return;
 
-    const handlers: Array<[string, EventListener]> = [];
+    const unsubs: Array<() => void> = [];
 
     if (onRowsChange) {
-      const handler = ((e: CustomEvent) => onRowsChange(e.detail.rows)) as EventListener;
-      grid.addEventListener('rows-change', handler);
-      handlers.push(['rows-change', handler]);
+      unsubs.push(grid.on('rows-change' as string, (detail: any) => onRowsChange(detail.rows)));
     }
 
     return () => {
-      handlers.forEach(([event, handler]) => {
-        grid.removeEventListener(event, handler);
-      });
+      unsubs.forEach((fn) => fn());
     };
   }, [onRowsChange]);
 
@@ -782,25 +778,23 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps>(function DataGrid
     const grid = gridRef.current;
     if (!grid) return;
 
-    const handlers: Array<[string, EventListener]> = [];
+    const unsubs: Array<() => void> = [];
 
     // Wire up all event props from EVENT_PROP_MAP
     for (const [propName, eventName] of Object.entries(EVENT_PROP_MAP)) {
       // Check if handler exists via key (stable), call via ref (latest)
       if (eventHandlersKey.includes(propName)) {
-        const handler = ((e: CustomEvent) => {
-          // Call via ref to always get latest handler
-          eventHandlersRef.current[propName]?.(e.detail, e);
-        }) as EventListener;
-        grid.addEventListener(eventName, handler);
-        handlers.push([eventName, handler]);
+        unsubs.push(
+          grid.on(eventName as any, (detail: any, e: CustomEvent) => {
+            // Call via ref to always get latest handler
+            eventHandlersRef.current[propName]?.(detail, e);
+          }),
+        );
       }
     }
 
     return () => {
-      handlers.forEach(([event, handler]) => {
-        grid.removeEventListener(event, handler);
-      });
+      unsubs.forEach((fn) => fn());
     };
     // Only re-subscribe when the SET of handlers changes, not their identity
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -22,28 +22,28 @@ export interface SelectionMethods<TRow = unknown> {
   /**
    * Select all rows in the grid.
    * Requires SelectionPlugin with mode: 'row'.
-   * @deprecated Use `useGridSelection()` from `@toolbox-web/grid-react/features/selection` instead.
+   * @deprecated Use `useGridSelection()` from `@toolbox-web/grid-react/features/selection` instead. Will be removed in v2.
    */
   selectAll: () => void;
 
   /**
    * Clear all selection.
    * Works with any SelectionPlugin mode.
-   * @deprecated Use `useGridSelection()` from `@toolbox-web/grid-react/features/selection` instead.
+   * @deprecated Use `useGridSelection()` from `@toolbox-web/grid-react/features/selection` instead. Will be removed in v2.
    */
   clearSelection: () => void;
 
   /**
    * Get selected row indices.
    * Returns Set of selected row indices.
-   * @deprecated Use `useGridSelection()` from `@toolbox-web/grid-react/features/selection` instead.
+   * @deprecated Use `useGridSelection()` from `@toolbox-web/grid-react/features/selection` instead. Will be removed in v2.
    */
   getSelectedIndices: () => Set<number>;
 
   /**
    * Get selected rows data.
    * Returns array of selected row objects.
-   * @deprecated Use `useGridSelection()` from `@toolbox-web/grid-react/features/selection` instead.
+   * @deprecated Use `useGridSelection()` from `@toolbox-web/grid-react/features/selection` instead. Will be removed in v2.
    */
   getSelectedRows: () => TRow[];
 }
@@ -51,7 +51,7 @@ export interface SelectionMethods<TRow = unknown> {
 /**
  * Export convenience methods returned from useGrid.
  *
- * @deprecated These methods are deprecated and will be removed in a future version.
+ * @deprecated These methods are deprecated and will be removed in v2.
  * Use `useGridExport()` from `@toolbox-web/grid-react/features/export` instead.
  *
  * @example
@@ -70,7 +70,7 @@ export interface ExportMethods {
    * Requires ExportPlugin to be loaded.
    *
    * @param filename - Optional filename (defaults to 'export.csv')
-   * @deprecated Use `useGridExport()` from `@toolbox-web/grid-react/features/export` instead.
+   * @deprecated Use `useGridExport()` from `@toolbox-web/grid-react/features/export` instead. Will be removed in v2.
    */
   exportToCsv: (filename?: string) => void;
 
@@ -79,7 +79,7 @@ export interface ExportMethods {
    * Requires ExportPlugin to be loaded.
    *
    * @param filename - Optional filename (defaults to 'export.json')
-   * @deprecated Use `useGridExport()` from `@toolbox-web/grid-react/features/export` instead.
+   * @deprecated Use `useGridExport()` from `@toolbox-web/grid-react/features/export` instead. Will be removed in v2.
    */
   exportToJson: (filename?: string) => void;
 }

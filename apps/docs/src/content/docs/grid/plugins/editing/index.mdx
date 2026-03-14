@@ -55,8 +55,8 @@ grid.gridConfig = {
 };
 
 // Listen for commits
-grid.addEventListener('cell-commit', (e) => {
-  console.log('Cell edited:', e.detail);
+grid.on('cell-commit', (detail) => {
+  console.log('Cell edited:', detail);
 });
 ```
   </TabItem>
@@ -180,8 +180,8 @@ grid.updateRows([
 ]);
 
 // Listen for programmatic updates
-grid.addEventListener('cell-change', (e) => {
-  console.log('Row updated:', e.detail.rowId, e.detail.changes);
+grid.on('cell-change', ({ rowId, changes }) => {
+  console.log('Row updated:', rowId, changes);
 });
 ```
 
@@ -1004,10 +1004,10 @@ recalculates `total`:
 <Tabs syncKey="framework">
   <TabItem label="Vanilla JS">
 ```ts
-grid.addEventListener('cell-commit', (e) => {
-  if (e.detail.field === 'quantity') {
-    const price = e.detail.row.price;
-    e.detail.updateRow({ total: price * e.detail.value });
+grid.on('cell-commit', ({ field, row, value, updateRow }) => {
+  if (field === 'quantity') {
+    const price = row.price;
+    updateRow({ total: price * value });
   }
 });
 ```
@@ -1238,8 +1238,7 @@ Access via `grid.getPluginByName('editing')`:
 The `dirty-change` event fires whenever a row's dirty state changes:
 
 ```ts
-grid.addEventListener('dirty-change', (e: CustomEvent<DirtyChangeDetail>) => {
-  const { rowId, row, original, type } = e.detail;
+grid.on('dirty-change', ({ rowId, row, original, type }) => {
   // type: 'modified' | 'new' | 'reverted' | 'pristine'
   console.log(`Row ${rowId}: ${type}`);
 });

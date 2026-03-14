@@ -88,28 +88,24 @@ if (container) {
     if (log) log.innerHTML = '';
   });
 
-  grid.addEventListener('edit-open', (e) => {
-    const d = e.detail;
+  grid.on('edit-open', (d) => {
     addLog('edit-open', `row ${d.rowIndex} (${d.rowId})`);
   });
 
-  grid.addEventListener('edit-close', (e) => {
-    const d = e.detail;
+  grid.on('edit-close', (d) => {
     addLog('edit-close', `row ${d.rowIndex} (${d.rowId}), reverted: ${d.reverted}`);
   });
 
-  grid.addEventListener('cell-commit', (e) => {
-    const d = e.detail;
+  grid.on('cell-commit', (d) => {
     addLog('cell-commit', `field="${d.field}", "${d.oldValue}" → "${d.value}"`);
   });
 
-  grid.addEventListener('row-commit', (e) => {
-    const d = e.detail;
+  grid.on('row-commit', (d) => {
     addLog('row-commit', `row ${d.rowIndex} (${d.rowId}), changed: ${d.changed}`);
   });
 
-  grid.addEventListener('changed-rows-reset', (e) => {
-    addLog('changed-rows-reset', `${e.detail.rows?.length || 0} rows cleared`);
+  grid.on('changed-rows-reset', (d) => {
+    addLog('changed-rows-reset', `${d.rows?.length || 0} rows cleared`);
   });
 }
 </script>

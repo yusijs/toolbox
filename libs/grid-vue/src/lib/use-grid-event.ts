@@ -47,12 +47,12 @@ export function useGridEvent<K extends keyof GridEventMap>(
   let cleanup: (() => void) | null = null;
 
   onMounted(() => {
-    const element = grid.value as unknown as HTMLElement | null;
+    const element = grid.value as unknown as DataGridElement | null;
     if (!element) return;
 
-    const eventHandler = handler as EventListener;
-    element.addEventListener(eventName, eventHandler);
-    cleanup = () => element.removeEventListener(eventName, eventHandler);
+    cleanup = element.on(eventName as string, (_detail: unknown, event: CustomEvent) =>
+      handler(event as CustomEvent<GridEventMap[K]>),
+    );
   });
 
   onBeforeUnmount(() => {

@@ -580,8 +580,8 @@ via `localStorage` or a server:
 
 ```ts
 // Save full state including filters
-grid.addEventListener('column-state-change', (e) => {
-  localStorage.setItem('grid-state', JSON.stringify(e.detail));
+grid.on('column-state-change', (state) => {
+  localStorage.setItem('grid-state', JSON.stringify(state));
 });
 
 // Restore state (filters are re-applied automatically)

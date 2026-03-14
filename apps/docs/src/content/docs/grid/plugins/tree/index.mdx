@@ -6,6 +6,7 @@ description: "Display hierarchical data as an expandable tree."
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import TreeDefaultDemo from '@components/demos/tree/TreeDefaultDemo.astro';
 import ShowSource from '@components/ShowSource.astro';
+import TreeEventsDemo from '@components/demos/tree/TreeEventsDemo.astro';
 
 
 
@@ -190,13 +191,16 @@ const row = plugin.getRowByKey(key);     // Find a row by its key
 
 ## Events
 
+<ShowSource>
+  <TreeEventsDemo />
+</ShowSource>
+
 ### tree-expand
 
 Fired when a node is expanded or collapsed (via click or keyboard):
 
 ```ts
-grid.addEventListener('tree-expand', (e) => {
-  const { key, row, expanded, depth } = e.detail;
+grid.on('tree-expand', ({ key, row, expanded, depth }) => {
   console.log(`${expanded ? 'Expanded' : 'Collapsed'} node ${key} at depth ${depth}`);
 });
 ```
@@ -208,8 +212,7 @@ See [`TreeExpandDetail`](./Interfaces/TreeExpandDetail/) for the full event payl
 Fired when the overall expansion state changes (via `toggle()`, `expandAll()`, or `collapseAll()`):
 
 ```ts
-grid.addEventListener('tree-state-change', (e) => {
-  const { expandedKeys } = e.detail;
+grid.on('tree-state-change', ({ expandedKeys }) => {
   console.log(`${expandedKeys.length} nodes expanded`);
 });
 ```

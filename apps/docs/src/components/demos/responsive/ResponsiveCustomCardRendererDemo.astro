@@ -125,11 +125,10 @@ if (container) {
     { id: 6, name: 'Frank Miller', department: 'Engineering', salary: 98000, email: 'frank@example.com', startDate: '2020-08-20' },
   ];
 
-  grid.addEventListener('responsive-change', ((e: CustomEvent) => {
+  grid.on('responsive-change', ({ isResponsive, width }) => {
     if (!status) return;
-    const { isResponsive, width } = e.detail;
     status.textContent = `Mode: ${isResponsive ? '📱 Custom Cards' : '📊 Table'} | Width: ${Math.round(width)}px`;
-  }) as EventListener);
+  });
 
   requestAnimationFrame(() => {
     if (!status) return;

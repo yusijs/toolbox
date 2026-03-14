@@ -15,7 +15,7 @@
 
 <script>
   import '@toolbox-web/grid';
-  import type { ColumnConfig } from '@toolbox-web/grid';
+import type { ColumnConfig } from '@toolbox-web/grid';
 
   const container = document.querySelector('[data-demo-id="core-events"]')?.closest('.grid-demo');
   if (container) {
@@ -58,9 +58,9 @@
       logEl.scrollTop = logEl.scrollHeight;
     }
 
-    const events = ['cell-click', 'row-click', 'cell-activate', 'sort-change', 'column-resize', 'column-state-change'];
+    const events = ['cell-click', 'row-click', 'cell-activate', 'sort-change', 'column-resize', 'column-state-change', 'data-change'];
     for (const name of events) {
-      grid.addEventListener(name, ((e: CustomEvent) => logEvent(name, e.detail)) as EventListener);
+      grid.on(name, (detail: unknown) => logEvent(name, detail));
     }
 
     container.querySelector('[data-clear-log]')!.addEventListener('click', () => {

@@ -68,10 +68,9 @@ if (container) {
     rebuild(v.breakpoint as number, v.hideHeader as boolean, v.animate as boolean, v.hiddenColumns as string[], v.debounceMs as number);
   }) as EventListener);
 
-  grid.addEventListener('responsive-change', ((e: any) => {
-    const { isResponsive, width, breakpoint } = e.detail;
+  grid.on('responsive-change', ({ isResponsive, width, breakpoint }) => {
     status.textContent = `Mode: ${isResponsive ? '📱 Card' : '📊 Table'} | Width: ${Math.round(width)}px | Breakpoint: ${breakpoint}px`;
-  }) as EventListener);
+  });
 
   requestAnimationFrame(() => {
     const width = grid.clientWidth;

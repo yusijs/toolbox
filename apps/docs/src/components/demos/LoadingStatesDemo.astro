@@ -77,9 +77,8 @@ import type { ColumnConfig, GridConfig } from '@toolbox-web/grid';
     }) as EventListener);
 
     // Row click → row loading
-    grid.addEventListener('row-click', (e: Event) => {
+    grid.on('row-click', ({ row }) => {
       if (currentMode !== 'row') return;
-      const { row } = (e as CustomEvent).detail;
       const timeout = currentAutoReset ? 1000 : null;
       if (timeout) {
         grid.setRowLoading(row.id, true);
@@ -90,9 +89,8 @@ import type { ColumnConfig, GridConfig } from '@toolbox-web/grid';
     });
 
     // Cell click → cell loading
-    grid.addEventListener('cell-click', (e: Event) => {
+    grid.on('cell-click', ({ row, column }) => {
       if (currentMode !== 'cell') return;
-      const { row, column } = (e as CustomEvent).detail;
       const timeout = currentAutoReset ? 1000 : null;
       if (timeout) {
         grid.setCellLoading(row.id, column.field, true);

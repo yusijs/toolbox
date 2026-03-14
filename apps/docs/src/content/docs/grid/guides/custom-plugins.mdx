@@ -630,7 +630,7 @@ For events that external code should listen to, use `emit()`:
 this.emit('copy', { text: copiedText, rowCount: 5 });
 
 // External code:
-grid.addEventListener('copy', (e) => console.log(e.detail));
+grid.on('copy', (detail) => console.log(detail));
 ```
 
 ## TypeScript Generics

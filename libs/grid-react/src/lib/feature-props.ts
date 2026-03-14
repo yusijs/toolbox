@@ -159,7 +159,7 @@ export interface FeatureProps<TRow = unknown> {
   multiSort?: boolean | 'single' | 'multi' | MultiSortConfig;
 
   /**
-   * @deprecated Use `multiSort` instead. Will be removed in a future version.
+   * @deprecated Use `multiSort` instead. Will be removed in v2.
    *
    * Enable column sorting. This is an alias for `multiSort`.
    *
@@ -197,7 +197,7 @@ export interface FeatureProps<TRow = unknown> {
   reorderColumns?: boolean | ReorderConfig;
 
   /**
-   * @deprecated Use `reorderColumns` instead. Will be removed in v2.0.
+   * @deprecated Use `reorderColumns` instead. Will be removed in v2.
    */
   reorder?: boolean | ReorderConfig;
 

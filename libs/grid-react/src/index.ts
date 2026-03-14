@@ -47,7 +47,7 @@ export {
   useTypeDefault,
   type GridTypeProviderProps,
   // Deprecated - use TypeDefault instead
-  /** @deprecated Use `TypeDefault` instead */
+  /** @deprecated Use `TypeDefault` instead. Will be removed in v2. */
   type ReactTypeDefault,
   // Primary export
   type TypeDefault,
@@ -65,10 +65,10 @@ export type {
   // Primary exports - use these
   ColumnConfig,
   GridConfig,
-  /** @deprecated Use `ColumnConfig` instead */
+  /** @deprecated Use `ColumnConfig` instead. Will be removed in v2. */
   ReactColumnConfig,
   // Deprecated names - use GridConfig/ColumnConfig instead
-  /** @deprecated Use `GridConfig` instead */
+  /** @deprecated Use `GridConfig` instead. Will be removed in v2. */
   ReactGridConfig,
 } from './lib/react-column-config';
 
@@ -78,7 +78,7 @@ export { useGridEvent } from './lib/use-grid-event';
 
 // React adapter (for advanced manual registration - most users don't need this)
 export { GridAdapter } from './lib/react-grid-adapter';
-/** @deprecated Use `GridAdapter` instead */
+/** @deprecated Use `GridAdapter` instead. Will be removed in v2. */
 export { ReactGridAdapter } from './lib/react-grid-adapter';
 
 // Context types

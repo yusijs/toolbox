@@ -140,8 +140,7 @@ function buildSelectionEvent(
  *   plugins: [new SelectionPlugin({ mode: 'range' })],
  * };
  *
- * grid.addEventListener('selection-change', (e) => {
- *   const { mode, ranges } = e.detail;
+ * grid.on('selection-change', ({ mode, ranges }) => {
  *   console.log(`Selected ${ranges.length} ranges in ${mode} mode`);
  * });
  * ```

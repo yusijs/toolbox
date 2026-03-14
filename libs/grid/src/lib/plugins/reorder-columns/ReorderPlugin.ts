@@ -64,15 +64,15 @@ import type { ColumnMoveDetail, ReorderConfig } from './types';
  * };
  *
  * // Persist column order
- * grid.addEventListener('column-move', (e) => {
- *   localStorage.setItem('columnOrder', JSON.stringify(e.detail.columnOrder));
+ * grid.on('column-move', ({ columnOrder }) => {
+ *   localStorage.setItem('columnOrder', JSON.stringify(columnOrder));
  * });
  * ```
  *
  * @example Prevent Moves That Break Group Boundaries
  * ```ts
- * grid.addEventListener('column-move', (e) => {
- *   if (!isValidMoveWithinGroup(e.detail.field, e.detail.fromIndex, e.detail.toIndex)) {
+ * grid.on('column-move', (detail, e) => {
+ *   if (!isValidMoveWithinGroup(detail.field, detail.fromIndex, detail.toIndex)) {
  *     e.preventDefault(); // Column snaps back to original position
  *   }
  * });

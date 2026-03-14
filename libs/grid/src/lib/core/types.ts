@@ -25,7 +25,7 @@ export type RowPositionEntry = RowPosition;
  * // Query existing grid
  * const grid = document.querySelector('tbw-grid') as DataGridElement<Employee>;
  * grid.rows = employees;
- * grid.addEventListener('cell-click', (e) => console.log(e.detail));
+ * grid.on('cell-click', (detail) => console.log(detail));
  *
  * // Create grid programmatically
  * import { createGrid } from '@toolbox-web/grid';
@@ -1075,9 +1075,9 @@ export interface ColumnEditorContext<TRow = any, TValue = any> {
    * @example
    * ```typescript
    * // In a cell-commit listener:
-   * grid.addEventListener('cell-commit', (e) => {
-   *   if (e.detail.field === 'quantity') {
-   *     e.detail.updateRow({ total: e.detail.row.price * e.detail.value });
+   * grid.on('cell-commit', (detail) => {
+   *   if (detail.field === 'quantity') {
+   *     detail.updateRow({ total: detail.row.price * detail.value });
    *   }
    * });
    * ```
@@ -2515,14 +2515,14 @@ export interface DataChangeDetail {
  *
  * @example
  * ```typescript
- * grid.addEventListener('cell-change', (e) => {
- *   const { source, field, newValue } = e.detail;
+ * grid.on('cell-change', (detail) => {
+ *   const { source, field, newValue } = detail;
  *
  *   // Only cascade updates for user edits
  *   if (source === 'user' && field === 'price') {
  *     // Update calculated field (marked as 'cascade')
- *     grid.updateRow(e.detail.rowId, {
- *       total: newValue * e.detail.row.quantity,
+ *     grid.updateRow(detail.rowId, {
+ *       total: newValue * detail.row.quantity,
  *     });
  *   }
  *
@@ -3034,11 +3034,12 @@ export interface ToolPanelDefinition {
  *     container.appendChild(span);
  *
  *     // Update on data changes
- *     const update = () => { span.textContent = `${grid.rows.length} rows`; };
- *     grid.addEventListener('data-change', update);
+ *     const unsub = grid.on('data-change', () => {
+ *       span.textContent = `${grid.rows.length} rows`;
+ *     });
  *
  *     return () => {
- *       grid.removeEventListener('data-change', update);
+ *       unsub();
  *     };
  *   },
  * });
@@ -3329,7 +3330,7 @@ export interface CellActivateDetail<TRow = unknown> {
 
 /**
  * @deprecated Use `CellActivateDetail` instead. Will be removed in next major version.
- * Kept for backwards compatibility.
+ * Kept for backwards compatibility. Will be removed in v2.
  *
  * @category Events
  */
@@ -3623,7 +3624,7 @@ export interface DataGridEventMap<TRow = unknown> {
   'column-resize': ColumnResizeDetail;
 
   /**
-   * @deprecated Use `cell-activate` instead. Will be removed in the next major version.
+   * @deprecated Use `cell-activate` instead. Will be removed in v2.
    * @see {@link ActivateCellDetail}
    * @group Core Events
    */

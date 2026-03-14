@@ -280,8 +280,8 @@ describe('PrintPlugin', () => {
       });
 
       let eventDetail: any = null;
-      grid.addEventListener('print-start', (e: Event) => {
-        eventDetail = (e as CustomEvent).detail;
+      grid.on('print-start', (detail) => {
+        eventDetail = detail;
       });
 
       const plugin = grid.getPluginByName('print');
@@ -313,12 +313,12 @@ describe('PrintPlugin', () => {
       const plugin = grid.getPluginByName('print');
 
       const startHandler = vi.fn();
-      grid.addEventListener('print-start', startHandler);
+      grid.on('print-start', startHandler);
 
       await plugin.print();
 
       expect(startHandler).toHaveBeenCalled();
-      const detail = startHandler.mock.calls[0][0].detail;
+      const detail = startHandler.mock.calls[0][0];
       expect(detail.rowCount).toBe(3);
       expect(detail.limitApplied).toBe(false);
     });
@@ -341,12 +341,12 @@ describe('PrintPlugin', () => {
       const plugin = grid.getPluginByName('print');
 
       const completeHandler = vi.fn();
-      grid.addEventListener('print-complete', completeHandler);
+      grid.on('print-complete', completeHandler);
 
       await plugin.print();
 
       expect(completeHandler).toHaveBeenCalled();
-      const detail = completeHandler.mock.calls[0][0].detail;
+      const detail = completeHandler.mock.calls[0][0];
       expect(detail.success).toBe(true);
       expect(detail.rowCount).toBe(3);
     });

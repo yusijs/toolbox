@@ -1,0 +1,101 @@
+---
+// MasterDetailEventsDemo.astro — Shows detail-expand events with a live log panel
+---
+<div class="grid-demo not-content" id="master-detail-events-demo">
+  <p style="font-size: 0.85em; color: var(--sl-color-gray-3); margin: 0 0 8px;">
+    Click the expand arrow to open/close row details.
+  </p>
+  <tbw-grid style="display: block; height: 340px;"></tbw-grid>
+  <div class="log-panel">
+    <div class="log-header">
+      <strong>Event Log:</strong>
+      <button id="clear-master-detail-events-log">Clear</button>
+    </div>
+    <div class="event-log" id="master-detail-events-log"></div>
+  </div>
+</div>
+
+<style>
+  #master-detail-events-demo .log-panel {
+    border: 1px solid var(--sl-color-gray-5);
+    padding: 12px;
+    border-radius: 4px;
+    background: var(--sl-color-gray-6);
+    overflow-y: auto;
+    max-height: 200px;
+    margin-top: 8px;
+  }
+  #master-detail-events-demo .log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  #master-detail-events-demo .log-header button {
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  #master-detail-events-demo .event-log {
+    font-family: monospace;
+    font-size: 11px;
+    color: var(--sl-color-gray-2);
+  }
+  #master-detail-events-demo .event-log > div {
+    padding: 2px 0;
+    border-bottom: 1px solid var(--sl-color-gray-5);
+  }
+  #master-detail-events-demo .event-log .event-type {
+    color: var(--sl-color-accent);
+  }
+</style>
+
+<script>
+import '@toolbox-web/grid';
+import { queryGrid } from '@toolbox-web/grid';
+import '@toolbox-web/grid/features/master-detail';
+
+const container = document.getElementById('master-detail-events-demo');
+if (container) {
+  const grid = queryGrid('tbw-grid', container);
+
+  grid.gridConfig = {
+    columns: [
+      { field: 'name', header: 'Name' },
+      { field: 'department', header: 'Department' },
+      { field: 'salary', header: 'Salary', type: 'number', align: 'right' },
+    ],
+    features: {
+      masterDetail: {
+        detailRenderer: (row: Record<string, unknown>) =>
+          `<div style="padding: 12px;"><strong>${row['name']}</strong> — ${row['department']}, $${Number(row['salary']).toLocaleString()}</div>`,
+      },
+    },
+  };
+
+  grid.rows = [
+    { name: 'Alice Johnson', department: 'Engineering', salary: 95000 },
+    { name: 'Bob Smith', department: 'Marketing', salary: 75000 },
+    { name: 'Carol White', department: 'Sales', salary: 68000 },
+    { name: 'David Brown', department: 'Engineering', salary: 92000 },
+    { name: 'Eve Davis', department: 'HR', salary: 65000 },
+  ];
+
+  const log = container.querySelector('#master-detail-events-log');
+  const clearBtn = container.querySelector('#clear-master-detail-events-log');
+
+  function addLog(type: string, detail: string) {
+    if (!log) return;
+    const msg = document.createElement('div');
+    msg.innerHTML = `<span class="event-type">[${type}]</span> ${detail}`;
+    log.insertBefore(msg, log.firstChild);
+    while (log.children.length > 15) log.lastChild?.remove();
+  }
+
+  clearBtn?.addEventListener('click', () => { if (log) log.innerHTML = ''; });
+
+  grid.on('detail-expand', (d) => {
+    addLog('detail-expand', `row ${d.rowIndex}, name: "${(d.row as Record<string, unknown>)['name']}", expanded: ${d.expanded}`);
+  });
+}
+</script>
