@@ -8,7 +8,7 @@
 import type { PluginManifest } from '../../core/plugin/base-plugin';
 import { BaseGridPlugin } from '../../core/plugin/base-plugin';
 import contextMenuStyles from './context-menu.css?inline';
-import { buildMenuItems, collapseSeparators, createMenuElement, positionMenu } from './menu';
+import { buildMenuItems, collapseSeparators, createMenuElement, focusFirstMenuItem, positionMenu, setupMenuKeyboard } from './menu';
 import type { ContextMenuConfig, ContextMenuItem, ContextMenuParams, HeaderContextMenuItem } from './types';
 
 /** Query type for collecting context menu items from plugins */
@@ -431,6 +431,73 @@ export class ContextMenuPlugin extends BaseGridPlugin<ContextMenuConfig> {
 
   // #region Hooks
 
+  /**
+   * Shared logic to build menu items, create the menu element, and show it.
+   * Used by both the contextmenu mouse handler and keyboard triggers.
+   *
+   * @param params - Context menu parameters
+   * @param x - Viewport X coordinate
+   * @param y - Viewport Y coordinate
+   * @param focusFirst - Whether to focus the first menu item (keyboard-triggered)
+   */
+  private openMenuAt(params: ContextMenuParams, x: number, y: number, focusFirst = false): void {
+    this.params = params;
+    this.position = { x, y };
+
+    // Collect plugin-contributed items via the query system
+    const pluginItems = this.collectPluginItems(params);
+
+    // Build configured items
+    let items = buildMenuItems(this.config.items ?? defaultItems, params);
+
+    // Merge plugin items with configured items
+    if (pluginItems.length > 0) {
+      const converted = this.convertPluginItems(pluginItems);
+      if (items.length > 0 && converted.length > 0) {
+        items = [...items, { id: '__plugin-sep', name: '', separator: true }, ...converted];
+      } else {
+        items = [...items, ...converted];
+      }
+    }
+
+    // Collapse consecutive/leading/trailing separators
+    items = collapseSeparators(items);
+
+    if (!items.length) return;
+
+    // Close any open context menu (including from other grids)
+    document.querySelectorAll('.tbw-context-menu').forEach((m) => m.remove());
+    this.menuElement = null;
+
+    this.menuElement = createMenuElement(
+      items,
+      params,
+      (item) => {
+        if (item.action) {
+          item.action(params);
+        }
+        this.menuElement?.remove();
+        this.menuElement = null;
+        this.isOpen = false;
+      },
+      this.gridIcons.submenuArrow,
+    );
+
+    // Attach keyboard navigation (arrow keys, Enter, Escape)
+    setupMenuKeyboard(this.menuElement, () => this.hideMenu());
+
+    document.body.appendChild(this.menuElement);
+    this.copyGridStyles(this.menuElement);
+    positionMenu(this.menuElement, x, y);
+    this.isOpen = true;
+
+    if (focusFirst) {
+      focusFirstMenuItem(this.menuElement);
+    }
+
+    this.emit('context-menu-open', { params, items });
+  }
+
   /** @internal */
   override afterRender(): void {
     const gridEl = this.gridElement;
@@ -496,56 +563,60 @@ export class ContextMenuPlugin extends BaseGridPlugin<ContextMenuConfig> {
         return;
       }
 
-      this.params = params;
-      this.position = { x: event.clientX, y: event.clientY };
-
-      // Collect plugin-contributed items via the query system
-      const pluginItems = this.collectPluginItems(params);
-
-      // Build configured items
-      let items = buildMenuItems(this.config.items ?? defaultItems, params);
-
-      // Merge plugin items with configured items
-      if (pluginItems.length > 0) {
-        const converted = this.convertPluginItems(pluginItems);
-        if (items.length > 0 && converted.length > 0) {
-          // Add separator between configured and plugin items
-          items = [...items, { id: '__plugin-sep', name: '', separator: true }, ...converted];
-        } else {
-          items = [...items, ...converted];
-        }
-      }
-
-      // Collapse consecutive/leading/trailing separators
-      items = collapseSeparators(items);
-
-      if (!items.length) return;
-
-      // Close any open context menu (including from other grids)
-      document.querySelectorAll('.tbw-context-menu').forEach((m) => m.remove());
-      this.menuElement = null;
-
-      this.menuElement = createMenuElement(
-        items,
-        params,
-        (item) => {
-          if (item.action) {
-            item.action(params);
-          }
-          this.menuElement?.remove();
-          this.menuElement = null;
-          this.isOpen = false;
-        },
-        this.gridIcons.submenuArrow,
-      );
-
-      document.body.appendChild(this.menuElement);
-      this.copyGridStyles(this.menuElement);
-      positionMenu(this.menuElement, event.clientX, event.clientY);
-      this.isOpen = true;
-
-      this.emit('context-menu-open', { params, items });
+      this.openMenuAt(params, event.clientX, event.clientY);
     });
+  }
+
+  /**
+   * Handle keyboard shortcuts to open the context menu.
+   * Shift+F10 and the dedicated ContextMenu key open the menu at the focused cell.
+   * @internal
+   */
+  override onKeyDown(event: KeyboardEvent): boolean | void {
+    // Shift+F10 or the dedicated ContextMenu/Application key
+    const isShiftF10 = event.key === 'F10' && event.shiftKey;
+    const isContextMenuKey = event.key === 'ContextMenu';
+
+    if (!isShiftF10 && !isContextMenuKey) return;
+
+    // Prevent the browser's native context menu from appearing
+    event.preventDefault();
+
+    const grid = this.grid;
+    if (!grid) return;
+
+    const rowIndex = grid._focusRow;
+    const colIndex = grid._focusCol;
+    const column = this.visibleColumns[colIndex];
+    const row = this.rows[rowIndex];
+
+    // Find the focused cell element to position the menu near it
+    const gridEl = this.gridElement;
+    const cellEl = gridEl?.querySelector<HTMLElement>(`[data-row="${rowIndex}"][data-col="${colIndex}"]`);
+    let x = 0;
+    let y = 0;
+    if (cellEl) {
+      const rect = cellEl.getBoundingClientRect();
+      x = rect.left + rect.width / 2;
+      y = rect.bottom;
+    }
+
+    const selectedRows = this.syncSelectionOnContextMenu(rowIndex);
+
+    const params: ContextMenuParams = {
+      row,
+      rowIndex,
+      column,
+      columnIndex: colIndex,
+      field: column?.field ?? '',
+      value: row?.[column?.field as keyof typeof row] ?? null,
+      isHeader: false,
+      event: event as unknown as MouseEvent,
+      selectedRows,
+    };
+
+    this.openMenuAt(params, x, y, true);
+    return true;
   }
   // #endregion
 
@@ -570,41 +641,7 @@ export class ContextMenuPlugin extends BaseGridPlugin<ContextMenuConfig> {
       selectedRows: params.selectedRows ?? [],
     };
 
-    const pluginItems = this.collectPluginItems(fullParams);
-    let items = buildMenuItems(this.config.items ?? defaultItems, fullParams);
-
-    if (pluginItems.length > 0) {
-      const converted = this.convertPluginItems(pluginItems);
-      if (items.length > 0 && converted.length > 0) {
-        items = [...items, { id: '__plugin-sep', name: '', separator: true }, ...converted];
-      } else {
-        items = [...items, ...converted];
-      }
-    }
-
-    // Collapse consecutive/leading/trailing separators
-    items = collapseSeparators(items);
-
-    // Close any open context menu (including from other grids)
-    document.querySelectorAll('.tbw-context-menu').forEach((m) => m.remove());
-    this.menuElement = null;
-
-    this.menuElement = createMenuElement(
-      items,
-      fullParams,
-      (item) => {
-        if (item.action) item.action(fullParams);
-        this.menuElement?.remove();
-        this.menuElement = null;
-        this.isOpen = false;
-      },
-      this.gridIcons.submenuArrow,
-    );
-
-    document.body.appendChild(this.menuElement);
-    this.copyGridStyles(this.menuElement);
-    positionMenu(this.menuElement, x, y);
-    this.isOpen = true;
+    this.openMenuAt(fullParams, x, y);
   }
 
   /**

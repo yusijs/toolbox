@@ -99,6 +99,7 @@ export function createMenuElement(
     if (item.cssClass) menuItem.classList.add(item.cssClass);
     menuItem.setAttribute('role', 'menuitem');
     menuItem.setAttribute('data-id', item.id);
+    menuItem.setAttribute('tabindex', '-1');
 
     const disabled = isItemDisabled(item, params);
     if (disabled) {
@@ -230,4 +231,59 @@ export function positionMenu(menu: HTMLElement, x: number, y: number): void {
   menu.style.left = `${left}px`;
   menu.style.top = `${top}px`;
   menu.style.visibility = 'visible';
+}
+
+/**
+ * Attach keyboard navigation to a context menu element.
+ * Handles ArrowUp/Down to move between items, Enter to activate, Escape to close.
+ *
+ * @param menu - The menu element (must have role="menu" children with role="menuitem")
+ * @param onClose - Callback to run when the menu is closed via keyboard
+ */
+export function setupMenuKeyboard(menu: HTMLElement, onClose: () => void): void {
+  menu.addEventListener('keydown', (e: KeyboardEvent) => {
+    const items = Array.from(menu.querySelectorAll<HTMLElement>('[role="menuitem"]:not(.disabled)'));
+    if (!items.length) return;
+
+    const current = document.activeElement as HTMLElement;
+    const idx = items.indexOf(current);
+
+    switch (e.key) {
+      case 'ArrowDown': {
+        e.preventDefault();
+        const next = idx < items.length - 1 ? idx + 1 : 0;
+        items[next].focus();
+        break;
+      }
+      case 'ArrowUp': {
+        e.preventDefault();
+        const prev = idx > 0 ? idx - 1 : items.length - 1;
+        items[prev].focus();
+        break;
+      }
+      case 'Enter':
+      case ' ': {
+        e.preventDefault();
+        if (current && items.includes(current)) {
+          current.click();
+        }
+        break;
+      }
+      case 'Escape': {
+        e.preventDefault();
+        onClose();
+        break;
+      }
+    }
+  });
+}
+
+/**
+ * Focus the first non-disabled menu item.
+ *
+ * @param menu - The menu element
+ */
+export function focusFirstMenuItem(menu: HTMLElement): void {
+  const first = menu.querySelector<HTMLElement>('[role="menuitem"]:not(.disabled)');
+  first?.focus();
 }

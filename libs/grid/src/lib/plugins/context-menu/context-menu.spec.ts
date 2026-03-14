@@ -1,6 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ContextMenuPlugin } from './ContextMenuPlugin';
-import { buildMenuItems, collapseSeparators, createMenuElement, isItemDisabled, positionMenu } from './menu';
+import {
+  buildMenuItems,
+  collapseSeparators,
+  createMenuElement,
+  focusFirstMenuItem,
+  isItemDisabled,
+  positionMenu,
+  setupMenuKeyboard,
+} from './menu';
 import type { ContextMenuItem, ContextMenuParams } from './types';
 
 /**
@@ -1201,4 +1209,437 @@ describe('contextMenu', () => {
       plugin.detach();
     });
   });
+
+  describe('keyboard navigation', () => {
+    describe('setupMenuKeyboard', () => {
+      let menu: HTMLElement;
+      let onClose: ReturnType<typeof vi.fn>;
+
+      beforeEach(() => {
+        const items: ContextMenuItem[] = [
+          { id: 'item1', name: 'Item 1', action: vi.fn() },
+          { id: 'item2', name: 'Item 2', action: vi.fn() },
+          { id: 'item3', name: 'Item 3', action: vi.fn(), disabled: true },
+          { id: 'item4', name: 'Item 4', action: vi.fn() },
+        ];
+        const params = createMockParams();
+        onClose = vi.fn();
+        menu = createMenuElement(items, params, vi.fn());
+        document.body.appendChild(menu);
+        setupMenuKeyboard(menu, onClose);
+      });
+
+      afterEach(() => {
+        menu.remove();
+      });
+
+      it('should move focus down with ArrowDown', () => {
+        const items = menu.querySelectorAll<HTMLElement>('[role="menuitem"]:not(.disabled)');
+        items[0].focus();
+
+        menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+        expect(document.activeElement).toBe(items[1]);
+      });
+
+      it('should wrap focus from last to first with ArrowDown', () => {
+        const items = menu.querySelectorAll<HTMLElement>('[role="menuitem"]:not(.disabled)');
+        // Focus the last non-disabled item
+        items[items.length - 1].focus();
+
+        menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+        expect(document.activeElement).toBe(items[0]);
+      });
+
+      it('should move focus up with ArrowUp', () => {
+        const items = menu.querySelectorAll<HTMLElement>('[role="menuitem"]:not(.disabled)');
+        items[1].focus();
+
+        menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+        expect(document.activeElement).toBe(items[0]);
+      });
+
+      it('should wrap focus from first to last with ArrowUp', () => {
+        const items = menu.querySelectorAll<HTMLElement>('[role="menuitem"]:not(.disabled)');
+        items[0].focus();
+
+        menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+        expect(document.activeElement).toBe(items[items.length - 1]);
+      });
+
+      it('should activate item with Enter', () => {
+        const items = menu.querySelectorAll<HTMLElement>('[role="menuitem"]:not(.disabled)');
+        const clickSpy = vi.spyOn(items[0], 'click');
+        items[0].focus();
+
+        menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        expect(clickSpy).toHaveBeenCalled();
+      });
+
+      it('should activate item with Space', () => {
+        const items = menu.querySelectorAll<HTMLElement>('[role="menuitem"]:not(.disabled)');
+        const clickSpy = vi.spyOn(items[0], 'click');
+        items[0].focus();
+
+        menu.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+        expect(clickSpy).toHaveBeenCalled();
+      });
+
+      it('should call onClose with Escape', () => {
+        menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        expect(onClose).toHaveBeenCalled();
+      });
+
+      it('should skip disabled items', () => {
+        // item3 is disabled — disabled items should not appear in non-disabled query
+        const enabledItems = menu.querySelectorAll<HTMLElement>('[role="menuitem"]:not(.disabled)');
+        expect(enabledItems).toHaveLength(3); // item1, item2, item4
+      });
+    });
+
+    describe('focusFirstMenuItem', () => {
+      it('should focus the first non-disabled item', () => {
+        const items: ContextMenuItem[] = [
+          { id: 'disabled1', name: 'Disabled', disabled: true },
+          { id: 'first', name: 'First Enabled' },
+          { id: 'second', name: 'Second' },
+        ];
+        const params = createMockParams();
+        const menu = createMenuElement(items, params, vi.fn());
+        document.body.appendChild(menu);
+
+        focusFirstMenuItem(menu);
+
+        const focused = document.activeElement as HTMLElement;
+        expect(focused?.getAttribute('data-id')).toBe('first');
+
+        menu.remove();
+      });
+    });
+
+    describe('menu items have tabindex', () => {
+      it('should set tabindex="-1" on menu items', () => {
+        const items: ContextMenuItem[] = [
+          { id: 'item1', name: 'Item 1' },
+          { id: 'item2', name: 'Item 2' },
+        ];
+        const params = createMockParams();
+        const menu = createMenuElement(items, params, vi.fn());
+
+        const menuItems = menu.querySelectorAll('[role="menuitem"]');
+        menuItems.forEach((item) => {
+          expect(item.getAttribute('tabindex')).toBe('-1');
+        });
+      });
+    });
+  });
+
+  // #region Integration tests (plugin-level with mock grid)
+
+  /**
+   * Creates a mock grid element with a `.tbw-grid-root` container and data cells.
+   * Returns { grid, plugin } ready for integration testing.
+   */
+  function createMockGrid(
+    config: Partial<import('./types').ContextMenuConfig> = {},
+    options: { rows?: Record<string, unknown>[]; columns?: { field: string; header?: string }[] } = {},
+  ) {
+    const rows = options.rows ?? [
+      { id: 1, name: 'Alice' },
+      { id: 2, name: 'Bob' },
+    ];
+    const columns = options.columns ?? [
+      { field: 'id', header: 'ID' },
+      { field: 'name', header: 'Name' },
+    ];
+
+    const plugin = new ContextMenuPlugin({
+      items: [
+        { id: 'copy', name: 'Copy', action: vi.fn() },
+        { id: 'delete', name: 'Delete', action: vi.fn() },
+      ],
+      ...config,
+    });
+
+    const grid = document.createElement('div');
+    grid.className = 'tbw-grid';
+
+    // Build container with rows + cells
+    const container = document.createElement('div');
+    container.className = 'tbw-grid-root';
+
+    // Header row
+    const headerRow = document.createElement('div');
+    headerRow.setAttribute('role', 'row');
+    columns.forEach((col, ci) => {
+      const headerCell = document.createElement('div');
+      headerCell.setAttribute('part', 'header-cell');
+      headerCell.setAttribute('data-col', String(ci));
+      headerCell.textContent = col.header ?? col.field;
+      headerRow.appendChild(headerCell);
+    });
+    container.appendChild(headerRow);
+
+    // Data rows with cells
+    rows.forEach((row, ri) => {
+      const rowEl = document.createElement('div');
+      rowEl.setAttribute('role', 'row');
+      columns.forEach((col, ci) => {
+        const cell = document.createElement('div');
+        cell.setAttribute('data-row', String(ri));
+        cell.setAttribute('data-col', String(ci));
+        cell.textContent = String(row[col.field] ?? '');
+        rowEl.appendChild(cell);
+      });
+      container.appendChild(rowEl);
+    });
+
+    grid.appendChild(container);
+
+    Object.assign(grid, {
+      rows,
+      columns,
+      _visibleColumns: columns,
+      gridConfig: {},
+      effectiveConfig: {},
+      _focusRow: 0,
+      _focusCol: 0,
+      disconnectSignal: new AbortController().signal,
+      requestRender: vi.fn(),
+      requestAfterRender: vi.fn(),
+      forceLayout: vi.fn().mockResolvedValue(undefined),
+      getPlugin: vi.fn(),
+      getPluginByName: vi.fn(),
+      query: vi.fn(() => []),
+      queryPlugins: vi.fn().mockReturnValue([]),
+    });
+    grid.dispatchEvent = vi.fn();
+    document.body.appendChild(grid);
+
+    plugin.attach(grid as never);
+
+    return { grid, plugin, container, rows, columns };
+  }
+
+  describe('onKeyDown', () => {
+    afterEach(() => {
+      document.body.innerHTML = '';
+    });
+
+    it('should open context menu on Shift+F10', () => {
+      const { plugin } = createMockGrid();
+
+      const event = new KeyboardEvent('keydown', { key: 'F10', shiftKey: true });
+      const preventSpy = vi.spyOn(event, 'preventDefault');
+      plugin.onKeyDown(event);
+
+      expect(preventSpy).toHaveBeenCalled();
+      expect(document.querySelectorAll('.tbw-context-menu')).toHaveLength(1);
+      expect(plugin.isMenuOpen()).toBe(true);
+
+      plugin.detach();
+    });
+
+    it('should open context menu on ContextMenu key', () => {
+      const { plugin } = createMockGrid();
+
+      const event = new KeyboardEvent('keydown', { key: 'ContextMenu' });
+      plugin.onKeyDown(event);
+
+      expect(document.querySelectorAll('.tbw-context-menu')).toHaveLength(1);
+      expect(plugin.isMenuOpen()).toBe(true);
+
+      plugin.detach();
+    });
+
+    it('should ignore other keys', () => {
+      const { plugin } = createMockGrid();
+
+      const event = new KeyboardEvent('keydown', { key: 'Enter' });
+      const result = plugin.onKeyDown(event);
+
+      expect(result).toBeUndefined();
+      expect(document.querySelectorAll('.tbw-context-menu')).toHaveLength(0);
+
+      plugin.detach();
+    });
+
+    it('should ignore F10 without Shift', () => {
+      const { plugin } = createMockGrid();
+
+      const event = new KeyboardEvent('keydown', { key: 'F10', shiftKey: false });
+      const result = plugin.onKeyDown(event);
+
+      expect(result).toBeUndefined();
+      expect(document.querySelectorAll('.tbw-context-menu')).toHaveLength(0);
+
+      plugin.detach();
+    });
+
+    it('should return true when menu is opened', () => {
+      const { plugin } = createMockGrid();
+
+      const event = new KeyboardEvent('keydown', { key: 'F10', shiftKey: true });
+      const result = plugin.onKeyDown(event);
+
+      expect(result).toBe(true);
+
+      plugin.detach();
+    });
+
+    it('should build params from the focused cell', () => {
+      const actionFn = vi.fn();
+      const { grid, plugin } = createMockGrid({
+        items: [{ id: 'test', name: 'Test', action: actionFn }],
+      });
+
+      // Set focus to row 1, col 1 (Bob, name)
+      (grid as any)._focusRow = 1;
+      (grid as any)._focusCol = 1;
+
+      const event = new KeyboardEvent('keydown', { key: 'F10', shiftKey: true });
+      plugin.onKeyDown(event);
+
+      // Click the menu item to verify params are correct
+      const menuItem = document.querySelector<HTMLElement>('[role="menuitem"]');
+      menuItem?.click();
+
+      expect(actionFn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          rowIndex: 1,
+          columnIndex: 1,
+          field: 'name',
+          value: 'Bob',
+          isHeader: false,
+        }),
+      );
+
+      plugin.detach();
+    });
+
+    it('should focus first menu item when opened via keyboard', () => {
+      const { plugin } = createMockGrid();
+
+      const event = new KeyboardEvent('keydown', { key: 'F10', shiftKey: true });
+      plugin.onKeyDown(event);
+
+      const firstItem = document.querySelector<HTMLElement>('[role="menuitem"]');
+      expect(document.activeElement).toBe(firstItem);
+
+      plugin.detach();
+    });
+  });
+
+  describe('afterRender', () => {
+    afterEach(() => {
+      document.body.innerHTML = '';
+    });
+
+    it('should bind contextmenu handler on afterRender', () => {
+      const { container, plugin } = createMockGrid();
+      plugin.afterRender();
+
+      expect(container.getAttribute('data-context-menu-bound')).toBe('true');
+
+      plugin.detach();
+    });
+
+    it('should not double-bind on repeated afterRender calls', () => {
+      const { container, plugin } = createMockGrid();
+      plugin.afterRender();
+      plugin.afterRender();
+
+      // If double-bound, two context menus would appear; verify only one handler
+      expect(container.getAttribute('data-context-menu-bound')).toBe('true');
+
+      plugin.detach();
+    });
+
+    it('should open menu on right-click of a data cell', () => {
+      const { container, plugin } = createMockGrid();
+      plugin.afterRender();
+
+      const cell = container.querySelector('[data-row="0"][data-col="0"]')!;
+      const event = new MouseEvent('contextmenu', { bubbles: true });
+      cell.dispatchEvent(event);
+
+      expect(document.querySelectorAll('.tbw-context-menu')).toHaveLength(1);
+
+      plugin.detach();
+    });
+
+    it('should open menu on right-click of a header cell', () => {
+      const { container, plugin } = createMockGrid();
+      plugin.afterRender();
+
+      const header = container.querySelector('[part~="header-cell"]')!;
+      const event = new MouseEvent('contextmenu', { bubbles: true });
+      header.dispatchEvent(event);
+
+      expect(document.querySelectorAll('.tbw-context-menu')).toHaveLength(1);
+
+      plugin.detach();
+    });
+
+    it('should not open menu on right-click outside cells', () => {
+      const { container, plugin } = createMockGrid();
+      plugin.afterRender();
+
+      // Click on the container itself, not on a cell
+      const event = new MouseEvent('contextmenu', { bubbles: false });
+      container.dispatchEvent(event);
+
+      expect(document.querySelectorAll('.tbw-context-menu')).toHaveLength(0);
+
+      plugin.detach();
+    });
+  });
+
+  describe('hideMenu / isMenuOpen', () => {
+    afterEach(() => {
+      document.body.innerHTML = '';
+    });
+
+    it('should report isMenuOpen as false when no menu is open', () => {
+      const { plugin } = createMockGrid();
+
+      expect(plugin.isMenuOpen()).toBe(false);
+
+      plugin.detach();
+    });
+
+    it('should report isMenuOpen as true after showMenu', () => {
+      const { plugin } = createMockGrid();
+
+      plugin.showMenu(100, 100, { rowIndex: 0, field: 'id', value: '1' });
+
+      expect(plugin.isMenuOpen()).toBe(true);
+
+      plugin.detach();
+    });
+
+    it('should hide menu and report closed after hideMenu', () => {
+      const { plugin } = createMockGrid();
+
+      plugin.showMenu(100, 100, { rowIndex: 0, field: 'id', value: '1' });
+      expect(plugin.isMenuOpen()).toBe(true);
+      expect(document.querySelectorAll('.tbw-context-menu')).toHaveLength(1);
+
+      plugin.hideMenu();
+
+      expect(plugin.isMenuOpen()).toBe(false);
+      expect(document.querySelectorAll('.tbw-context-menu')).toHaveLength(0);
+
+      plugin.detach();
+    });
+
+    it('should be safe to call hideMenu when no menu is open', () => {
+      const { plugin } = createMockGrid();
+
+      expect(() => plugin.hideMenu()).not.toThrow();
+      expect(plugin.isMenuOpen()).toBe(false);
+
+      plugin.detach();
+    });
+  });
+  // #endregion
 });

@@ -44,54 +44,51 @@ The grid implements full keyboard navigation following the WAI-ARIA grid pattern
 
 | Key | Action |
 |-----|--------|
-| **Arrow Up/Down** | Move focus between rows |
-| **Arrow Left/Right** | Move focus between cells |
-| **Home** | Move to first cell in row |
-| **End** | Move to last cell in row |
-| **Ctrl + Home** | Move to first cell in grid |
-| **Ctrl + End** | Move to last cell in grid |
-| **Page Up** | Scroll up one viewport |
-| **Page Down** | Scroll down one viewport |
-| **Tab** | Move to next cell (wraps to next row) |
-| **Shift + Tab** | Move to previous cell (wraps to previous row) |
+| <kbd>↑</kbd> / <kbd>↓</kbd> | Move focus between rows |
+| <kbd>←</kbd> / <kbd>→</kbd> | Move focus between cells |
+| <kbd>Home</kbd> | Move to first cell in row |
+| <kbd>End</kbd> | Move to last cell in row |
+| <kbd>Ctrl</kbd> + <kbd>Home</kbd> | Move to first cell in grid |
+| <kbd>Ctrl</kbd> + <kbd>End</kbd> | Move to last cell in grid |
+| <kbd>PgUp</kbd> | Scroll up one viewport |
+| <kbd>PgDn</kbd> | Scroll down one viewport |
+| <kbd>⇥ Tab</kbd> | Move to next cell (wraps to next row) |
+| <kbd>⇧ Shift</kbd> + <kbd>⇥ Tab</kbd> | Move to previous cell (wraps to previous row) |
 
 ### Selection (with SelectionPlugin)
 
 | Key | Action |
 |-----|--------|
-| **Space** | Toggle row selection |
-| **Shift + Arrow** | Extend range selection |
-| **Ctrl + A** | Select all rows/cells |
-| **Escape** | Clear selection |
-| **Shift + Space** | Select entire row |
-| **Ctrl + Space** | Select entire column |
+| <kbd>Space</kbd> | Toggle row selection |
+| <kbd>⇧ Shift</kbd> + <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> | Extend range selection |
+| <kbd>Ctrl</kbd> + <kbd>A</kbd> | Select all rows/cells |
+| <kbd>Esc</kbd> | Clear selection |
 
 ### Editing (with EditingPlugin)
 
 | Key | Action |
 |-----|--------|
-| **Enter** | Start editing focused cell |
-| **F2** | Start editing (alternative) |
-| **Escape** | Cancel editing |
-| **Tab** | Commit and move to next cell |
-| **Shift + Tab** | Commit and move to previous cell |
-| **Enter** (while editing) | Commit value |
+| <kbd>↵ Enter</kbd> | Start editing focused cell |
+| <kbd>F2</kbd> | Start editing (alternative) |
+| <kbd>Esc</kbd> | Cancel editing |
+| <kbd>⇥ Tab</kbd> | Commit and move to next cell |
+| <kbd>⇧ Shift</kbd> + <kbd>⇥ Tab</kbd> | Commit and move to previous cell |
+| <kbd>↵ Enter</kbd> (while editing) | Commit value |
 
 ### Row Grouping / Tree
 
 | Key | Action |
 |-----|--------|
-| **Arrow Right** | Expand group/tree node |
-| **Arrow Left** | Collapse group/tree node |
+| <kbd>Space</kbd> | Toggle expand/collapse on group or tree node |
 
 ### Context Menu (with ContextMenuPlugin)
 
 | Key | Action |
 |-----|--------|
-| **Shift + F10** | Open context menu |
-| **Arrow Up/Down** | Navigate menu items |
-| **Enter** | Activate menu item |
-| **Escape** | Close menu |
+| <kbd>⇧ Shift</kbd> + <kbd>F10</kbd> / <kbd>☰ Menu</kbd> | Open context menu at focused cell |
+| <kbd>↑</kbd> / <kbd>↓</kbd> | Navigate menu items |
+| <kbd>↵ Enter</kbd> / <kbd>Space</kbd> | Activate menu item |
+| <kbd>Esc</kbd> | Close menu |
 
 ## Focus Management
 
