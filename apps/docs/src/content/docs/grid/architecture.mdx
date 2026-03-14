@@ -526,32 +526,9 @@ background: var(--tbw-selection-bg, var(--tbw-color-selection));
 
 ## Event Flow
 
-### Core Grid Events
+The grid dispatches `CustomEvent`s for every user-visible action (cell clicks, commits, sort changes, etc.). See the [Events section of the API Reference](/grid/api-reference/#events) for the full list and the auto-generated [`DataGridEventMap`](/grid/api/core/interfaces/datagrideventmap/) for payload types.
 
-| Event                   | When                                |
-| ----------------------- | ----------------------------------- |
-| `cell-click`            | Cell clicked                        |
-| `row-click`             | Row clicked                         |
-| `cell-activate`         | Cell activated (keyboard/click)     |
-| `cell-commit`           | Cell value committed                |
-| `row-commit`            | Row edit committed                  |
-| `sort-change`           | Sort state changed                  |
-| `column-resize`         | Column resized                      |
-| `column-state-change`   | Column config changed               |
-
-### Plugin Events
-
-| Event                      | Plugin       |
-| -------------------------- | ------------ |
-| `selection-change`         | Selection    |
-| `filter-change`            | Filtering    |
-| `sort-model-change`        | MultiSort    |
-| `export-start` / `export-complete` | Export |
-| `clipboard-copy` / `clipboard-paste` | Clipboard |
-| `context-menu-open`        | ContextMenu  |
-| `column-visibility-change` | Visibility   |
-| `column-reorder`           | Reorder      |
-| `detail-expand`            | MasterDetail |
+Internally, plugins communicate through two mechanisms described in the [Plugin Communication](#plugin-communication) section above: the **Event Bus** (async, fire-and-forget) and the **Query System** (sync, request-response). Public `CustomEvent`s are dispatched by the core grid or by individual plugins after their internal processing completes.
 
 ### Data Flow Example: Sort
 
