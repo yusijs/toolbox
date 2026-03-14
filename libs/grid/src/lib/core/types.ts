@@ -872,9 +872,12 @@ export interface ColumnConfig<TRow = any> extends BaseColumnConfig<TRow, any> {
    *
    * // Status-based styling
    * cellClass: (value) => [`status-${value}`]
+   *
+   * // Single class as string
+   * cellClass: (value) => value < 0 ? 'negative' : ''
    * ```
    */
-  cellClass?: (value: unknown, row: TRow, column: ColumnConfig<TRow>) => string[];
+  cellClass?: (value: unknown, row: TRow, column: ColumnConfig<TRow>) => string | string[];
 
   /**
    * Custom header label renderer. Customize the label content while the grid
@@ -1996,9 +1999,12 @@ export interface GridConfig<TRow = any> {
    *
    * // Status-based row styling
    * rowClass: (row) => [`priority-${row.priority}`]
+   *
+   * // Single class as string
+   * rowClass: (row) => row.isNew ? 'new-row' : ''
    * ```
    */
-  rowClass?: (row: TRow) => string[];
+  rowClass?: (row: TRow) => string | string[];
   /** Sizing mode for columns. Can also be set via `fitMode` prop. */
   fitMode?: FitMode;
 

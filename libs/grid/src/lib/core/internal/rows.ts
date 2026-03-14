@@ -342,7 +342,8 @@ export function renderVisibleRows(
         prevClasses.split(' ').forEach((cls) => cls && rowEl.classList.remove(cls));
       }
       try {
-        const newClasses = rowClassFn(rowData);
+        const result = rowClassFn(rowData);
+        const newClasses = typeof result === 'string' ? result.split(/\s+/) : result;
         if (newClasses && newClasses.length > 0) {
           const validClasses = newClasses.filter((c) => c && typeof c === 'string');
           validClasses.forEach((cls) => rowEl.classList.add(cls));
@@ -407,6 +408,7 @@ function fastPatchRow(grid: InternalGrid, rowEl: HTMLElement, rowData: any, rowI
         col.viewRenderer ||
         col.externalView ||
         col.format ||
+        col.cellClass ||
         col.type === 'date' ||
         col.type === 'boolean' ||
         // Check for adapter-level type defaults (framework adapters)
@@ -515,7 +517,8 @@ function fastPatchRow(grid: InternalGrid, rowEl: HTMLElement, rowData: any, rowI
       }
       try {
         const value = rowData[col.field];
-        const cellClasses = cellClassFn(value, rowData, col);
+        const result = cellClassFn(value, rowData, col);
+        const cellClasses = typeof result === 'string' ? result.split(/\s+/) : result;
         if (cellClasses && cellClasses.length > 0) {
           const validClasses = cellClasses.filter((c: string) => c && typeof c === 'string');
           validClasses.forEach((cls: string) => cell.classList.add(cls));
@@ -878,7 +881,8 @@ export function renderInlineRow(grid: InternalGrid, rowEl: HTMLElement, rowData:
     if (cellClassFn) {
       try {
         const cellValue = (rowData as Record<string, unknown>)[col.field];
-        const cellClasses = cellClassFn(cellValue, rowData, col);
+        const result = cellClassFn(cellValue, rowData, col);
+        const cellClasses = typeof result === 'string' ? result.split(/\s+/) : result;
         if (cellClasses && cellClasses.length > 0) {
           const validClasses = cellClasses.filter((c) => c && typeof c === 'string');
           validClasses.forEach((cls) => cell.classList.add(cls));
