@@ -2,13 +2,13 @@
 // EmployeeManagementGroupedDemo.astro — Employee grid with row grouping by department
 ---
 <div class="grid-demo not-content">
-  <div data-demo-id="employee-grouped" style="display: block; height: 600px;"></div>
+  <div id="employee-grouped" style="height: 600px;"></div>
 </div>
 
 <script>
   import { createEmployeeGrid } from '@demo/vanilla';
 
-  const container = document.querySelector<HTMLElement>('[data-demo-id="employee-grouped"]');
+  const container = document.getElementById('employee-grouped');
   if (container) {
     const grid = createEmployeeGrid({
       rowCount: 200,

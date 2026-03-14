@@ -82,7 +82,7 @@ const { id, height = '400px', controls } = Astro.props;
       </div>
     ))}
   </div>
-  <tbw-grid style={`display: block; height: ${height};`} data-playground-id={id}></tbw-grid>
+  <tbw-grid style={`height: ${height};`} data-playground-id={id}></tbw-grid>
   <div class="grid-demo-output" data-output-id={id}>
     <span style="color: var(--sl-color-gray-3);">Interact with the grid to see state updates...</span>
   </div>

@@ -6,14 +6,14 @@
   <div class="loading-bar">
     <button data-toggle="loading">Toggle Loading</button>
   </div>
-  <tbw-grid style="display: block; height: 300px;" data-demo-id="custom-loading-renderer"></tbw-grid>
+  <tbw-grid style="height: 300px;" id="custom-loading-renderer"></tbw-grid>
 </div>
 
 <script>
   import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
-  const grid = queryGrid('[data-demo-id="custom-loading-renderer"]');
+  const grid = queryGrid('#custom-loading-renderer');
   const toggleBtn = document.querySelector<HTMLButtonElement>('[data-toggle="loading"]');
 
   if (grid) {
@@ -32,7 +32,8 @@ import { queryGrid } from '@toolbox-web/grid';
       { id: 5, name: 'Eve Brown', email: 'eve@example.com', department: 'HR' },
     ];
 
-    grid.registerStyles('custom-loading', `
+    grid.addEventListener('grid-connected', () => {
+      grid.registerStyles('custom-loading', `
       .progress-bar-container {
         position: absolute;
         top: 0;
@@ -55,6 +56,7 @@ import { queryGrid } from '@toolbox-web/grid';
         100% { transform: translateX(400%); }
       }
     `);
+    });
 
     grid.gridConfig = {
       getRowId: (row: { id: number }) => row.id,

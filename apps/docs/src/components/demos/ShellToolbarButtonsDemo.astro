@@ -8,8 +8,8 @@
   Custom toolbar buttons via light DOM. The grid provides the container — you provide the HTML.
 </p>
 <div class="grid-demo">
-  <div data-demo-id="shell-toolbar-wrap">
-    <tbw-grid style="height: 380px; display: block;">
+  <div id="shell-toolbar-wrap">
+    <tbw-grid style="height: 380px;">
       <tbw-grid-header title="Toolbar Demo"></tbw-grid-header>
       <tbw-grid-tool-buttons>
         <button class="tbw-toolbar-btn" title="Export" aria-label="Export">📥</button>
@@ -21,9 +21,9 @@
 
 <script>
   import '@toolbox-web/grid';
-  import type { ColumnConfig } from '@toolbox-web/grid';
+import type { ColumnConfig } from '@toolbox-web/grid';
 
-  const wrap = document.querySelector('[data-demo-id="shell-toolbar-wrap"]');
+  const wrap = document.getElementById('shell-toolbar-wrap');
   const grid = wrap?.querySelector<HTMLElement & {
     columns: ColumnConfig[];
     rows: Record<string, unknown>[];

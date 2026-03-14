@@ -14,7 +14,7 @@ import DemoControls from '@components/DemoControls.astro';
     { section: 'PANELS', name: 'showCustomPanel', label: 'Custom tool panel', type: 'boolean', default: false, description: 'Show custom tool panel via API' },
     { section: 'PANELS', name: 'panelPosition', label: 'Panel position', type: 'radio', options: ['left', 'right'], default: 'right', description: 'Tool panel position' },
   ]} />
-  <tbw-grid data-demo-id="shell-basic" style="height: 420px; display: block;"></tbw-grid>
+  <tbw-grid id="shell-basic" style="height: 420px;"></tbw-grid>
 </div>
 
 <script>
@@ -24,7 +24,7 @@ import { queryGrid } from '@toolbox-web/grid';
 import '@toolbox-web/grid/features/visibility';
 
   const container = document.getElementById('shell-basic-demo-container');
-  const grid = queryGrid('[data-demo-id="shell-basic"]');
+  const grid = queryGrid('#shell-basic');
 
   if (container && grid) {
     const departments = ['Engineering', 'Sales', 'Marketing', 'Support'];

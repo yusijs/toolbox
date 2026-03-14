@@ -4,7 +4,7 @@
 // column groups, footer aggregations — all in one impressive demo.
 ---
 <div class="grid-demo not-content">
-  <tbw-grid style="display: block; height: 430px; font-size: 13px;" data-demo-id="intro-showcase"></tbw-grid>
+  <tbw-grid style="height: 430px; font-size: 13px;" id="intro-showcase"></tbw-grid>
 </div>
 
 <script>
@@ -100,7 +100,7 @@ import '@toolbox-web/grid/features/selection';
   // #endregion
 
   // #region Grid setup
-  const grid = queryGrid('[data-demo-id="intro-showcase"]');
+  const grid = queryGrid('#intro-showcase');
 
   if (grid) {
     grid.gridConfig = {

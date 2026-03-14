@@ -16,7 +16,7 @@ const { id, height = '400px', description } = Astro.props;
 {description && <p class="grid-demo-description">{description}</p>}
 <div class="grid-demo not-content" id={`demo-${id}`}>
   <slot name="controls" />
-  <tbw-grid style={`display: block; height: ${height};`} data-demo-id={id}></tbw-grid>
+  <tbw-grid style={`height: ${height};`} id={id}></tbw-grid>
   <slot name="output" />
 </div>
 <slot />

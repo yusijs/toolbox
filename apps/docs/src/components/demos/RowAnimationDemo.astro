@@ -13,25 +13,19 @@
     <button data-anim-action="insert" class="grid-demo-btn">Insert Row</button>
     <button data-anim-action="remove" class="grid-demo-btn">Remove Last</button>
   </div>
-  <tbw-grid data-demo-id="row-animation" style="height: 260px; display: block;"></tbw-grid>
+  <tbw-grid id="row-animation" style="height: 260px;"></tbw-grid>
 </div>
 
 <script>
   import '@toolbox-web/grid';
-import type { ColumnConfig } from '@toolbox-web/grid';
+import { queryGrid } from '@toolbox-web/grid';
 
   interface Item { id: number; name: string; status: string; }
 
-  const container = document.querySelector('[data-demo-id="row-animation"]')?.closest('.grid-demo');
-  const grid = container?.querySelector<HTMLElement & {
-    columns: ColumnConfig<Item>[];
-    rows: Item[];
-    animateRow: (index: number, type: string) => void;
-    insertRow: (index: number, row: Item) => Promise<void>;
-    removeRow: (index: number) => Promise<void>;
-  }>('tbw-grid');
+  const grid = queryGrid<Item>('#row-animation');
 
   if (grid) {
+    const container = document.querySelector('.grid-demo');
     let nextId = 6;
     const data: Item[] = [
       { id: 1, name: 'Alpha', status: 'active' },
@@ -48,7 +42,7 @@ import type { ColumnConfig } from '@toolbox-web/grid';
     ];
     grid.rows = data;
 
-    container?.addEventListener('click', (e) => {
+    container.addEventListener('click', (e) => {
       const action = (e.target as HTMLElement).dataset.animAction;
       if (!action) return;
 

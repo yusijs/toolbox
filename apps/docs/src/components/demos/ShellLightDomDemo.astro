@@ -8,8 +8,8 @@
   Shell configured via <code>&lt;tbw-grid-header&gt;</code> light DOM elements — no JavaScript shell config needed.
 </p>
 <div class="grid-demo">
-  <div data-demo-id="shell-lightdom-wrap">
-    <tbw-grid style="height: 420px; display: block;">
+  <div id="shell-lightdom-wrap">
+    <tbw-grid style="height: 420px;">
       <tbw-grid-header title="Employee Directory">
         <tbw-grid-header-content>
           <span style="color: var(--sl-color-gray-3); font-size: 13px; padding: 4px 8px; background: var(--sl-color-gray-6); border-radius: 4px;">20 employees</span>
@@ -26,7 +26,7 @@ import type { ColumnConfig } from '@toolbox-web/grid';
   const grid = document.querySelector<HTMLElement & {
     columns: ColumnConfig[];
     rows: Record<string, unknown>[];
-  }>('[data-demo-id="shell-lightdom-wrap"] tbw-grid');
+  }>('#shell-lightdom-wrap tbw-grid');
 
   if (grid) {
     const departments = ['Engineering', 'Sales', 'Marketing', 'Support'];
