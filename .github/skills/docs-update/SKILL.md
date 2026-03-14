@@ -128,12 +128,14 @@ These are AI-consumable documentation. `llms.txt` is a concise index (~120 lines
 - New event (add to events list)
 - New CSS variable (add to theming section)
 
-**`events.mdx`** (`apps/docs/src/content/docs/grid/events.mdx`) — Update when:
+**`api-reference.mdx`** (`apps/docs/src/content/docs/grid/api-reference.mdx`) Events section — Update when:
 
-- New event added (core or plugin)
-- Event detail type changes
-- Event cancelability changes
-- New plugin that dispatches events
+- Event cancelability changes (the cancelable events table is curated)
+- Framework-specific listening patterns change
+
+:::note
+Individual event descriptions, payload types, and code examples are auto-generated from JSDoc in `DataGridEventMap` — update the JSDoc, not the curated docs. Run `bun nx typedoc grid` to regenerate.
+:::
 
 **`llms-full.txt`** — Update when:
 

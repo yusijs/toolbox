@@ -3,6 +3,10 @@ title: API Reference
 description: Complete reference for the <tbw-grid> component — properties, methods, events, CSS custom properties, keyboard shortcuts, declarative configuration, and accessibility.
 ---
 
+import { LinkCard, CardGrid, Tabs, TabItem } from '@astrojs/starlight/components';
+import CoreEventsDemo from '@components/demos/CoreEventsDemo.astro';
+import ShowSource from '@components/ShowSource.astro';
+
 Complete reference for the `<tbw-grid>` component API.
 
 ## Element Tag
@@ -697,7 +701,132 @@ grid.scrollToRowById('emp-42', { align: 'center' });
 
 ## Events
 
-See the dedicated [Events Reference](/grid/events/) for the complete catalog of all events (core + plugin), detail types, cancelable events, and listening patterns.
+The grid dispatches standard `CustomEvent`s that bubble up the DOM. All events use `bubbles: true` and `composed: true`.
+
+<ShowSource file="demos/CoreEventsDemo.astro">
+  <CoreEventsDemo />
+</ShowSource>
+
+### Listening to Events
+
+<Tabs syncKey="framework">
+  <TabItem label="Vanilla JS">
+```typescript
+import { queryGrid } from '@toolbox-web/grid';
+import type { CellClickDetail, CellCommitDetail } from '@toolbox-web/grid';
+
+const grid = queryGrid<Employee>('#my-grid');
+
+// Type-safe event listening
+grid.addEventListener('cell-click', (e: CustomEvent<CellClickDetail<Employee>>) => {
+  console.log(e.detail.row, e.detail.field);
+});
+
+// Cancelable events — call preventDefault() to reject the action
+grid.addEventListener('cell-commit', (e: CustomEvent<CellCommitDetail<Employee>>) => {
+  if (!isValid(e.detail.value)) {
+    e.preventDefault(); // Rejects the edit
+  }
+});
+```
+  </TabItem>
+  <TabItem label="React">
+```tsx
+import { DataGrid, useGrid, useGridEvent } from '@toolbox-web/grid-react';
+import type { CellClickDetail, CellCommitDetail } from '@toolbox-web/grid';
+
+function EmployeeGrid() {
+  const gridRef = useGrid<Employee>();
+
+  // Type-safe event hook
+  useGridEvent(gridRef, 'cell-click', (e) => {
+    console.log(e.detail.row, e.detail.field);
+  });
+
+  // Or use event handler props
+  const handleCellCommit = useCallback((detail: CellCommitDetail<Employee>) => {
+    if (!isValid(detail.value)) {
+      // Cancelable — return false or call e.preventDefault()
+    }
+  }, []);
+
+  return <DataGrid ref={gridRef} rows={employees} onCellCommit={handleCellCommit} />;
+}
+```
+  </TabItem>
+  <TabItem label="Vue">
+```html
+<script setup lang="ts">
+import { TbwGrid } from '@toolbox-web/grid-vue';
+import type { CellClickDetail, CellCommitDetail } from '@toolbox-web/grid';
+
+function onCellClick(detail: CellClickDetail) {
+  console.log(detail.row, detail.field);
+}
+
+function onCellCommit(detail: CellCommitDetail) {
+  if (!isValid(detail.value)) {
+    // Cancelable — call detail.preventDefault()
+  }
+}
+</script>
+
+<template>
+  <TbwGrid :rows="employees" @cell-click="onCellClick" @cell-commit="onCellCommit" />
+</template>
+```
+  </TabItem>
+  <TabItem label="Angular">
+```typescript
+import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Grid } from '@toolbox-web/grid-angular';
+
+@Component({
+  imports: [Grid],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  template: `
+    <tbw-grid
+      [rows]="employees"
+      (cell-click)="onCellClick($event)"
+      (cell-commit)="onCellCommit($event)"
+    />
+  `,
+})
+export class EmployeeGridComponent {
+  onCellClick(event: CustomEvent) {
+    console.log(event.detail.row, event.detail.field);
+  }
+
+  onCellCommit(event: CustomEvent) {
+    if (!isValid(event.detail.value)) {
+      event.preventDefault(); // Rejects the edit
+    }
+  }
+}
+```
+  </TabItem>
+</Tabs>
+
+### Cancelable Events
+
+Four events support `preventDefault()` to reject the action:
+
+| Event | Plugin | What Canceling Does |
+|-------|--------|-------------------|
+| `cell-commit` | Editing | Reverts the cell to its previous value |
+| `row-commit` | Editing | Reverts the entire row to pre-edit state |
+| `column-move` | Reorder | Rejects the column drag-and-drop |
+| `row-move` | Row Reorder | Rejects the row drag/keyboard move |
+
+### Event Reference
+
+The [`DataGridEventMap`](/grid/api/core/interfaces/datagrideventmap/) is the complete, auto-generated reference for every event the grid dispatches — core events and plugin events alike. It includes detail payload types, descriptions, and code examples, grouped by plugin.
+
+<LinkCard title="DataGridEventMap Reference" description="Full list of every event, grouped by plugin, with payload types and code examples." href="/grid/api/core/interfaces/datagrideventmap/" />
+
+:::note[Multi-Sort overrides `sort-change`]
+When `MultiSortPlugin` is active, the `sort-change` event payload changes from `SortChangeDetail` (single `{ field, direction }`) to `{ sortModel: SortModel[] }` (array of sort columns). This override cannot be expressed in `DataGridEventMap` because TypeScript declaration merging doesn't allow changing a property type. Import `SortModel` from `@toolbox-web/grid/plugins/multi-sort`.
+:::
 
 ## CSS Custom Properties
 

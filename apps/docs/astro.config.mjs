@@ -162,7 +162,6 @@ export default defineConfig({
               collapsed: true,
               items: [
                 { slug: 'grid/api-reference' },
-                { slug: 'grid/events' },
                 { slug: 'grid/architecture' },
                 {
                   label: 'Core',

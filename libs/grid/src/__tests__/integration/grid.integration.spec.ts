@@ -59,7 +59,7 @@ describe('tbw-grid integration: inference, sorting, editing', () => {
     await nextFrame();
     const header = grid.querySelector('.header-row .cell') as HTMLElement;
     const directions: number[] = [];
-    grid.addEventListener('sort-change', (e: any) => directions.push(e.detail.direction));
+    grid.on('sort-change', (detail: any) => directions.push(detail.direction));
     header.click();
     header.click();
     header.click();
@@ -76,7 +76,7 @@ describe('tbw-grid integration: inference, sorting, editing', () => {
     await nextFrame();
 
     const events: any[] = [];
-    grid.addEventListener('cell-click', (e: CustomEvent) => events.push(e.detail));
+    grid.on('cell-click', (detail: any) => events.push(detail));
 
     // Click on the "name" cell of the second row (row=1, col=1)
     const rows = grid.querySelectorAll('.data-grid-row');
@@ -104,7 +104,7 @@ describe('tbw-grid integration: inference, sorting, editing', () => {
     await nextFrame();
 
     const events: any[] = [];
-    grid.addEventListener('row-click', (e: CustomEvent) => events.push(e.detail));
+    grid.on('row-click', (detail: any) => events.push(detail));
 
     // Click on the second row
     const rows = grid.querySelectorAll('.data-grid-row');
@@ -129,7 +129,7 @@ describe('tbw-grid integration: inference, sorting, editing', () => {
     await nextFrame();
 
     const events: any[] = [];
-    grid.addEventListener('cell-activate', (e: CustomEvent) => events.push(e.detail));
+    grid.on('cell-activate', (detail: any) => events.push(detail));
 
     // Click on the "name" cell of the second row
     const rows = grid.querySelectorAll('.data-grid-row');
@@ -157,7 +157,7 @@ describe('tbw-grid integration: inference, sorting, editing', () => {
     await nextFrame();
 
     const events: any[] = [];
-    grid.addEventListener('cell-activate', (e: CustomEvent) => events.push(e.detail));
+    grid.on('cell-activate', (detail: any) => events.push(detail));
 
     // Focus the first cell, then navigate to second row, second column
     grid._focusRow = 1;
@@ -186,7 +186,7 @@ describe('tbw-grid integration: inference, sorting, editing', () => {
     await nextFrame();
 
     // Block activation via preventDefault
-    grid.addEventListener('cell-activate', (e: CustomEvent) => {
+    grid.on('cell-activate', (_detail: any, e: CustomEvent) => {
       e.preventDefault();
     });
 
@@ -211,7 +211,7 @@ describe('tbw-grid integration: inference, sorting, editing', () => {
     await nextFrame();
 
     // Block activation via preventDefault
-    grid.addEventListener('cell-activate', (e: CustomEvent) => {
+    grid.on('cell-activate', (_detail: any, e: CustomEvent) => {
       e.preventDefault();
     });
 
@@ -721,7 +721,7 @@ describe('tbw-grid integration: public API & events', () => {
     document.body.appendChild(grid);
     await waitUpgrade(grid);
     const commits: any[] = [];
-    grid.addEventListener('cell-commit', (e: any) => commits.push(e.detail));
+    grid.on('cell-commit', (detail: any) => commits.push(detail));
     const row = grid.querySelector('.data-grid-row') as HTMLElement;
     const nameCell = row.querySelector('.cell[data-col="1"]') as HTMLElement;
     nameCell.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
@@ -1960,7 +1960,7 @@ describe('tbw-grid integration: async filtering state persistence', () => {
 
     // Track events to verify `selected` payload
     const events: any[] = [];
-    grid.addEventListener('filter-change', (e: any) => events.push(e.detail));
+    grid.on('filter-change', (detail: any) => events.push(detail));
 
     plugin.setFilter('dept', { type: 'set', operator: 'in', value: ['Eng', 'HR'] });
     await nextFrame();
@@ -2256,7 +2256,7 @@ describe('tbw-grid integration: data-change event', () => {
     await nextFrame();
 
     const events: any[] = [];
-    grid.addEventListener('data-change', (e: any) => events.push(e.detail));
+    grid.on('data-change', (detail: any) => events.push(detail));
 
     grid.rows = [{ id: 1 }, { id: 2 }, { id: 3 }];
     // Wait for microtask (#queueUpdate) + RAF (scheduler flush)
@@ -2276,7 +2276,7 @@ describe('tbw-grid integration: data-change event', () => {
     await nextFrame();
 
     const events: any[] = [];
-    grid.addEventListener('data-change', (e: any) => events.push(e.detail));
+    grid.on('data-change', (detail: any) => events.push(detail));
 
     await grid.insertRow(1, { id: 2 }, false);
     expect(events.length).toBeGreaterThanOrEqual(1);
@@ -2290,7 +2290,7 @@ describe('tbw-grid integration: data-change event', () => {
     await nextFrame();
 
     const events: any[] = [];
-    grid.addEventListener('data-change', (e: any) => events.push(e.detail));
+    grid.on('data-change', (detail: any) => events.push(detail));
 
     await grid.removeRow(0, false);
     expect(events.length).toBeGreaterThanOrEqual(1);
@@ -2304,7 +2304,7 @@ describe('tbw-grid integration: data-change event', () => {
     await nextFrame();
 
     const events: any[] = [];
-    grid.addEventListener('data-change', (e: any) => events.push(e.detail));
+    grid.on('data-change', (detail: any) => events.push(detail));
 
     grid.updateRow('1', { name: 'Bob' });
     expect(events.length).toBe(1);
