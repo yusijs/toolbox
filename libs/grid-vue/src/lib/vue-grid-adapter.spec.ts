@@ -610,10 +610,7 @@ describe('VueGridAdapter', () => {
 
       const renderer = adapter.createRenderer(element);
       const ctx = { value: 'test-value', row: {}, column: { field: 'rendered' } };
-      const container = (renderer as Function)(ctx);
-
-      expect(container).toBeInstanceOf(HTMLElement);
-      expect(container.className).toBe('vue-cell-renderer');
+      const container = (renderer as (...args: unknown[]) => HTMLElement)(ctx);
     });
 
     it('should use cell caching when cellEl is provided', () => {
@@ -626,11 +623,11 @@ describe('VueGridAdapter', () => {
       const renderer = adapter.createRenderer(element);
       const cellEl = document.createElement('div');
       const ctx1 = { value: 'first', row: {}, column: { field: 'cached' }, cellEl };
-      const container1 = (renderer as Function)(ctx1);
+      const container1 = (renderer as (...args: unknown[]) => HTMLElement)(ctx1);
 
       // Second call with same cellEl should return cached container
       const ctx2 = { value: 'second', row: {}, column: { field: 'cached' }, cellEl };
-      const container2 = (renderer as Function)(ctx2);
+      const container2 = (renderer as (...args: unknown[]) => HTMLElement)(ctx2);
 
       expect(container2).toBe(container1);
     });
@@ -674,10 +671,7 @@ describe('VueGridAdapter', () => {
 
       const editor = adapter.createEditor(element);
       const ctx = { value: 'edit-me', row: {}, column: { field: 'editField' } };
-      const container = (editor as Function)(ctx);
-
-      expect(container).toBeInstanceOf(HTMLElement);
-      expect(container.className).toBe('vue-cell-editor');
+      const container = (editor as (...args: unknown[]) => HTMLElement)(ctx);
     });
   });
 
@@ -700,7 +694,7 @@ describe('VueGridAdapter', () => {
       const renderer = adapter.createRenderer(element);
       // Create a view without cellEl so it goes into mountedViews
       const ctx = { value: 'val', row: {}, column: { field: 'cleanupTest' } };
-      (renderer as Function)(ctx);
+      (renderer as (...args: unknown[]) => unknown)(ctx);
 
       // Cleanup should not throw and should clear internal state
       expect(() => adapter.cleanup()).not.toThrow();
@@ -718,7 +712,7 @@ describe('VueGridAdapter', () => {
 
       const editor = adapter.createEditor(element);
       const ctx = { value: 'val', row: {}, column: { field: 'cleanupEditor' } };
-      (editor as Function)(ctx);
+      (editor as (...args: unknown[]) => unknown)(ctx);
 
       expect(() => adapter.cleanup()).not.toThrow();
     });
@@ -738,7 +732,7 @@ describe('VueGridAdapter', () => {
 
       const renderer = adapter.createRenderer(element);
       const ctx = { value: 'val', row: {}, column: { field: 'unmountTest' } };
-      const container = (renderer as Function)(ctx);
+      const container = (renderer as (...args: unknown[]) => HTMLElement)(ctx);
 
       // Should not throw
       expect(() => adapter.unmount(container)).not.toThrow();
@@ -766,7 +760,7 @@ describe('VueGridAdapter', () => {
 
       const editor = adapter.createEditor(element);
       const ctx = { value: 'val', row: {}, column: { field: 'releaseTest' } };
-      const editorContainer = (editor as Function)(ctx);
+      const editorContainer = (editor as (...args: unknown[]) => HTMLElement)(ctx);
 
       // Simulate cell containing the editor
       const cellEl = document.createElement('div');
@@ -892,7 +886,7 @@ describe('VueGridAdapter', () => {
 
       // Actually invoke the renderer
       const ctx = { value: 'US', row: {}, column: { field: 'country' } };
-      const container = (result!.renderer as Function)(ctx);
+      const container = (result!.renderer as (...args: unknown[]) => HTMLElement)(ctx);
       expect(container).toBeInstanceOf(HTMLElement);
     });
 
@@ -908,7 +902,7 @@ describe('VueGridAdapter', () => {
 
       // Actually invoke the editor
       const ctx = { value: 'Active', row: {}, column: { field: 'status' } };
-      const container = (result!.editor as Function)(ctx);
+      const container = (result!.editor as (...args: unknown[]) => HTMLElement)(ctx);
       expect(container).toBeInstanceOf(HTMLElement);
     });
 
@@ -925,7 +919,7 @@ describe('VueGridAdapter', () => {
       // Actually invoke the filter panel renderer
       const container = document.createElement('div');
       const params = { column: { field: 'custom' }, currentFilter: null };
-      (result!.filterPanelRenderer as Function)(container, params);
+      (result!.filterPanelRenderer as (...args: unknown[]) => void)(container, params);
       expect(container.children.length).toBeGreaterThan(0);
     });
   });

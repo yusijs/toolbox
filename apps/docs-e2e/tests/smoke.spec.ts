@@ -9,7 +9,7 @@ import { EXCLUDED_DEMOS } from './utils';
  */
 
 // Discover all demos by fetching the index page
-let demoSlugs: string[] = [];
+const demoSlugs: string[] = [];
 
 test.beforeAll(async ({ browser }) => {
   const page = await browser.newPage();

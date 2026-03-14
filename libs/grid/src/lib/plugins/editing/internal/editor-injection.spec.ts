@@ -372,7 +372,7 @@ describe('editor-injection', () => {
     it('should warn if mount callback throws', () => {
       const deps = createDeps();
       const { cell } = createCellInRow();
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { /* noop */ });
       const column = col('name') as ColumnInternal<any>;
       column.editor = {
         mount: () => {

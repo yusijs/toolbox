@@ -146,7 +146,7 @@ describe('use-grid-event', () => {
 
   describe('deprecation warning', () => {
     it('should show deprecation warning on localhost', () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { /* noop */ });
 
       // Reset the module-level warning flag by re-importing won't work,
       // but we can verify the warning was already shown in prior tests

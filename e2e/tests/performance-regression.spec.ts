@@ -12,15 +12,14 @@ import { DEMOS, waitForGridReady } from './utils';
  * flaky failures from CI machine variance, while still catching real
  * regressions (10x+ slowdowns).
  *
- * **Skipped on CI**: Timing budgets are inherently machine-dependent and
+ * **Not run on CI**: Timing budgets are inherently machine-dependent and
  * produce unreliable results on shared CI runners with variable CPU/memory.
  * Run locally to validate performance before merging.
  *
  * Run with: npx playwright test performance-regression.spec.ts
+ *
+ * NOTE: Excluded from CI via testIgnore in playwright.config.ts
  */
-
-// Skip all performance tests on CI — timing budgets are machine-dependent
-test.skip(!!process.env.CI, 'Performance tests are skipped on CI (timing budgets are machine-dependent)');
 
 // #region Helpers
 

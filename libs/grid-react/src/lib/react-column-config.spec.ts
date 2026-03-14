@@ -76,8 +76,8 @@ describe('react-column-config', () => {
         row: {},
         column: {} as any,
         field: 'name',
-        commit: () => {},
-        cancel: () => {},
+        commit: () => { /* noop */ },
+        cancel: () => { /* noop */ },
       } as any);
 
       expect(result).toBeInstanceOf(HTMLElement);
@@ -169,7 +169,7 @@ describe('react-column-config', () => {
       const result = processGridConfig(config);
       expect(result?.columns![0].renderer).toBeDefined();
       // The wrapped renderer should produce an HTMLElement
-      const container = (result?.columns![0].renderer as Function)({
+      const container = (result?.columns![0].renderer as (...args: unknown[]) => HTMLElement)({
         value: 'test',
         row: {},
         column: {} as any,
@@ -186,13 +186,13 @@ describe('react-column-config', () => {
 
       const result = processGridConfig(config);
       expect(result?.columns![0].editor).toBeDefined();
-      const container = (result?.columns![0].editor as Function)({
+      const container = (result?.columns![0].editor as (...args: unknown[]) => HTMLElement)({
         value: 'test',
         row: {},
         column: {} as any,
         field: 'name',
-        commit: () => {},
-        cancel: () => {},
+        commit: () => { /* noop */ },
+        cancel: () => { /* noop */ },
       });
       expect(container).toBeInstanceOf(HTMLElement);
     });
@@ -267,8 +267,8 @@ describe('react-column-config', () => {
         row: {},
         column: {} as any,
         field: 'name',
-        commit: () => {},
-        cancel: () => {},
+        commit: () => { /* noop */ },
+        cancel: () => { /* noop */ },
       } as any);
 
       // Put the editor container inside a parent

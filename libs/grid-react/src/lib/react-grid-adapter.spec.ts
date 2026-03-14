@@ -405,13 +405,13 @@ describe('ReactGridAdapter', () => {
         const td = adapter.getTypeDefault('status');
         expect(td!.editor).toBeDefined();
 
-        const result = (td!.editor as Function)({
+        const result = (td!.editor as (...args: unknown[]) => HTMLElement)({
           value: 'active',
           row: {},
           column: {} as any,
           field: 'status',
-          commit: () => {},
-          cancel: () => {},
+          commit: () => { /* noop */ },
+          cancel: () => { /* noop */ },
         });
 
         expect(result).toBeInstanceOf(HTMLElement);
@@ -460,8 +460,8 @@ describe('ReactGridAdapter', () => {
           row: {},
           column: {} as any,
           field: 'releaseCellTest',
-          commit: () => {},
-          cancel: () => {},
+          commit: () => { /* noop */ },
+          cancel: () => { /* noop */ },
         } as any);
 
         // Simulate cell containing the editor

@@ -22,7 +22,7 @@ describe('print-isolated', () => {
 
     // happy-dom doesn't define window.print by default
     if (!window.print) {
-      window.print = () => {};
+      window.print = () => { /* noop */ };
     }
   });
 
@@ -230,7 +230,7 @@ describe('print-isolated', () => {
 
   describe('warnings', () => {
     it('should warn when multiple elements share the grid ID', async () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { /* noop */ });
 
       // Add another element with the same ID
       const duplicate = document.createElement('div');
@@ -247,7 +247,7 @@ describe('print-isolated', () => {
     });
 
     it('should not warn when only one element has the grid ID', async () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { /* noop */ });
 
       vi.spyOn(window, 'print').mockImplementation(() => {
         window.dispatchEvent(new Event('afterprint'));

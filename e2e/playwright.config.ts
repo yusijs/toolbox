@@ -28,6 +28,10 @@ const reporters: Parameters<typeof defineConfig>[0]['reporter'] = process.env.CI
 
 export default defineConfig({
   testDir: './tests',
+  /* Completely exclude CI-incompatible test files so they don't appear in reports */
+  testIgnore: process.env.CI
+    ? ['**/performance-regression*', '**/virtualization-stability*']
+    : [],
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code */

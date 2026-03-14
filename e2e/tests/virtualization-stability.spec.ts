@@ -11,16 +11,13 @@ import { DEMOS, SELECTORS, waitForGridReady } from './utils';
  * - Rows always fill the visible area
  * - Scroll position remains stable when expanding/collapsing details
  *
- * **Skipped on CI**: These tests involve heavy scrolling with many
+ * **Not run on CI**: These tests involve heavy scrolling with many
  * waitForTimeout delays that are unreliable on slow shared CI runners.
  * Run locally to validate virtualization stability.
+ *
+ * NOTE: Excluded from CI via testIgnore in playwright.config.ts
  */
 
-// Skip on CI — scroll-heavy tests with many waitForTimeout calls are unreliable on shared runners
-test.skip(
-  !!process.env.CI,
-  'Virtualization stability tests are skipped on CI (scroll-heavy, unreliable on shared runners)',
-);
 test.describe('Variable Row Height Virtualization Stability', () => {
   // Disable retries — these tests are deterministic; retrying masks real bugs
   test.describe.configure({ retries: 0 });
