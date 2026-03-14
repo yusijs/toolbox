@@ -24,10 +24,6 @@ import ShowSource from '@components/ShowSource.astro';
 
 This page documents built-in grid features that don't require plugins — the interactive playground, column configuration, data formatting, styling, shell layout, loading states, events, methods, and more.
 
-:::tip
-For basic setup and installation, see the [Getting Started](/grid/getting-started/) guide. For plugin features (selection, filtering, grouping, etc.), see the [Plugins](/grid/plugins/) section.
-:::
-
 ---
 
 ## Basic Usage
@@ -46,15 +42,15 @@ The grid implements [ARIA grid keyboard patterns](https://www.w3.org/WAI/ARIA/ap
 
 | Key | Action |
 |-----|--------|
-| Arrow keys | Move between cells |
-| Home / End | Jump to first/last cell in row |
-| Ctrl+Home / Ctrl+End | Jump to first/last cell in grid |
-| Page Up / Page Down | Scroll by viewport height |
-| Enter | Start editing (with EditingPlugin) |
-| Escape | Cancel editing |
-| Tab / Shift+Tab | Move to next/previous editable cell |
+| <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> | Move between cells |
+| <kbd>Home</kbd> / <kbd>End</kbd> | Jump to first/last cell in row |
+| <kbd>Ctrl</kbd> + <kbd>Home</kbd> / <kbd>Ctrl</kbd> + <kbd>End</kbd> | Jump to first/last cell in grid |
+| <kbd>PgUp</kbd> / <kbd>PgDn</kbd> | Scroll by viewport height |
+| <kbd>↵ Enter</kbd> | Start editing (with EditingPlugin) |
+| <kbd>Esc</kbd> | Cancel editing |
+| <kbd>⇥ Tab</kbd> / <kbd>⇧ Shift</kbd> + <kbd>⇥ Tab</kbd> | Move to next/previous editable cell |
 
-For the full keyboard shortcut reference, see the [Accessibility guide](/grid/guides/accessibility).
+For the full keyboard shortcut reference, see the [Accessibility guide](/grid/guides/accessibility/).
 
 ### RTL (Right-to-Left) Support
 
