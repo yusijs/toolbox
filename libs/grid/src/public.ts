@@ -129,6 +129,8 @@ export const DGEvents = {
   CELL_ACTIVATE: 'cell-activate',
   GROUP_TOGGLE: 'group-toggle',
   COLUMN_STATE_CHANGE: 'column-state-change',
+  /** Emitted when grid row data changes (set, insert, remove, update) */
+  DATA_CHANGE: 'data-change',
 } as const;
 
 /**
@@ -253,6 +255,7 @@ export type {
   // Type-level defaults
   ColumnType,
   ColumnViewRenderer,
+  DataChangeDetail,
   DataGridCustomEvent,
   DataGridElement as DataGridElementInterface,
   DataGridEventMap,

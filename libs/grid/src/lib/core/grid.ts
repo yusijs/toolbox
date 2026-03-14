@@ -77,6 +77,7 @@ import type {
   ColumnConfig,
   ColumnConfigMap,
   ColumnInternal,
+  DataChangeDetail,
   DataGridEventMap,
   FitMode,
   FrameworkAdapter,
@@ -1920,6 +1921,13 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
     this.dispatchEvent(new CustomEvent(eventName, { detail, bubbles: true, composed: true }));
   }
 
+  #emitDataChange(): void {
+    this.#emit<DataChangeDetail>('data-change', {
+      rowCount: this._rows.length,
+      sourceRowCount: this.#rows.length,
+    });
+  }
+
   /** Update ARIA selection attributes on rendered rows/cells */
   #updateAriaSelection(): void {
     // Mark active row and cell with aria-selected
@@ -2290,6 +2298,8 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
     if (this._virtualization.variableHeights) {
       this.#initializePositionCache();
     }
+
+    this.#emitDataChange();
   }
 
   /**
@@ -2957,6 +2967,7 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
     if (changedFields.length > 0) {
       invalidateCellCache(this);
       this.#scheduler.requestPhase(RenderPhase.VIRTUALIZATION, 'updateRow');
+      this.#emitDataChange();
     }
   }
 
@@ -3019,6 +3030,7 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
     if (anyChanged) {
       invalidateCellCache(this);
       this.#scheduler.requestPhase(RenderPhase.VIRTUALIZATION, 'updateRows');
+      this.#emitDataChange();
     }
   }
 
@@ -3153,6 +3165,8 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
     // Notify plugins about the inserted row (e.g., editing dirty tracking)
     this.#pluginManager?.emitPluginEvent('row-inserted', { row, index: idx });
 
+    this.#emitDataChange();
+
     if (animate) {
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       await this.animateRow(idx, 'insert');
@@ -3225,6 +3239,8 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
     this.__rowRenderEpoch++;
     for (const r of this._rowPool) (r as unknown as { __epoch: number }).__epoch = -1;
     this.refreshVirtualWindow(true);
+
+    this.#emitDataChange();
 
     // Clean up stale remove animation attributes after re-render
     if (animate) {

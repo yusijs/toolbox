@@ -2473,6 +2473,36 @@ export type LoadingRenderer = (context: LoadingContext) => HTMLElement | string;
 
 // #endregion
 
+// #region Data Change Event
+
+/**
+ * Detail for the `data-change` event.
+ *
+ * Fired whenever the grid's row data changes — including new data assignment,
+ * row insertion/removal, and in-place mutations via `updateRow()`.
+ *
+ * Use this to keep external UI in sync with the grid's current data state
+ * (row counts, summaries, charts, etc.).
+ *
+ * @example
+ * ```typescript
+ * grid.addEventListener('data-change', (e: CustomEvent<DataChangeDetail>) => {
+ *   console.log(`${e.detail.rowCount} rows visible of ${e.detail.sourceRowCount} total`);
+ * });
+ * ```
+ *
+ * @see {@link DataGridEventMap} for all event types
+ * @category Events
+ */
+export interface DataChangeDetail {
+  /** Number of visible (processed) rows */
+  rowCount: number;
+  /** Total number of source rows (before filtering/grouping) */
+  sourceRowCount: number;
+}
+
+// #endregion
+
 // #region Data Update Management
 
 /**
@@ -3006,7 +3036,7 @@ export interface ToolPanelDefinition {
  *     container.appendChild(span);
  *
  *     // Update on data changes
- *     const update = () => span.textContent = `${grid.rows.length} rows`;
+ *     const update = () => { span.textContent = `${grid.rows.length} rows`; };
  *     grid.addEventListener('data-change', update);
  *
  *     return () => {
@@ -3407,17 +3437,233 @@ export interface ExternalMountEditorDetail<TRow = unknown> {
  * @category Events
  */
 export interface DataGridEventMap<TRow = unknown> {
+  /**
+   * Fired when a cell is clicked.
+   * Provides full context: row data, column config, cell element, and the original mouse event.
+   *
+   * @example
+   * ```typescript
+   * grid.addEventListener('cell-click', (e) => {
+   *   const { row, field, value, cellEl } = e.detail;
+   *   console.log(`Clicked ${field} = ${value}`);
+   *
+   *   // Open a detail dialog for a specific column
+   *   if (field === 'avatar') {
+   *     showImagePreview(row.avatarUrl, cellEl);
+   *   }
+   * });
+   * ```
+   *
+   * @see {@link CellClickDetail}
+   */
   'cell-click': CellClickDetail<TRow>;
+
+  /**
+   * Fired when a row is clicked (anywhere on the row).
+   * Use for row-level actions like opening a detail panel or navigating.
+   *
+   * @example
+   * ```typescript
+   * grid.addEventListener('row-click', (e) => {
+   *   const { row, rowIndex, rowEl } = e.detail;
+   *   console.log(`Row ${rowIndex}: ${row.name}`);
+   *
+   *   // Navigate to detail page
+   *   router.navigate(`/employees/${row.id}`);
+   * });
+   * ```
+   *
+   * @see {@link RowClickDetail}
+   */
   'row-click': RowClickDetail<TRow>;
+
+  /**
+   * Fired when a cell is activated by Enter key or pointer click.
+   * Unified event for both keyboard and pointer activation — use this
+   * instead of the deprecated `activate-cell`.
+   *
+   * Call `e.preventDefault()` to suppress default behavior (e.g., inline editing).
+   *
+   * @example
+   * ```typescript
+   * grid.addEventListener('cell-activate', (e) => {
+   *   const { row, field, trigger, cellEl } = e.detail;
+   *
+   *   // Custom editing for a specific column
+   *   if (field === 'notes') {
+   *     e.preventDefault();
+   *     openRichTextEditor(row, cellEl);
+   *   }
+   *
+   *   console.log(`Activated via ${trigger}`); // 'keyboard' | 'pointer'
+   * });
+   * ```
+   *
+   * @see {@link CellActivateDetail}
+   * @see {@link CellActivateTrigger}
+   */
   'cell-activate': CellActivateDetail<TRow>;
+
+  /**
+   * Fired after any data mutation — user edits, cascade updates, or API calls.
+   * This is an informational event for logging, auditing, or cascading updates
+   * to related fields. Check `source` to distinguish edit origins.
+   *
+   * @example
+   * ```typescript
+   * grid.addEventListener('cell-change', (e) => {
+   *   const { row, field, oldValue, newValue, source } = e.detail;
+   *   console.log(`${field}: ${oldValue} → ${newValue} (${source})`);
+   *
+   *   // Cascade: recalculate total when quantity changes
+   *   if (source === 'user' && field === 'quantity') {
+   *     grid.updateRow(e.detail.rowId, {
+   *       total: newValue * row.price,
+   *     });
+   *   }
+   * });
+   * ```
+   *
+   * @see {@link CellChangeDetail}
+   * @see {@link UpdateSource}
+   */
   'cell-change': CellChangeDetail<TRow>;
+
+  /**
+   * Fired whenever the grid's row data changes — new data assignment,
+   * row insertion/removal, or in-place mutations via `updateRow()`.
+   * Use to keep external UI (row counts, summaries, charts) in sync.
+   *
+   * @example
+   * ```typescript
+   * grid.addEventListener('data-change', (e) => {
+   *   const { rowCount, sourceRowCount } = e.detail;
+   *   statusBar.textContent = `${rowCount} of ${sourceRowCount} rows`;
+   * });
+   * ```
+   *
+   * @see {@link DataChangeDetail}
+   */
+  'data-change': DataChangeDetail;
+
+  /**
+   * Emitted when a cell with an external view renderer (React, Angular, Vue component)
+   * needs to be mounted. Framework adapters listen for this event internally.
+   *
+   * @example
+   * ```typescript
+   * // Custom framework adapter
+   * grid.addEventListener('mount-external-view', (e) => {
+   *   const { placeholder, spec, context } = e.detail;
+   *   myFramework.render(spec.component, placeholder, {
+   *     row: context.row,
+   *     value: context.value,
+   *   });
+   * });
+   * ```
+   *
+   * @see {@link ExternalMountViewDetail}
+   * @see {@link FrameworkAdapter}
+   */
   'mount-external-view': ExternalMountViewDetail<TRow>;
+
+  /**
+   * Emitted when a cell with an external editor component (React, Angular, Vue)
+   * needs to be mounted with commit/cancel bindings. Framework adapters listen
+   * for this event internally.
+   *
+   * @example
+   * ```typescript
+   * // Custom framework adapter
+   * grid.addEventListener('mount-external-editor', (e) => {
+   *   const { placeholder, spec, context } = e.detail;
+   *   myFramework.render(spec.component, placeholder, {
+   *     value: context.value,
+   *     onSave: context.commit,
+   *     onCancel: context.cancel,
+   *   });
+   * });
+   * ```
+   *
+   * @see {@link ExternalMountEditorDetail}
+   * @see {@link FrameworkAdapter}
+   */
   'mount-external-editor': ExternalMountEditorDetail<TRow>;
+
+  /**
+   * Fired when the sort state changes — column header click, programmatic sort,
+   * or sort cleared. `direction: 0` indicates the sort was removed.
+   *
+   * @example
+   * ```typescript
+   * grid.addEventListener('sort-change', (e) => {
+   *   const { field, direction } = e.detail;
+   *   if (direction === 0) {
+   *     console.log('Sort cleared');
+   *   } else {
+   *     console.log(`Sorted by ${field} ${direction === 1 ? 'ASC' : 'DESC'}`);
+   *   }
+   *
+   *   // Server-side sorting
+   *   fetchData({ sortBy: field, sortDir: direction });
+   * });
+   * ```
+   *
+   * @see {@link SortChangeDetail}
+   * @see {@link SortHandler}
+   */
   'sort-change': SortChangeDetail;
+
+  /**
+   * Fired when a column is resized by the user dragging the resize handle.
+   * Use to persist column widths to user preferences or localStorage.
+   *
+   * @example
+   * ```typescript
+   * grid.addEventListener('column-resize', (e) => {
+   *   const { field, width } = e.detail;
+   *   console.log(`Column "${field}" resized to ${width}px`);
+   *
+   *   // Persist to localStorage
+   *   const widths = JSON.parse(localStorage.getItem('col-widths') ?? '{}');
+   *   widths[field] = width;
+   *   localStorage.setItem('col-widths', JSON.stringify(widths));
+   * });
+   * ```
+   *
+   * @see {@link ColumnResizeDetail}
+   */
   'column-resize': ColumnResizeDetail;
-  /** @deprecated Use 'cell-activate' instead */
+
+  /**
+   * @deprecated Use `cell-activate` instead. Will be removed in the next major version.
+   * @see {@link ActivateCellDetail}
+   */
   'activate-cell': ActivateCellDetail;
+
+  /**
+   * Fired when column state changes — reordering, resizing, visibility toggle,
+   * or sort changes. Use with `getColumnState()` / `columnState` setter for
+   * full state persistence.
+   *
+   * @example
+   * ```typescript
+   * grid.addEventListener('column-state-change', (e) => {
+   *   const state: GridColumnState = e.detail;
+   *   localStorage.setItem('grid-state', JSON.stringify(state));
+   *   console.log(`${state.columns.length} columns in state`);
+   * });
+   *
+   * // Restore on load
+   * const saved = localStorage.getItem('grid-state');
+   * if (saved) grid.columnState = JSON.parse(saved);
+   * ```
+   *
+   * @see {@link GridColumnState}
+   * @see {@link ColumnState}
+   */
   'column-state-change': GridColumnState;
+
   // Note: 'cell-commit', 'row-commit', 'changed-rows-reset' are added via
   // module augmentation by EditingPlugin when imported
 }

@@ -2236,3 +2236,84 @@ describe('insertRow / removeRow', () => {
     expect(() => grid.suspendProcessing()).not.toThrow();
   });
 });
+
+describe('tbw-grid integration: data-change event', () => {
+  let grid: any;
+
+  beforeEach(() => {
+    document.body.innerHTML = '';
+    grid = document.createElement('tbw-grid');
+    document.body.appendChild(grid);
+  });
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('fires data-change when rows are set', async () => {
+    grid.columns = [{ field: 'id' }];
+    grid.rows = [{ id: 1 }];
+    await waitUpgrade(grid);
+    await nextFrame();
+
+    const events: any[] = [];
+    grid.addEventListener('data-change', (e: any) => events.push(e.detail));
+
+    grid.rows = [{ id: 1 }, { id: 2 }, { id: 3 }];
+    // Wait for microtask (#queueUpdate) + RAF (scheduler flush)
+    await nextFrame();
+    await nextFrame();
+
+    expect(events.length).toBeGreaterThanOrEqual(1);
+    const last = events[events.length - 1];
+    expect(last.rowCount).toBe(3);
+    expect(last.sourceRowCount).toBe(3);
+  });
+
+  it('fires data-change on insertRow', async () => {
+    grid.columns = [{ field: 'id' }];
+    grid.rows = [{ id: 1 }];
+    await waitUpgrade(grid);
+    await nextFrame();
+
+    const events: any[] = [];
+    grid.addEventListener('data-change', (e: any) => events.push(e.detail));
+
+    await grid.insertRow(1, { id: 2 }, false);
+    expect(events.length).toBeGreaterThanOrEqual(1);
+    expect(events[events.length - 1].rowCount).toBe(2);
+  });
+
+  it('fires data-change on removeRow', async () => {
+    grid.columns = [{ field: 'id' }];
+    grid.rows = [{ id: 1 }, { id: 2 }];
+    await waitUpgrade(grid);
+    await nextFrame();
+
+    const events: any[] = [];
+    grid.addEventListener('data-change', (e: any) => events.push(e.detail));
+
+    await grid.removeRow(0, false);
+    expect(events.length).toBeGreaterThanOrEqual(1);
+    expect(events[events.length - 1].rowCount).toBe(1);
+  });
+
+  it('fires data-change on updateRow', async () => {
+    grid.gridConfig = { columns: [{ field: 'id' }, { field: 'name' }], getRowId: (r: any) => String(r.id) };
+    grid.rows = [{ id: 1, name: 'Alice' }];
+    await waitUpgrade(grid);
+    await nextFrame();
+
+    const events: any[] = [];
+    grid.addEventListener('data-change', (e: any) => events.push(e.detail));
+
+    grid.updateRow('1', { name: 'Bob' });
+    expect(events.length).toBe(1);
+    expect(events[0].rowCount).toBe(1);
+    expect(events[0].sourceRowCount).toBe(1);
+  });
+
+  it('includes DATA_CHANGE in DGEvents', async () => {
+    const mod = await import('../../index');
+    expect(mod.DGEvents.DATA_CHANGE).toBe('data-change');
+  });
+});
