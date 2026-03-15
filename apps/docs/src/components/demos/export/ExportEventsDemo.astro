@@ -58,7 +58,7 @@ import '@toolbox-web/grid/features/export';
 
 const container = document.getElementById('export-events-demo');
 if (container) {
-  const grid = queryGrid('tbw-grid', container);
+  const grid = await queryGrid('tbw-grid', container, true);
 
   grid.gridConfig = {
     columns: [
@@ -93,11 +93,11 @@ if (container) {
   clearBtn?.addEventListener('click', () => { if (log) log.innerHTML = ''; });
 
   csvBtn?.addEventListener('click', () => {
-    grid.getPluginByName('export')?.exportToCSV();
+    grid.getPluginByName('export')?.exportCsv();
   });
 
   jsonBtn?.addEventListener('click', () => {
-    grid.getPluginByName('export')?.exportToJSON();
+    grid.getPluginByName('export')?.exportJson();
   });
 
   grid.on('export-complete', (d) => {

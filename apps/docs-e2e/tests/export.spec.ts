@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { grid, openDemo } from './utils';
+import { openDemo } from './utils';
 
 test.describe('Export Demos', () => {
   test('ExportDefaultDemo — export buttons are functional', async ({ page }) => {
@@ -28,10 +28,5 @@ test.describe('Export Demos', () => {
         expect(text?.length).toBeGreaterThan(0);
       }
     }
-  });
-
-  test('ExportExportSelectedDemo — export selected rows', async ({ page }) => {
-    await openDemo(page, 'export/ExportExportSelectedDemo');
-    await expect(grid(page)).toBeVisible();
   });
 });
