@@ -103,6 +103,9 @@
       display: flex;
       flex-direction: row;
       overflow: hidden;
+      /* Grid handles touch scrolling via JS (faux scrollbar pattern).
+         Prevent browser compositor from hijacking touch gestures mid-scroll. */
+      touch-action: none;
     }
 
     .tbw-scroll-area {

@@ -86,6 +86,9 @@
       position: relative;
       display: block;
       overflow: clip;
+      /* Grid handles touch scrolling via JS (faux scrollbar pattern).
+         Prevent browser from competing with our touch handlers. */
+      touch-action: none;
 
       .rows {
         position: absolute;
@@ -107,6 +110,8 @@
       overflow-y: auto;
       overflow-x: hidden;
       z-index: var(--tbw-z-layer-header, 30);
+      /* Prevent native touch scrolling — JS touch handler manages scroll via faux scrollbar */
+      touch-action: none;
     }
 
     .faux-vscroll-spacer {

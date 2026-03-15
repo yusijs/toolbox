@@ -133,11 +133,6 @@ for (const ctrl of controls) {
               </div>
             )}
           </div>
-          {ctrl.default !== undefined && (
-            <div class="dc-default-cell">
-              <span class="dc-default-badge">{String(ctrl.default)}</span>
-            </div>
-          )}
         </div>
       ))}
     </div>
@@ -192,8 +187,6 @@ for (const ctrl of controls) {
         if (output) output.textContent = target.value;
         emitChange(name, Number(target.value));
       } else if (type === 'boolean') {
-        const badge = target.closest('.dc-row')?.querySelector('.dc-default-badge');
-        if (badge) badge.textContent = String(target.checked);
         emitChange(name, target.checked);
       } else if (type === 'radio') {
         emitChange(name, target.value);
@@ -366,20 +359,6 @@ for (const ctrl of controls) {
     background: var(--sl-color-gray-7);
     color: var(--sl-color-gray-2);
     font-size: 0.8125rem;
-  }
-
-  .dc-default-cell {
-    display: flex;
-    align-items: center;
-  }
-
-  .dc-default-badge {
-    padding: 1px 6px;
-    font-size: 0.6875rem;
-    border-radius: 3px;
-    background: var(--sl-color-gray-6);
-    color: var(--sl-color-gray-3);
-    white-space: nowrap;
   }
 
   @media (max-width: 640px) {

@@ -18,14 +18,14 @@ describe('touch-scroll', () => {
 
       expect(state.startY).toBeNull();
       expect(state.startX).toBeNull();
-      expect(state.scrollTop).toBeNull();
-      expect(state.scrollLeft).toBeNull();
       expect(state.lastY).toBeNull();
       expect(state.lastX).toBeNull();
       expect(state.lastTime).toBeNull();
       expect(state.velocityY).toBe(0);
       expect(state.velocityX).toBe(0);
       expect(state.momentumRaf).toBe(0);
+      expect(state.locked).toBe(false);
+      expect(state.activePointerId).toBeNull();
     });
   });
 
@@ -34,21 +34,19 @@ describe('touch-scroll', () => {
       const state = createTouchScrollState();
       state.startY = 100;
       state.startX = 50;
-      state.scrollTop = 200;
-      state.scrollLeft = 100;
       state.lastY = 90;
       state.lastX = 45;
       state.lastTime = 1000;
+      state.locked = true;
 
       resetTouchState(state);
 
       expect(state.startY).toBeNull();
       expect(state.startX).toBeNull();
-      expect(state.scrollTop).toBeNull();
-      expect(state.scrollLeft).toBeNull();
       expect(state.lastY).toBeNull();
       expect(state.lastX).toBeNull();
       expect(state.lastTime).toBeNull();
+      expect(state.locked).toBe(false);
     });
 
     it('should not reset velocity or momentumRaf', () => {
@@ -102,53 +100,27 @@ describe('touch-scroll', () => {
       elements = { fauxScrollbar, scrollArea: null };
     });
 
-    it('should initialize touch state on single touch', () => {
-      const event = createTouchEvent('touchstart', [{ clientX: 50, clientY: 200 }]);
-
-      handleTouchStart(event, state, elements);
+    it('should initialize touch state from coordinates', () => {
+      handleTouchStart(50, 200, state);
 
       expect(state.startY).toBe(200);
       expect(state.startX).toBe(50);
       expect(state.lastY).toBe(200);
       expect(state.lastX).toBe(50);
-      expect(state.scrollTop).toBe(100);
       expect(state.velocityY).toBe(0);
       expect(state.velocityX).toBe(0);
-    });
-
-    it('should ignore multi-touch events', () => {
-      const event = createTouchEvent('touchstart', [
-        { clientX: 50, clientY: 200 },
-        { clientX: 100, clientY: 300 },
-      ]);
-
-      handleTouchStart(event, state, elements);
-
-      expect(state.startY).toBeNull();
-      expect(state.startX).toBeNull();
+      expect(state.locked).toBe(false);
     });
 
     it('should cancel ongoing momentum animation', () => {
       const cancelSpy = vi.spyOn(globalThis, 'cancelAnimationFrame');
       state.momentumRaf = 789;
-      const event = createTouchEvent('touchstart', [{ clientX: 50, clientY: 200 }]);
 
-      handleTouchStart(event, state, elements);
+      handleTouchStart(50, 200, state);
 
       expect(cancelSpy).toHaveBeenCalledWith(789);
       expect(state.momentumRaf).toBe(0);
       cancelSpy.mockRestore();
-    });
-
-    it('should capture scrollLeft from scrollArea when present', () => {
-      const scrollArea = document.createElement('div');
-      Object.defineProperty(scrollArea, 'scrollLeft', { value: 75, writable: true });
-      elements.scrollArea = scrollArea;
-      const event = createTouchEvent('touchstart', [{ clientX: 50, clientY: 200 }]);
-
-      handleTouchStart(event, state, elements);
-
-      expect(state.scrollLeft).toBe(75);
     });
   });
 
@@ -173,59 +145,58 @@ describe('touch-scroll', () => {
       // Initialize state as if touchstart occurred
       state.startY = 200;
       state.startX = 50;
-      state.scrollTop = 100;
-      state.scrollLeft = 0;
       state.lastY = 200;
       state.lastX = 50;
-      state.lastTime = performance.now() - 16; // 16ms ago
+      state.lastTime = performance.now() - 16;
     });
 
     it('should return false when state is not initialized', () => {
-      state.startY = null;
-      const event = createTouchEvent('touchmove', [{ clientX: 50, clientY: 180 }]);
+      state.lastY = null;
 
-      const result = handleTouchMove(event, state, elements);
-
-      expect(result).toBe(false);
-    });
-
-    it('should return false for multi-touch events', () => {
-      const event = createTouchEvent('touchmove', [
-        { clientX: 50, clientY: 180 },
-        { clientX: 100, clientY: 280 },
-      ]);
-
-      const result = handleTouchMove(event, state, elements);
+      const result = handleTouchMove(50, 180, state, elements);
 
       expect(result).toBe(false);
     });
 
-    it('should return true when scrolling vertically is possible', () => {
-      const event = createTouchEvent('touchmove', [{ clientX: 50, clientY: 180 }]);
+    it('should return false for small movements (below 3px threshold)', () => {
+      const result = handleTouchMove(50, 199, state, elements);
 
-      const result = handleTouchMove(event, state, elements);
+      expect(result).toBe(false);
+    });
+
+    it('should return true and lock when scrolling vertically', () => {
+      // Move > 3px to trigger lock
+      const result = handleTouchMove(50, 180, state, elements);
 
       expect(result).toBe(true);
+      expect(state.locked).toBe(true);
+    });
+
+    it('should use incremental deltas for scroll', () => {
+      // First move: from 200 to 180 (incr = 20)
+      handleTouchMove(50, 180, state, elements);
+      expect(fauxScrollbar.scrollTop).toBe(120); // 100 + 20
+
+      // Second move: from 180 to 170 (incr = 10), should add incrementally
+      handleTouchMove(50, 170, state, elements);
+      expect(fauxScrollbar.scrollTop).toBe(130); // 120 + 10
     });
 
     it('should update velocity based on touch movement', () => {
-      const event = createTouchEvent('touchmove', [{ clientX: 50, clientY: 180 }]);
+      handleTouchMove(50, 180, state, elements);
 
-      handleTouchMove(event, state, elements);
-
-      // Velocity should be calculated (direction: positive = scrolling down)
       expect(state.velocityY).toBeGreaterThan(0);
       expect(state.lastY).toBe(180);
     });
 
-    it('should apply vertical scroll delta', () => {
-      const event = createTouchEvent('touchmove', [{ clientX: 50, clientY: 180 }]);
+    it('should keep preventing default once locked', () => {
+      // First move locks
+      handleTouchMove(50, 180, state, elements);
+      expect(state.locked).toBe(true);
 
-      handleTouchMove(event, state, elements);
-
-      // scrollTop should increase (finger moved up = content scrolls down)
-      // deltaY = startY - currentY = 200 - 180 = 20
-      expect(fauxScrollbar.scrollTop).toBe(120); // 100 + 20
+      // Subsequent moves stay locked even with small delta
+      const result = handleTouchMove(50, 179, state, elements);
+      expect(result).toBe(true);
     });
 
     it('should handle horizontal scrolling when scrollArea is present', () => {
@@ -236,14 +207,10 @@ describe('touch-scroll', () => {
         clientWidth: { value: 400 },
       });
       elements.scrollArea = scrollArea;
-      state.scrollLeft = 50;
 
-      const event = createTouchEvent('touchmove', [{ clientX: 30, clientY: 200 }]);
-
-      const result = handleTouchMove(event, state, elements);
+      const result = handleTouchMove(30, 200, state, elements);
 
       expect(result).toBe(true);
-      // deltaX = startX - currentX = 50 - 30 = 20
       expect(scrollArea.scrollLeft).toBe(70); // 50 + 20
     });
   });
@@ -256,7 +223,6 @@ describe('touch-scroll', () => {
       state = createTouchScrollState();
       state.startY = 200;
       state.lastY = 180;
-      state.scrollTop = 100;
       state.lastTime = performance.now();
 
       const fauxScrollbar = document.createElement('div');
@@ -279,8 +245,8 @@ describe('touch-scroll', () => {
 
       expect(state.startY).toBeNull();
       expect(state.startX).toBeNull();
-      expect(state.scrollTop).toBeNull();
       expect(state.lastY).toBeNull();
+      expect(state.lastX).toBeNull();
     });
 
     it('should start momentum animation when velocity is significant', () => {
@@ -313,6 +279,9 @@ describe('touch-scroll', () => {
 
     beforeEach(() => {
       gridContentEl = document.createElement('div');
+      // Mock setPointerCapture/releasePointerCapture
+      gridContentEl.setPointerCapture = vi.fn();
+      gridContentEl.releasePointerCapture = vi.fn();
       state = createTouchScrollState();
       const fauxScrollbar = document.createElement('div');
       Object.defineProperties(fauxScrollbar, {
@@ -328,71 +297,120 @@ describe('touch-scroll', () => {
       controller.abort();
     });
 
-    it('should add touch event listeners', () => {
+    it('should add pointer event listeners', () => {
       const addSpy = vi.spyOn(gridContentEl, 'addEventListener');
 
       setupTouchScrollListeners(gridContentEl, state, elements, controller.signal);
 
-      expect(addSpy).toHaveBeenCalledTimes(3);
       expect(addSpy).toHaveBeenCalledWith(
-        'touchstart',
+        'pointerdown',
         expect.any(Function),
         expect.objectContaining({ passive: true }),
       );
       expect(addSpy).toHaveBeenCalledWith(
-        'touchmove',
+        'pointermove',
         expect.any(Function),
         expect.objectContaining({ passive: false }),
       );
-      expect(addSpy).toHaveBeenCalledWith('touchend', expect.any(Function), expect.objectContaining({ passive: true }));
+      expect(addSpy).toHaveBeenCalledWith(
+        'pointerup',
+        expect.any(Function),
+        expect.objectContaining({ passive: true }),
+      );
+      expect(addSpy).toHaveBeenCalledWith(
+        'pointercancel',
+        expect.any(Function),
+        expect.objectContaining({ passive: true }),
+      );
+      expect(addSpy).toHaveBeenCalledWith(
+        'lostpointercapture',
+        expect.any(Function),
+        expect.objectContaining({ passive: true }),
+      );
+    });
+
+    it('should set pointer capture on touch pointerdown', () => {
+      setupTouchScrollListeners(gridContentEl, state, elements, controller.signal);
+
+      gridContentEl.dispatchEvent(createPointerEvent('pointerdown', { clientX: 50, clientY: 200, pointerId: 1, pointerType: 'touch' }));
+
+      expect(state.activePointerId).toBe(1);
+      expect(state.startY).toBe(200);
+      expect(gridContentEl.setPointerCapture).toHaveBeenCalledWith(1);
+    });
+
+    it('should ignore mouse pointerdown events', () => {
+      setupTouchScrollListeners(gridContentEl, state, elements, controller.signal);
+
+      gridContentEl.dispatchEvent(createPointerEvent('pointerdown', { clientX: 50, clientY: 200, pointerId: 1, pointerType: 'mouse' }));
+
+      expect(state.activePointerId).toBeNull();
+      expect(state.startY).toBeNull();
+    });
+
+    it('should ignore second touch while first is active', () => {
+      setupTouchScrollListeners(gridContentEl, state, elements, controller.signal);
+
+      gridContentEl.dispatchEvent(createPointerEvent('pointerdown', { clientX: 50, clientY: 200, pointerId: 1, pointerType: 'touch' }));
+      gridContentEl.dispatchEvent(createPointerEvent('pointerdown', { clientX: 100, clientY: 300, pointerId: 2, pointerType: 'touch' }));
+
+      expect(state.activePointerId).toBe(1);
+      expect(state.startY).toBe(200);
     });
 
     it('should remove listeners when signal is aborted', () => {
       setupTouchScrollListeners(gridContentEl, state, elements, controller.signal);
 
-      // Dispatch touchstart and verify it updates state
-      const startEvent = createTouchEvent('touchstart', [{ clientX: 50, clientY: 200 }]);
-      gridContentEl.dispatchEvent(startEvent);
+      // Dispatch pointerdown and verify it updates state
+      gridContentEl.dispatchEvent(createPointerEvent('pointerdown', { clientX: 50, clientY: 200, pointerId: 1, pointerType: 'touch' }));
       expect(state.startY).toBe(200);
 
       // Abort and reset state
       controller.abort();
       state.startY = null;
+      state.activePointerId = null;
 
       // Dispatch again - should not update state
-      const startEvent2 = createTouchEvent('touchstart', [{ clientX: 50, clientY: 300 }]);
-      gridContentEl.dispatchEvent(startEvent2);
+      gridContentEl.dispatchEvent(createPointerEvent('pointerdown', { clientX: 50, clientY: 300, pointerId: 2, pointerType: 'touch' }));
       expect(state.startY).toBeNull();
+    });
+
+    it('should clean up state on pointercancel', () => {
+      setupTouchScrollListeners(gridContentEl, state, elements, controller.signal);
+
+      gridContentEl.dispatchEvent(createPointerEvent('pointerdown', { clientX: 50, clientY: 200, pointerId: 1, pointerType: 'touch' }));
+      expect(state.activePointerId).toBe(1);
+
+      gridContentEl.dispatchEvent(createPointerEvent('pointercancel', { pointerId: 1, pointerType: 'touch' }));
+      expect(state.activePointerId).toBeNull();
+      expect(state.locked).toBe(false);
+    });
+
+    it('should clean up state on lostpointercapture', () => {
+      setupTouchScrollListeners(gridContentEl, state, elements, controller.signal);
+
+      gridContentEl.dispatchEvent(createPointerEvent('pointerdown', { clientX: 50, clientY: 200, pointerId: 1, pointerType: 'touch' }));
+      expect(state.activePointerId).toBe(1);
+
+      gridContentEl.dispatchEvent(createPointerEvent('lostpointercapture', { pointerId: 1, pointerType: 'touch' }));
+      expect(state.activePointerId).toBeNull();
+      expect(state.locked).toBe(false);
     });
   });
 });
 
 /**
- * Helper to create touch events for testing.
+ * Helper to create pointer events for testing.
  */
-function createTouchEvent(type: string, touches: Array<{ clientX: number; clientY: number }>): TouchEvent {
-  const touchList = touches.map(
-    (t, i) =>
-      ({
-        identifier: i,
-        target: document.body,
-        clientX: t.clientX,
-        clientY: t.clientY,
-        pageX: t.clientX,
-        pageY: t.clientY,
-        screenX: t.clientX,
-        screenY: t.clientY,
-        radiusX: 0,
-        radiusY: 0,
-        rotationAngle: 0,
-        force: 1,
-      }) as Touch,
-  );
-
-  return new TouchEvent(type, {
-    touches: touchList,
-    targetTouches: touchList,
-    changedTouches: touchList,
+function createPointerEvent(
+  type: string,
+  opts: { clientX?: number; clientY?: number; pointerId: number; pointerType: string },
+): PointerEvent {
+  return new PointerEvent(type, {
+    clientX: opts.clientX ?? 0,
+    clientY: opts.clientY ?? 0,
+    pointerId: opts.pointerId,
+    pointerType: opts.pointerType,
     bubbles: true,
     cancelable: true,
   });
