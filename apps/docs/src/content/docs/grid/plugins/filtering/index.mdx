@@ -6,11 +6,9 @@ description: "Add column-level filtering with built-in filter panel and custom f
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 import FilteringDefaultDemo from '@components/demos/filtering/FilteringDefaultDemo.astro';
 import FilteringCustomFilterPanelDemo from '@components/demos/filtering/FilteringCustomFilterPanelDemo.astro';
-import FilteringCaseSensitiveDemo from '@components/demos/filtering/FilteringCaseSensitiveDemo.astro';
 import FilteringTypeSpecificFiltersDemo from '@components/demos/filtering/FilteringTypeSpecificFiltersDemo.astro';
 import FilteringAsyncFilteringDemo from '@components/demos/filtering/FilteringAsyncFilteringDemo.astro';
 import FilteringFilterEventsDemo from '@components/demos/filtering/FilteringFilterEventsDemo.astro';
-import FilteringNoDebounceDemo from '@components/demos/filtering/FilteringNoDebounceDemo.astro';
 import ShowSource from '@components/ShowSource.astro';
 
 
@@ -387,16 +385,6 @@ export class MyGridComponent {
   </TabItem>
 </Tabs>
 
-### Case-Sensitive Filtering
-
-<ShowSource file="demos/filtering/FilteringCaseSensitiveDemo.astro">
-  <FilteringCaseSensitiveDemo />
-</ShowSource>
-
-When `caseSensitive: true`, text filters distinguish between uppercase and lowercase letters. Try filtering the **Name** or **Department** column—typing "alice" won't match "Alice".
-
-
-
 ### Type-Specific Filter Panels
 
 <ShowSource file="demos/filtering/FilteringTypeSpecificFiltersDemo.astro">
@@ -481,16 +469,6 @@ grid.gridConfig = {
 
 When `valuesHandler` is provided, the filter panel shows a loading indicator while fetching values.
 When `filterHandler` is provided, filter application bypasses the local `processRows` hook.
-
-### No Debounce (Instant Filtering)
-
-Set `debounceMs: 0` to filter immediately on every keystroke — useful when working with small datasets:
-
-<ShowSource file="demos/filtering/FilteringNoDebounceDemo.astro">
-  <FilteringNoDebounceDemo />
-</ShowSource>
-
-
 
 ## Configuration Options
 

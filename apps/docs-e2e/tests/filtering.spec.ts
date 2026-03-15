@@ -35,55 +35,6 @@ test.describe('Filtering Demos', () => {
     expect(filteredRows).toBeLessThan(initialRows);
   });
 
-  test('FilteringNoDebounceDemo — filter applies instantly', async ({ page }) => {
-    await openDemo(page, 'filtering/FilteringNoDebounceDemo');
-
-    const initialRows = await dataRows(page).count();
-
-    // Hover header then click the .tbw-filter-btn
-    const nameHeader = page.locator('tbw-grid [role="columnheader"]', { hasText: 'Name' });
-    await nameHeader.hover();
-    const filterBtn = nameHeader.locator('.tbw-filter-btn');
-    await expect(filterBtn).toBeVisible({ timeout: 5000 });
-    await filterBtn.click();
-    await page.waitForTimeout(300);
-
-    const filterInput = page.locator('.tbw-filter-panel .tbw-filter-search-input, .tbw-filter-panel input').first();
-    if (await filterInput.isVisible({ timeout: 3000 })) {
-      await filterInput.fill('Alice');
-      await page.waitForTimeout(200);
-
-      const filteredRows = await dataRows(page).count();
-      expect(filteredRows).toBeLessThanOrEqual(initialRows);
-    }
-  });
-
-  test('FilteringCaseSensitiveDemo — case-sensitive filtering', async ({ page }) => {
-    await openDemo(page, 'filtering/FilteringCaseSensitiveDemo');
-
-    // Hover header then click the .tbw-filter-btn
-    const nameHeader = page.locator('tbw-grid [role="columnheader"]', { hasText: 'Name' });
-    await nameHeader.hover();
-    const filterBtn = nameHeader.locator('.tbw-filter-btn');
-    await expect(filterBtn).toBeVisible({ timeout: 5000 });
-    await filterBtn.click();
-    await page.waitForTimeout(300);
-
-    const filterInput = page.locator('.tbw-filter-panel .tbw-filter-search-input, .tbw-filter-panel input').first();
-    if (await filterInput.isVisible({ timeout: 3000 })) {
-      // Lowercase should match fewer rows in case-sensitive mode
-      await filterInput.fill('alice');
-      await page.waitForTimeout(500);
-      const lowerRows = await dataRows(page).count();
-
-      await filterInput.fill('Alice');
-      await page.waitForTimeout(500);
-      const properRows = await dataRows(page).count();
-
-      expect(properRows).toBeGreaterThanOrEqual(lowerRows);
-    }
-  });
-
   test('FilteringFilterEventsDemo — filter triggers event log', async ({ page }) => {
     await openDemo(page, 'filtering/FilteringFilterEventsDemo');
 

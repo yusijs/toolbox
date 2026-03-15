@@ -37,7 +37,7 @@ if (container) {
   const grid = queryGrid('tbw-grid', container);
 
       // Custom filter panel for Status column (radio-button style)
-      const statusFilterPanel = (container) => {
+      const statusFilterPanel = (container, params) => {
         container.innerHTML = `
           <div style="padding: 8px; min-width: 140px;">
             <div style="font-weight: 600; margin-bottom: 8px; color: var(--tbw-color-fg);">
