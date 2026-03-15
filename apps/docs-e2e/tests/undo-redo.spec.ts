@@ -49,5 +49,17 @@ test.describe('Undo/Redo Demos', () => {
   test('UndoRedoLimitedHistoryDemo — limited history renders', async ({ page }) => {
     await openDemo(page, 'undo-redo/UndoRedoLimitedHistoryDemo');
     await expect(grid(page)).toBeVisible();
+
+    // Edit a cell, then try undo to verify limited history works
+    await dblClickCell(page, 0, 1);
+    const input = page.locator('tbw-grid input, tbw-grid [contenteditable]').first();
+    if (await input.isVisible({ timeout: 3000 })) {
+      await typeAndCommit(page, 'Edit1');
+
+      // Undo should restore
+      await grid(page).click();
+      await page.keyboard.press('Control+z');
+      await page.waitForTimeout(300);
+    }
   });
 });

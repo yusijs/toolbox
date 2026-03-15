@@ -48,5 +48,16 @@ test.describe('Master-Detail Demos', () => {
   test('MasterDetailFixedDetailHeightDemo — fixed detail height', async ({ page }) => {
     await openDemo(page, 'master-detail/MasterDetailFixedDetailHeightDemo');
     await expect(grid(page)).toBeVisible();
+
+    // Expand a row to see the fixed-height detail panel
+    const expandBtn = page.locator('tbw-grid .master-detail-toggle[role="button"]').first();
+    if (await expandBtn.isVisible({ timeout: 5000 })) {
+      await expandBtn.click();
+      await page.waitForTimeout(500);
+
+      // Detail panel should be visible
+      const detail = page.locator('tbw-grid .master-detail-row');
+      await expect(detail.first()).toBeVisible();
+    }
   });
 });

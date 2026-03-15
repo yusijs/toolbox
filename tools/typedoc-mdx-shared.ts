@@ -119,10 +119,11 @@ export const escape = (text: string): string => {
 
 /**
  * Escape special characters in inline code within MDX.
- * Only pipes `|` need escaping — they break table cell boundaries.
+ * Backslashes and pipes need escaping — pipes break table cell boundaries,
+ * and unescaped backslashes can interfere with pipe escaping.
  * Angle brackets are safe inside backtick code spans (MDX treats them as literal text).
  */
-export const escapeCode = (text: string): string => text.replace(/\|/g, '\\|');
+export const escapeCode = (text: string): string => text.replace(/\\/g, '\\\\').replace(/\|/g, '\\|');
 
 /** Get summary text from a comment */
 export const getText = (comment?: TypeDocComment): string => comment?.summary?.map((s) => s.text).join('') ?? '';
@@ -247,7 +248,8 @@ export function formatTypeWithLinks(type: TypeDocType | undefined, typeRegistry:
     case 'reflection': {
       const sig = type.declaration?.signatures?.[0];
       if (sig) {
-        const params = sig.parameters?.map((p) => `${p.name}: ${formatTypeWithLinks(p.type, typeRegistry)}`).join(', ') ?? '';
+        const params =
+          sig.parameters?.map((p) => `${p.name}: ${formatTypeWithLinks(p.type, typeRegistry)}`).join(', ') ?? '';
         const ret = formatTypeWithLinks(sig.type, typeRegistry);
         return `(${params}) => ${ret}`;
       }
@@ -382,10 +384,7 @@ export function writeMdx(outDir: string, relativePath: string, content: string, 
  * @param resolveSeeLink - Optional function to resolve `{@link TypeName}` references
  *   to markdown links. When omitted, inline-tag references render as inline code.
  */
-export function genPropertyDetailsSections(
-  props: TypeDocNode[],
-  resolveSeeLink?: (text: string) => string,
-): string {
+export function genPropertyDetailsSections(props: TypeDocNode[], resolveSeeLink?: (text: string) => string): string {
   const richProps = props.filter((p) => hasPropertyDetails(p.comment));
   if (richProps.length === 0) return '';
 

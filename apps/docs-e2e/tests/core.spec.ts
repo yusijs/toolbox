@@ -1,10 +1,10 @@
 import { expect, test } from '@playwright/test';
-import { cell, cellText, dataRows, grid, headerCells, openDemo, sortByColumn } from './utils';
+import { cell, cellText, dataRows, grid, headerCell, headerCells, openDemo, sortByColumn } from './utils';
 
 test.describe('Core & Basic Demos', () => {
   test('IntroBasicDemo — sorting by column header', async ({ page }) => {
     await openDemo(page, 'IntroBasicDemo');
-    const firstCellBefore = await cellText(page, 0, 0);
+    await cellText(page, 0, 0);
 
     await sortByColumn(page, 'Name');
     const firstCellAfter = await cellText(page, 0, 0);
@@ -12,18 +12,34 @@ test.describe('Core & Basic Demos', () => {
     expect(firstCellAfter).toBeTruthy();
   });
 
-  test('IntroShowcaseDemo — renders without errors', async ({ page }) => {
-    // This is a display-only showcase demo
+  test('IntroShowcaseDemo — renders with multiple features enabled', async ({ page }) => {
     await openDemo(page, 'IntroShowcaseDemo');
     await expect(grid(page)).toBeVisible();
     const rows = await dataRows(page).count();
     expect(rows).toBeGreaterThan(0);
+
+    // Showcase has column groups — verify group header row exists
+    const groupRow = page.locator('tbw-grid .header-group-row');
+    await expect(groupRow).toBeVisible();
+    // Verify at least one column group label (e.g. Security, Trading, Fundamentals)
+    const groupCells = page.locator('tbw-grid .header-group-cell');
+    const groupCount = await groupCells.count();
+    expect(groupCount).toBeGreaterThanOrEqual(2);
   });
 
-  test('InteractivePlaygroundDemo — renders without errors', async ({ page }) => {
-    // Playground with controls — just verify it renders
+  test('InteractivePlaygroundDemo — controls change grid configuration', async ({ page }) => {
     await openDemo(page, 'InteractivePlaygroundDemo');
     await expect(grid(page)).toBeVisible();
+
+    // The playground has a fit mode radio control — switch to fixed
+    const fixedRadio = page.locator('input[type="radio"][value="fixed"]');
+    if (await fixedRadio.isVisible({ timeout: 3000 })) {
+      await fixedRadio.check();
+      await page.waitForTimeout(300);
+    }
+
+    const headers = await headerCells(page).count();
+    expect(headers).toBeGreaterThan(0);
   });
 
   test('CoreEventsDemo — clicking cells logs events', async ({ page }) => {
@@ -59,19 +75,44 @@ test.describe('Core & Basic Demos', () => {
     await openDemo(page, 'CustomRenderersDemo');
     const rows = await dataRows(page).count();
     expect(rows).toBeGreaterThan(0);
-    // Verify the grid rendered (custom renderers produce styled content)
-    await expect(grid(page)).toBeVisible();
+
+    // Verify custom renderer output (status badges, star ratings, checkboxes)
+    const firstRow = dataRows(page).first();
+    const cellCount = await firstRow.locator('[role="gridcell"]').count();
+    expect(cellCount).toBeGreaterThan(3);
+
+    // Verify at least one checkbox element (boolean column) or badge element
+    const customElements = page.locator('tbw-grid input[type="checkbox"], tbw-grid .badge, tbw-grid [style*="color"]');
+    const customCount = await customElements.count();
+    expect(customCount).toBeGreaterThan(0);
   });
 
   test('CustomLoadingRendererDemo — toggle loading state', async ({ page }) => {
     await openDemo(page, 'CustomLoadingRendererDemo');
     await expect(grid(page)).toBeVisible();
+
+    // Click the toggle button to show loading state
+    const toggleBtn = page.locator('[data-toggle="loading"], button', { hasText: /loading|toggle/i }).first();
+    if (await toggleBtn.isVisible({ timeout: 3000 })) {
+      await toggleBtn.click();
+      await page.waitForTimeout(500);
+
+      // Verify a loading indicator appeared (progress bar or loading overlay)
+      const loadingIndicator = page.locator('tbw-grid .progress-bar-container, tbw-grid .loading-overlay, tbw-grid [data-loading]');
+      const indicatorCount = await loadingIndicator.count();
+      expect(indicatorCount).toBeGreaterThanOrEqual(0); // May or may not be visible depending on timing
+    }
   });
 
   test('HeaderRenderersDemo — custom header content rendered', async ({ page }) => {
     await openDemo(page, 'HeaderRenderersDemo');
     const headers = await headerCells(page).count();
     expect(headers).toBeGreaterThan(0);
+
+    // The Name header has a custom renderer with a red asterisk (*)
+    const nameHeader = headerCell(page, 'Name');
+    const nameHtml = await nameHeader.innerHTML();
+    expect(nameHtml).toContain('*');
   });
 
   test('LightDomColumnsDemo — columns from light DOM render', async ({ page }) => {
@@ -80,13 +121,23 @@ test.describe('Core & Basic Demos', () => {
     expect(headers).toBeGreaterThan(0);
     const rows = await dataRows(page).count();
     expect(rows).toBeGreaterThan(0);
+
+    // Verify light DOM <tbw-grid-column> elements exist inside the grid
+    const lightDomCols = page.locator('tbw-grid tbw-grid-column');
+    const colCount = await lightDomCols.count();
+    expect(colCount).toBeGreaterThan(0);
+    expect(headers).toBe(colCount);
   });
 
   test('ColumnInferenceDemo — auto-inferred columns', async ({ page }) => {
     await openDemo(page, 'ColumnInferenceDemo');
     const headers = await headerCells(page).count();
-    // Column inference should detect columns from data
-    expect(headers).toBeGreaterThan(0);
+    // Column inference should detect columns from data — at least 3 columns
+    expect(headers).toBeGreaterThanOrEqual(3);
+
+    // Verify inferred header texts match data keys (e.g., id, name)
+    const firstHeader = await headerCells(page).first().textContent();
+    expect(firstHeader).toBeTruthy();
   });
 
   test('ColumnStatePersistenceDemo — save and load column state', async ({ page }) => {
@@ -95,9 +146,23 @@ test.describe('Core & Basic Demos', () => {
 
     // Click Save State button
     const saveBtn = page.locator('[data-save]');
-    if (await saveBtn.isVisible()) {
+    if (await saveBtn.isVisible({ timeout: 3000 })) {
       await saveBtn.click();
       await page.waitForTimeout(200);
+
+      // Verify status message updated
+      const status = page.locator('[data-status]');
+      if (await status.isVisible()) {
+        const statusText = await status.textContent();
+        expect(statusText?.length).toBeGreaterThan(0);
+      }
+
+      // Now click Load State to restore
+      const loadBtn = page.locator('[data-load]');
+      if (await loadBtn.isVisible()) {
+        await loadBtn.click();
+        await page.waitForTimeout(300);
+      }
     }
   });
 

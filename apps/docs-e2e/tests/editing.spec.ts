@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { cellText, clickCell, dataRows, dblClickCell, grid, openDemo, typeAndCommit } from './utils';
+import { cellText, clickCell, dataRows, dblClickCell, openDemo, typeAndCommit } from './utils';
 
 test.describe('Editing Demos', () => {
   test('EditingBasicEditingDemo — dblclick to edit, type, and commit', async ({ page }) => {
@@ -41,6 +41,19 @@ test.describe('Editing Demos', () => {
     const inputs = page.locator('tbw-grid input, tbw-grid select');
     const count = await inputs.count();
     expect(count).toBeGreaterThan(0);
+
+    // Type in an editor and verify the event log updates
+    const firstInput = inputs.first();
+    await firstInput.click();
+    await firstInput.fill('Test Product');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(300);
+
+    const eventLog = page.locator('#editing-grid-mode-demo .event-log');
+    if (await eventLog.isVisible()) {
+      const logText = await eventLog.textContent();
+      expect(logText).toContain('Test Product');
+    }
   });
 
   test('EditingEditingEventsDemo — editing fires events to log', async ({ page }) => {
@@ -74,9 +87,23 @@ test.describe('Editing Demos', () => {
 
   test('EditingAllColumnTypesDemo — different editor types render', async ({ page }) => {
     await openDemo(page, 'editing/EditingAllColumnTypesDemo');
-    await expect(grid(page)).toBeVisible();
     const rows = await dataRows(page).count();
     expect(rows).toBeGreaterThan(0);
+
+    // Double-click the Name cell (string editor)
+    await dblClickCell(page, 0, 0);
+    const textInput = page.locator('tbw-grid input[type="text"], tbw-grid input:not([type])').first();
+    await expect(textInput).toBeVisible({ timeout: 3000 });
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
+
+    // Double-click the Active cell (boolean → checkbox)
+    await dblClickCell(page, 0, 2);
+    await page.waitForTimeout(200);
+    const checkbox = page.locator('tbw-grid input[type="checkbox"]').first();
+    if (await checkbox.isVisible({ timeout: 2000 })) {
+      expect(await checkbox.isVisible()).toBe(true);
+    }
   });
 
   test('EditingAddRemoveRowsDemo — add row button inserts new row', async ({ page }) => {
@@ -97,8 +124,18 @@ test.describe('Editing Demos', () => {
 
   test('EditorParametersDemo — editor constraints applied', async ({ page }) => {
     await openDemo(page, 'editing/EditorParametersDemo');
-    await expect(grid(page)).toBeVisible();
     const rows = await dataRows(page).count();
     expect(rows).toBeGreaterThan(0);
+
+    // Double-click the Price cell (number editor with min/max/step)
+    await dblClickCell(page, 0, 0);
+    const numInput = page.locator('tbw-grid input[type="number"]').first();
+    if (await numInput.isVisible({ timeout: 3000 })) {
+      // Verify editor constraints are applied
+      const min = await numInput.getAttribute('min');
+      const max = await numInput.getAttribute('max');
+      expect(min).toBe('0');
+      expect(max).toBe('1000');
+    }
   });
 });

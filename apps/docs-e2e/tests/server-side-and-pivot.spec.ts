@@ -41,5 +41,13 @@ test.describe('Pivot Demo', () => {
   test('PivotDefaultDemo — pivot table renders', async ({ page }) => {
     await openDemo(page, 'pivot/PivotDefaultDemo');
     await expect(grid(page)).toBeVisible();
+
+    // Verify pivot renders with headers and data rows
+    const headers = page.locator('tbw-grid [role="columnheader"]');
+    const headerCount = await headers.count();
+    expect(headerCount).toBeGreaterThan(1);
+
+    const rows = await dataRows(page).count();
+    expect(rows).toBeGreaterThan(0);
   });
 });

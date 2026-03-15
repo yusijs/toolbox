@@ -66,18 +66,33 @@ test.describe('Shell Demos', () => {
   test('ShellBasicDemo — shell with title and toolbar renders', async ({ page }) => {
     await openDemo(page, 'ShellBasicDemo');
     await expect(grid(page)).toBeVisible();
+
+    // Verify shell title is visible
+    const title = page.locator('tbw-grid .tbw-shell-title');
+    await expect(title).toBeVisible();
+    const titleText = await title.textContent();
+    expect(titleText?.length).toBeGreaterThan(0);
+
+    // Verify shell header exists
+    const shellHeader = page.locator('tbw-grid .tbw-shell-header');
+    await expect(shellHeader).toBeVisible();
   });
 
   test('ShellLightDomDemo — shell configured via light DOM', async ({ page }) => {
     await openDemo(page, 'ShellLightDomDemo');
     await expect(grid(page)).toBeVisible();
+
+    // Verify light DOM shell elements exist
+    const shell = page.locator('tbw-grid-shell, tbw-grid tbw-grid-header');
+    const shellCount = await shell.count();
+    expect(shellCount).toBeGreaterThan(0);
   });
 
   test('ShellMultiPanelsDemo — toolbar toggles tool panels', async ({ page }) => {
     await openDemo(page, 'ShellMultiPanelsDemo');
 
     // Find toolbar buttons
-    const toolbarButtons = page.locator('tbw-grid .toolbar button, tbw-grid [data-tool-panel]');
+    const toolbarButtons = page.locator('tbw-grid .tbw-toolbar-btn');
     const count = await toolbarButtons.count();
 
     if (count > 0) {
@@ -92,5 +107,15 @@ test.describe('Shell Demos', () => {
   test('ShellToolbarButtonsDemo — custom toolbar buttons render', async ({ page }) => {
     await openDemo(page, 'ShellToolbarButtonsDemo');
     await expect(grid(page)).toBeVisible();
+
+    // Verify custom toolbar buttons exist
+    const toolbarButtons = page.locator('tbw-grid .tbw-toolbar-btn');
+    const count = await toolbarButtons.count();
+    expect(count).toBeGreaterThan(0);
+
+    // Click a toolbar button and verify it responds (demo shows alert)
+    page.on('dialog', (dialog) => dialog.accept());
+    await toolbarButtons.first().click();
+    await page.waitForTimeout(300);
   });
 });

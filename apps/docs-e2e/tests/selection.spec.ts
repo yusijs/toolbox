@@ -73,5 +73,19 @@ test.describe('Selection Demos', () => {
     await expect(grid(page)).toBeVisible();
     const rows = await dataRows(page).count();
     expect(rows).toBeGreaterThan(0);
+
+    // Click an active row (row 0 = Alice, status: active) — should select
+    await clickCell(page, 0, 0);
+    await page.waitForTimeout(200);
+    const activeRow = dataRows(page).nth(0);
+    const activeClass = await activeRow.getAttribute('class');
+    expect(activeClass).toContain('selected');
+
+    // Click a locked row (row 1 = Bob, status: locked) — should NOT select
+    await clickCell(page, 1, 0);
+    await page.waitForTimeout(200);
+    const lockedRow = dataRows(page).nth(1);
+    const lockedClass = await lockedRow.getAttribute('class');
+    expect(lockedClass).not.toContain('selected');
   });
 });

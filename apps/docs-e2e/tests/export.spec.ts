@@ -9,7 +9,7 @@ test.describe('Export Demos', () => {
     await expect(csvBtn).toBeVisible({ timeout: 5000 });
 
     // Click CSV export — it should trigger a download or action
-    const downloadPromise = page.waitForEvent('download', { timeout: 5000 }).catch(() => null);
+    await page.waitForEvent('download', { timeout: 5000 }).catch(() => null);
     await csvBtn.click();
     await page.waitForTimeout(500);
   });
