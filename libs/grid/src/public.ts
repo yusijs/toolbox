@@ -24,8 +24,8 @@ export { DataGridElement, DataGridElement as GridElement } from './lib/core/grid
  */
 export type { DataGridElement as TbwGrid } from './lib/core/grid';
 
-// Import types needed for factory functions
-import type { DataGridElement } from './lib/core/grid';
+// Import needed for factory functions (value import: tagName is accessed at runtime)
+import { DataGridElement } from './lib/core/grid';
 import type { GridConfig } from './lib/core/types';
 
 // #region Factory Functions
@@ -59,26 +59,66 @@ export function createGrid<TRow = unknown>(config?: Partial<GridConfig<TRow>>): 
 /**
  * Query an existing grid element from the DOM with proper typing.
  *
- * This avoids the need to cast when querying grids:
- * ```typescript
- * // Before: manual cast required
- * const grid = document.querySelector('tbw-grid') as DataGridElement<Employee>;
+ * **Sync mode** (default) — returns the element immediately. The element may not
+ * be upgraded yet if the grid module hasn't loaded.
  *
- * // After: fully typed
+ * **Async mode** — pass `true` as the second or third argument to wait for the
+ * custom element to be defined and upgraded before resolving. This guarantees
+ * all `DataGridElement` methods (e.g. `registerStyles`, `ready`, `on`) are
+ * available on the returned instance.
+ *
+ * @example
+ * ```typescript
+ * // Sync — unchanged from before
  * const grid = queryGrid<Employee>('#my-grid');
  * if (grid) {
- *   grid.rows = employees; // ✓ Typed!
+ *   grid.rows = employees; // ✓ Typed (assumes element is upgraded)
  * }
+ *
+ * // Async — waits for custom-element upgrade
+ * const grid = await queryGrid<Employee>('#my-grid', true);
+ * if (grid) {
+ *   grid.registerStyles('my-id', '.cell { color: red; }'); // ✓ Safe
+ * }
+ *
+ * // Async with parent scope
+ * const grid = await queryGrid<Employee>('tbw-grid', container, true);
  * ```
  *
  * @param selector - CSS selector to find the grid element
- * @param parent - Parent node to search within (defaults to document)
- * @returns The typed grid element or null if not found
+ * @param parentOrAwait - Parent node to search within, or `true` to wait for upgrade
+ * @param awaitUpgrade - When `true`, waits for the custom element to be defined before resolving
+ * @returns The typed grid element (or null), either synchronously or as a Promise
  */
+export function queryGrid<TRow = unknown>(selector: string): DataGridElement<TRow> | null;
+export function queryGrid<TRow = unknown>(selector: string, parent: ParentNode): DataGridElement<TRow> | null;
+export function queryGrid<TRow = unknown>(selector: string, awaitUpgrade: true): Promise<DataGridElement<TRow> | null>;
 export function queryGrid<TRow = unknown>(
   selector: string,
-  parent: ParentNode = document,
-): DataGridElement<TRow> | null {
+  parent: ParentNode,
+  awaitUpgrade: true,
+): Promise<DataGridElement<TRow> | null>;
+export function queryGrid<TRow = unknown>(
+  selector: string,
+  parentOrAwait?: ParentNode | boolean,
+  awaitUpgrade?: boolean,
+): DataGridElement<TRow> | null | Promise<DataGridElement<TRow> | null> {
+  let parent: ParentNode = document;
+  let shouldAwait = false;
+
+  if (typeof parentOrAwait === 'boolean') {
+    shouldAwait = parentOrAwait;
+  } else if (parentOrAwait) {
+    parent = parentOrAwait;
+    shouldAwait = !!awaitUpgrade;
+  }
+
+  if (shouldAwait) {
+    return customElements.whenDefined(DataGridElement.tagName).then(() => {
+      return parent.querySelector(selector) as DataGridElement<TRow> | null;
+    });
+  }
+
   return parent.querySelector(selector) as DataGridElement<TRow> | null;
 }
 // #endregion
@@ -310,7 +350,7 @@ export type {
   ToolPanelConfig,
   ToolPanelDefinition,
   TypeDefault,
-  UpdateSource,
+  UpdateSource
 } from './lib/core/types';
 
 // Re-export FitModeEnum for runtime usage
@@ -331,7 +371,7 @@ export type {
   PluginDependency,
   PluginManifest,
   PluginQuery,
-  QueryDefinition,
+  QueryDefinition
 } from './lib/core/plugin';
 
 // DOM constants - for querying grid elements and styling

@@ -7,15 +7,15 @@
 </div>
 
 <script>
-import '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 
 import '@toolbox-web/grid/features/editing';
 
 const container = document.getElementById('editing-custom-editor-demo');
 if (container) {
-  const grid = queryGrid('tbw-grid', container);
+  const grid = await queryGrid('tbw-grid', container, true);
 
+  if (grid) {
       // Register custom styles for the editor
       grid.registerStyles(
         'priority-editor',
@@ -84,5 +84,6 @@ if (container) {
         { name: 'Task B', priority: 'Medium' },
         { name: 'Task C', priority: 'Low' },
       ];
+  }
 }
 </script>

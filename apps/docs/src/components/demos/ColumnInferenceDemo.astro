@@ -14,10 +14,9 @@
 
 <script>
   import '@toolbox-web/grid';
+import { queryGrid } from '@toolbox-web/grid';
 
-  const grid = document.querySelector<HTMLElement & { rows: unknown[] }>(
-    '#column-inference'
-  );
+  const grid = queryGrid('#column-inference');
   if (grid) {
     grid.rows = [
       { id: 1, firstName: 'Alice', lastName: 'Johnson', age: 32, active: true, startDate: '2022-03-15' },

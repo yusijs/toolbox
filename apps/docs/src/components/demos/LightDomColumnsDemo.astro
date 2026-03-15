@@ -18,10 +18,9 @@
 
 <script>
   import '@toolbox-web/grid';
+import { queryGrid } from '@toolbox-web/grid';
 
-  const grid = document.querySelector<HTMLElement & { rows: unknown[] }>(
-    '#light-dom-columns'
-  );
+  const grid = queryGrid('#light-dom-columns');
   if (grid) {
     grid.rows = [
       { id: 1, name: 'Alice Johnson', email: 'alice@example.com', department: 'Engineering' },

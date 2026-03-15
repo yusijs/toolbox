@@ -115,5 +115,47 @@ describe('DataGridElement', () => {
       const found = queryGrid('#nested-grid', container);
       expect(found).toBe(grid);
     });
+
+    it('should return a promise when awaitUpgrade is true', async () => {
+      const created = createGrid();
+      created.id = 'await-grid';
+      document.body.appendChild(created);
+
+      const result = queryGrid('#await-grid', true);
+      expect(result).toBeInstanceOf(Promise);
+
+      const found = await result;
+      expect(found).toBe(created);
+    });
+
+    it('should resolve to null when element not found with awaitUpgrade', async () => {
+      const found = await queryGrid('#nonexistent', true);
+      expect(found).toBeNull();
+    });
+
+    it('should return a promise when parent + awaitUpgrade are provided', async () => {
+      const container = document.createElement('div');
+      const grid = createGrid();
+      grid.id = 'parent-await-grid';
+      container.appendChild(grid);
+      document.body.appendChild(container);
+
+      const result = queryGrid('#parent-await-grid', container, true);
+      expect(result).toBeInstanceOf(Promise);
+
+      const found = await result;
+      expect(found).toBe(grid);
+    });
+
+    it('should resolve to null with wrong parent and awaitUpgrade', async () => {
+      const container = document.createElement('div');
+      const grid = createGrid();
+      grid.id = 'wrong-parent-await';
+      container.appendChild(grid);
+      document.body.appendChild(container);
+
+      const found = await queryGrid('#wrong-parent-await', document.createElement('div'), true);
+      expect(found).toBeNull();
+    });
   });
 });

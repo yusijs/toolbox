@@ -10,10 +10,9 @@
 </div>
 
 <script>
-  import '@toolbox-web/grid';
-import { queryGrid } from '@toolbox-web/grid';
+  import { queryGrid } from '@toolbox-web/grid';
 
-  const grid = queryGrid('#custom-loading-renderer');
+  const grid = await queryGrid('#custom-loading-renderer', true);
   const toggleBtn = document.querySelector<HTMLButtonElement>('[data-toggle="loading"]');
 
   if (grid) {
@@ -32,8 +31,7 @@ import { queryGrid } from '@toolbox-web/grid';
       { id: 5, name: 'Eve Brown', email: 'eve@example.com', department: 'HR' },
     ];
 
-    grid.addEventListener('grid-connected', () => {
-      grid.registerStyles('custom-loading', `
+    grid.registerStyles('custom-loading', `
       .progress-bar-container {
         position: absolute;
         top: 0;
@@ -56,7 +54,6 @@ import { queryGrid } from '@toolbox-web/grid';
         100% { transform: translateX(400%); }
       }
     `);
-    });
 
     grid.gridConfig = {
       getRowId: (row: { id: number }) => row.id,
