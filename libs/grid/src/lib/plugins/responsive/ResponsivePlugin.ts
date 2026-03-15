@@ -589,13 +589,14 @@ export class ResponsivePlugin<T = unknown> extends BaseGridPlugin<ResponsivePlug
     // This follows the same pattern as GroupingRowsPlugin which sets className explicitly
     rowEl.className = 'data-grid-row responsive-card';
 
-    // Handle cardRowHeight
-    const cardHeight = this.config.cardRowHeight ?? 'auto';
-    if (cardHeight !== 'auto') {
-      rowEl.style.height = `${cardHeight}px`;
-    } else {
-      // Remove any virtualization-set height for auto mode
+    // Handle card row height — when a numeric height is configured, use the effective
+    // height from #getCardHeight() which incorporates DOM measurement after first render.
+    // This keeps inline height in sync with the position cache used for virtualization.
+    const configuredHeight = this.config.cardRowHeight;
+    if (configuredHeight === 'auto' || configuredHeight === undefined) {
       rowEl.style.height = 'auto';
+    } else {
+      rowEl.style.height = `${this.#getCardHeight()}px`;
     }
 
     // Append the custom card content

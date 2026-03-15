@@ -4822,6 +4822,14 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
     const rowHeight = this._virtualization.rowHeight;
     const scrollTop = fauxScrollbar.scrollTop;
 
+    // On force refresh with variable heights, rebuild the position cache
+    // to pick up any height changes from plugins (e.g., ResponsivePlugin
+    // measuring actual card heights from DOM after first render).
+    // This must happen before the cache is read for start/offset calculations.
+    if (force && this._virtualization.variableHeights) {
+      this.#initializePositionCache();
+    }
+
     let start: number;
     const positionCache = this._virtualization.positionCache;
 
