@@ -776,11 +776,11 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
         this.#updatePluginConfigs(); // Sync plugin configs (including auto-detection) before processing
         // Validate that plugin-specific column properties have their required plugins loaded
         // This runs after plugins are loaded and config is merged
-        validatePluginProperties(this.#effectiveConfig, this.#pluginManager?.getPlugins() ?? []);
+        validatePluginProperties(this.#effectiveConfig, this.#pluginManager?.getPlugins() ?? [], this.id);
         // Validate plugin configRules (errors/warnings for invalid config combinations)
-        validatePluginConfigRules(this.#pluginManager?.getPlugins() ?? []);
+        validatePluginConfigRules(this.#pluginManager?.getPlugins() ?? [], this.id);
         // Validate plugin incompatibilities (warnings for conflicting plugin combinations)
-        validatePluginIncompatibilities(this.#pluginManager?.getPlugins() ?? []);
+        validatePluginIncompatibilities(this.#pluginManager?.getPlugins() ?? [], this.id);
         // Update ARIA labels (explicit config or derived from shell title)
         this.#updateAriaLabels();
         // Store base columns before plugin transformation

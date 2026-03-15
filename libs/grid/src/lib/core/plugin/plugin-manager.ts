@@ -101,7 +101,7 @@ export class PluginManager {
   attach(plugin: BaseGridPlugin): void {
     // Validate plugin dependencies BEFORE attaching
     // This throws if a required dependency is missing
-    validatePluginDependencies(plugin, this.plugins);
+    validatePluginDependencies(plugin, this.plugins, this.grid.getAttribute('id') ?? undefined);
 
     // Store by constructor for type-safe lookup
     this.pluginMap.set(plugin.constructor as new (...args: unknown[]) => BaseGridPlugin, plugin);

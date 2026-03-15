@@ -773,3 +773,93 @@ describe('validatePluginIncompatibilities', () => {
     warnSpy.mockRestore();
   });
 });
+
+describe('gridId parameter', () => {
+  it('includes grid ID in validatePluginProperties error', () => {
+    const config: GridConfig = {
+      columns: [{ field: 'name', editable: true }],
+    };
+
+    expect(() => {
+      validatePluginProperties(config, [], 'my-grid');
+    }).toThrow(/\[tbw-grid#my-grid\] Configuration error/);
+  });
+
+  it('includes grid ID in validatePluginDependencies error', () => {
+    expect(() => {
+      validatePluginDependencies(mockUndoRedoPlugin, [], 'employee-grid');
+    }).toThrow(/\[tbw-grid#employee-grid\] Plugin dependency error/);
+  });
+
+  it('includes grid ID in validatePluginConfigRules warning', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {
+      /* noop */
+    });
+
+    class RulePlugin {
+      static manifest = {
+        configRules: [
+          {
+            id: 'test/invalid',
+            severity: 'warn' as const,
+            message: 'optionA should not be true',
+            check: (c: { optionA?: boolean }) => c.optionA === true,
+          },
+        ],
+      };
+      name = 'test';
+      version = '1.0.0';
+      config = { optionA: true };
+      attach() {
+        /* noop */
+      }
+      detach() {
+        /* noop */
+      }
+    }
+
+    validatePluginConfigRules([new RulePlugin() as unknown as BaseGridPlugin], 'settings-grid');
+
+    expect(warnSpy.mock.calls[0]?.[0]).toContain('[tbw-grid#settings-grid:TestPlugin]');
+    warnSpy.mockRestore();
+  });
+
+  it('includes grid ID in validatePluginIncompatibilities warning', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {
+      /* noop */
+    });
+
+    class ResponsivePlugin {
+      static readonly manifest = {
+        incompatibleWith: [{ name: 'groupingRows', reason: 'does not support row grouping' }],
+      };
+      readonly name = 'responsive';
+      readonly version = '1.0.0';
+      attach() {
+        /* noop */
+      }
+      detach() {
+        /* noop */
+      }
+    }
+
+    const groupingRows: BaseGridPlugin = {
+      name: 'groupingRows',
+      version: '1.0.0',
+      attach: () => {
+        /* noop */
+      },
+      detach: () => {
+        /* noop */
+      },
+    } as unknown as BaseGridPlugin;
+
+    validatePluginIncompatibilities(
+      [new ResponsivePlugin() as unknown as BaseGridPlugin, groupingRows],
+      'demo-grid',
+    );
+
+    expect(warnSpy.mock.calls[0]?.[0]).toContain('[tbw-grid#demo-grid]');
+    warnSpy.mockRestore();
+  });
+});

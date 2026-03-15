@@ -140,6 +140,16 @@ function capitalize(s: string): string {
 }
 
 /**
+ * Build the `[tbw-grid]` or `[tbw-grid#my-id]` log prefix.
+ * Pass `pluginName` for a scoped prefix like `[tbw-grid:SelectionPlugin]`.
+ */
+function gridPrefix(gridId?: string, pluginName?: string): string {
+  const id = gridId ? `#${gridId}` : '';
+  const plugin = pluginName ? `:${pluginName}` : '';
+  return `[tbw-grid${id}${plugin}]`;
+}
+
+/**
  * Check if a plugin with the given name is present in the plugins array.
  */
 function hasPlugin(plugins: readonly BaseGridPlugin[], pluginName: string): boolean {
@@ -155,7 +165,7 @@ function hasPlugin(plugins: readonly BaseGridPlugin[], pluginName: string): bool
  * @param plugins - The array of loaded plugins
  * @throws Error if a plugin-owned property is used without the plugin
  */
-export function validatePluginProperties<T>(config: GridConfig<T>, plugins: readonly BaseGridPlugin[]): void {
+export function validatePluginProperties<T>(config: GridConfig<T>, plugins: readonly BaseGridPlugin[], gridId?: string): void {
   // Use static registries of known plugin-owned properties
   const columnProps = KNOWN_COLUMN_PROPERTIES;
   const configProps = KNOWN_CONFIG_PROPERTIES;
@@ -236,7 +246,7 @@ export function validatePluginProperties<T>(config: GridConfig<T>, plugins: read
     }
 
     throw new Error(
-      `[tbw-grid] Configuration error:\n\n${errors.join('\n\n')}\n\n` +
+      `${gridPrefix(gridId)} Configuration error:\n\n${errors.join('\n\n')}\n\n` +
         `This validation helps catch misconfigurations early. ` +
         `The properties listed above require their respective plugins to function.`,
     );
@@ -254,9 +264,10 @@ export function validatePluginProperties<T>(config: GridConfig<T>, plugins: read
  *
  * @param plugins - The array of attached plugins (with config already merged)
  */
-export function validatePluginConfigRules(plugins: readonly BaseGridPlugin[]): void {
+export function validatePluginConfigRules(plugins: readonly BaseGridPlugin[], gridId?: string): void {
   const errors: string[] = [];
   const warnings: string[] = [];
+  const prefix = gridPrefix(gridId);
 
   for (const plugin of plugins) {
     const PluginClass = plugin.constructor as typeof BaseGridPlugin;
@@ -268,8 +279,8 @@ export function validatePluginConfigRules(plugins: readonly BaseGridPlugin[]): v
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const pluginConfig = (plugin as any).config;
       if (rule.check(pluginConfig)) {
-        const prefix = `[tbw-grid:${capitalize(plugin.name)}Plugin]`;
-        const formatted = `${prefix} Configuration warning: ${rule.message}`;
+        const rulePrefix = gridPrefix(gridId, `${capitalize(plugin.name)}Plugin`);
+        const formatted = `${rulePrefix} Configuration warning: ${rule.message}`;
         if (rule.severity === 'error') {
           errors.push(formatted);
         } else {
@@ -288,7 +299,7 @@ export function validatePluginConfigRules(plugins: readonly BaseGridPlugin[]): v
 
   // Throw consolidated error if any (always, regardless of environment)
   if (errors.length > 0) {
-    throw new Error(`[tbw-grid] Configuration error:\n\n${errors.join('\n\n')}`);
+    throw new Error(`${prefix} Configuration error:\n\n${errors.join('\n\n')}`);
   }
 }
 // #endregion
@@ -307,9 +318,14 @@ export function validatePluginConfigRules(plugins: readonly BaseGridPlugin[]): v
  * @param loadedPlugins - The array of already-loaded plugins
  * @throws Error if a required dependency is missing
  */
-export function validatePluginDependencies(plugin: BaseGridPlugin, loadedPlugins: readonly BaseGridPlugin[]): void {
+export function validatePluginDependencies(
+  plugin: BaseGridPlugin,
+  loadedPlugins: readonly BaseGridPlugin[],
+  gridId?: string,
+): void {
   const pluginName = plugin.name;
   const PluginClass = plugin.constructor as typeof BaseGridPlugin;
+  const prefix = gridPrefix(gridId);
 
   // Get dependencies from plugin's static property
   const dependencies = PluginClass.dependencies ?? [];
@@ -327,7 +343,7 @@ export function validatePluginDependencies(plugin: BaseGridPlugin, loadedPlugins
 
       if (required) {
         throw new Error(
-          `[tbw-grid] Plugin dependency error:\n\n` +
+          `${prefix} Plugin dependency error:\n\n` +
             `${reasonText}.\n\n` +
             `  → Add the plugin to your gridConfig.plugins array BEFORE ${capitalize(pluginName)}Plugin:\n` +
             `    ${importHint}\n` +
@@ -336,7 +352,7 @@ export function validatePluginDependencies(plugin: BaseGridPlugin, loadedPlugins
       } else {
         // Soft dependency - log info message but continue
         console.info(
-          `[tbw-grid] ${capitalize(pluginName)}Plugin: Optional "${requiredPlugin}" plugin not found. ` +
+          `${prefix} ${capitalize(pluginName)}Plugin: Optional "${requiredPlugin}" plugin not found. ` +
             `Some features may be unavailable.`,
         );
       }
@@ -355,12 +371,13 @@ export function validatePluginDependencies(plugin: BaseGridPlugin, loadedPlugins
  *
  * @param plugins - All attached plugins
  */
-export function validatePluginIncompatibilities(plugins: readonly BaseGridPlugin[]): void {
+export function validatePluginIncompatibilities(plugins: readonly BaseGridPlugin[], gridId?: string): void {
   // Only warn in development mode to avoid polluting production logs
   if (!isDevelopment()) return;
 
   const pluginNames = new Set(plugins.map((p) => p.name));
   const warned = new Set<string>(); // Avoid duplicate warnings for symmetric conflicts
+  const prefix = gridPrefix(gridId);
 
   for (const plugin of plugins) {
     const PluginClass = plugin.constructor as typeof BaseGridPlugin;
@@ -375,7 +392,7 @@ export function validatePluginIncompatibilities(plugins: readonly BaseGridPlugin
         warned.add(key);
 
         console.warn(
-          `[tbw-grid] Plugin incompatibility warning:\n\n` +
+          `${prefix} Plugin incompatibility warning:\n\n` +
             `${capitalize(plugin.name)}Plugin and ${capitalize(incompatibility.name)}Plugin are both loaded, ` +
             `but they are currently incompatible.\n\n` +
             `  → ${incompatibility.reason}\n\n` +
