@@ -126,7 +126,8 @@ export function getRegisteredFields(): string[] {
 
 /**
  * Clear the field registries.
- * @internal - for testing only
+ * Called during adapter cleanup and in tests.
+ * @internal
  */
 export function clearFieldRegistries(): void {
   fieldRegistries.clear();
@@ -1161,6 +1162,7 @@ export class GridAdapter implements FrameworkAdapter {
       }
     }
     this.editorViews = [];
+    fieldRegistries.clear();
   }
 
   /**

@@ -73,6 +73,7 @@ export class ConfigManager<T = unknown> {
   #changeListeners: Array<() => void> = [];
   #lightDomObserver?: MutationObserver;
   #stateChangeTimeoutId?: ReturnType<typeof setTimeout>;
+  #lightDomDebounceTimer?: ReturnType<typeof setTimeout>;
   #initialColumnState?: GridColumnState;
   #grid: GridHost<T>;
 
@@ -883,10 +884,9 @@ export class ConfigManager<T = unknown> {
 
     // Track which handlers need to be called (debounced)
     const pendingCallbacks = new Set<string>();
-    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
     const processPendingCallbacks = () => {
-      debounceTimer = null;
+      this.#lightDomDebounceTimer = undefined;
       for (const tagName of pendingCallbacks) {
         const handler = this.#lightDomHandlers.get(tagName);
         handler?.();
@@ -919,8 +919,8 @@ export class ConfigManager<T = unknown> {
       }
 
       // Debounce - batch all mutations into single callbacks
-      if (pendingCallbacks.size > 0 && !debounceTimer) {
-        debounceTimer = setTimeout(processPendingCallbacks, 0);
+      if (pendingCallbacks.size > 0 && !this.#lightDomDebounceTimer) {
+        this.#lightDomDebounceTimer = setTimeout(processPendingCallbacks, 0);
       }
     });
 
@@ -961,6 +961,10 @@ export class ConfigManager<T = unknown> {
     this.#changeListeners = [];
     if (this.#stateChangeTimeoutId) {
       clearTimeout(this.#stateChangeTimeoutId);
+    }
+    if (this.#lightDomDebounceTimer) {
+      clearTimeout(this.#lightDomDebounceTimer);
+      this.#lightDomDebounceTimer = undefined;
     }
   }
   // #endregion

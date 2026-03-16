@@ -1232,6 +1232,7 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
     // Clear caches to prevent memory leaks
     invalidateCellCache(this);
     this.#customStyleSheets.clear();
+    this._virtualization.heightCache?.byKey.clear();
 
     // Clear plugin tracking to allow fresh initialization on reconnect
     this.#lastPluginsArray = undefined;

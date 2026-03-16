@@ -21,12 +21,8 @@ import type { ContextMenuConfig, ContextMenuItem, ContextMenuParams, HeaderConte
 /** Query type for collecting context menu items from plugins */
 const QUERY_GET_CONTEXT_MENU_ITEMS = 'getContextMenuItems';
 
-/** Global click handler reference for cleanup */
-let globalClickHandler: ((e: Event) => void) | null = null;
-/** Global keydown handler reference for cleanup */
-let globalKeydownHandler: ((e: KeyboardEvent) => void) | null = null;
-/** Global scroll handler reference for cleanup */
-let globalScrollHandler: (() => void) | null = null;
+/** Shared AbortController for global document listeners (all instances share one) */
+let globalAbortController: AbortController | null = null;
 /** Global stylesheet for context menu (injected once) */
 let globalStyleSheet: HTMLStyleElement | null = null;
 /** Reference count for instances using global handlers */
@@ -306,33 +302,29 @@ export class ContextMenuPlugin extends BaseGridPlugin<ContextMenuConfig> {
       document.head.appendChild(globalStyleSheet);
     }
 
-    // Close menu on click outside
-    if (!globalClickHandler) {
-      globalClickHandler = () => {
+    if (!globalAbortController) {
+      globalAbortController = new AbortController();
+      const signal = globalAbortController.signal;
+
+      const closeAllMenus = () => {
         const menus = document.querySelectorAll('.tbw-context-menu');
         menus.forEach((menu) => menu.remove());
       };
-      document.addEventListener('click', globalClickHandler);
-    }
 
-    // Close on escape
-    if (!globalKeydownHandler) {
-      globalKeydownHandler = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
-          const menus = document.querySelectorAll('.tbw-context-menu');
-          menus.forEach((menu) => menu.remove());
-        }
-      };
-      document.addEventListener('keydown', globalKeydownHandler);
-    }
+      // Close menu on click outside
+      document.addEventListener('click', closeAllMenus, { signal });
 
-    // Close on scroll (any scrollable ancestor)
-    if (!globalScrollHandler) {
-      globalScrollHandler = () => {
-        const menus = document.querySelectorAll('.tbw-context-menu');
-        menus.forEach((menu) => menu.remove());
-      };
-      document.addEventListener('scroll', globalScrollHandler, true);
+      // Close on escape
+      document.addEventListener(
+        'keydown',
+        (e: KeyboardEvent) => {
+          if (e.key === 'Escape') closeAllMenus();
+        },
+        { signal },
+      );
+
+      // Close on scroll (any scrollable ancestor)
+      document.addEventListener('scroll', closeAllMenus, { capture: true, signal });
     }
   }
 
@@ -344,18 +336,10 @@ export class ContextMenuPlugin extends BaseGridPlugin<ContextMenuConfig> {
     globalHandlerRefCount--;
     if (globalHandlerRefCount > 0) return;
 
-    // Last instance - clean up all global resources
-    if (globalClickHandler) {
-      document.removeEventListener('click', globalClickHandler);
-      globalClickHandler = null;
-    }
-    if (globalKeydownHandler) {
-      document.removeEventListener('keydown', globalKeydownHandler);
-      globalKeydownHandler = null;
-    }
-    if (globalScrollHandler) {
-      document.removeEventListener('scroll', globalScrollHandler, true);
-      globalScrollHandler = null;
+    // Last instance - abort all global listeners at once
+    if (globalAbortController) {
+      globalAbortController.abort();
+      globalAbortController = null;
     }
     if (globalStyleSheet) {
       globalStyleSheet.remove();

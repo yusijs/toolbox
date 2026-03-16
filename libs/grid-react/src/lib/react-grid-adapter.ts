@@ -125,6 +125,15 @@ export function getRegisteredFields(): string[] {
 }
 
 /**
+ * Clear the field registries.
+ * Called during adapter cleanup and in tests.
+ * @internal
+ */
+export function clearFieldRegistries(): void {
+  fieldRegistries.clear();
+}
+
+/**
  * Tracks mounted React roots for cleanup.
  */
 interface MountedView {
@@ -582,6 +591,7 @@ export class GridAdapter implements FrameworkAdapter {
       }
     });
     this.editorViews = [];
+    fieldRegistries.clear();
   }
 
   /**
