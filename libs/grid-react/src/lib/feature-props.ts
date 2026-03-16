@@ -42,6 +42,7 @@ import type {
 } from '@toolbox-web/grid/all';
 import type { EditingConfig } from '@toolbox-web/grid/plugins/editing';
 import type { FilterPanelParams } from '@toolbox-web/grid/plugins/filtering';
+import type { ColumnGroupDefinition } from '@toolbox-web/grid/plugins/grouping-columns';
 import type { ReactNode } from 'react';
 
 // #region React-specific Config Overrides
@@ -57,13 +58,26 @@ type ReactFilterConfig<TRow = unknown> = Omit<FilterConfig<TRow>, 'filterPanelRe
 };
 
 /**
- * React-specific grouping columns config that allows React components as `groupHeaderRenderer`.
+ * React-specific column group definition that allows React render functions as `renderer`.
+ */
+type ReactColumnGroupDefinition = Omit<ColumnGroupDefinition, 'renderer'> & {
+  renderer?:
+    | ColumnGroupDefinition['renderer']
+    | ((...args: Parameters<NonNullable<ColumnGroupDefinition['renderer']>>) => ReactNode);
+};
+
+/**
+ * React-specific grouping columns config that allows React components as `groupHeaderRenderer`
+ * and per-group `renderer` in `columnGroups`.
  *
  * Extends the base GroupingColumnsConfig to accept a React render function
  * returning `ReactNode` instead of only `HTMLElement | string | void`.
  */
-type ReactGroupingColumnsConfig = Omit<GroupingColumnsConfig, 'groupHeaderRenderer'> & {
-  groupHeaderRenderer?: GroupingColumnsConfig['groupHeaderRenderer'] | ((...args: Parameters<NonNullable<GroupingColumnsConfig['groupHeaderRenderer']>>) => ReactNode);
+type ReactGroupingColumnsConfig = Omit<GroupingColumnsConfig, 'groupHeaderRenderer' | 'columnGroups'> & {
+  columnGroups?: ReactColumnGroupDefinition[];
+  groupHeaderRenderer?:
+    | GroupingColumnsConfig['groupHeaderRenderer']
+    | ((...args: Parameters<NonNullable<GroupingColumnsConfig['groupHeaderRenderer']>>) => ReactNode);
 };
 // #endregion
 

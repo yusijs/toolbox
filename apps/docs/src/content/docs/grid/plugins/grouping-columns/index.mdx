@@ -3,9 +3,9 @@ title: "Column Grouping Plugin"
 description: "Group columns visually under shared parent headers."
 ---
 
-import { Tabs, TabItem } from '@astrojs/starlight/components';
-import GroupingColumnsDefaultDemo from '@components/demos/grouping-columns/GroupingColumnsDefaultDemo.astro';
+import { TabItem, Tabs } from '@astrojs/starlight/components';
 import GroupingColumnsCustomRendererDemo from '@components/demos/grouping-columns/GroupingColumnsCustomRendererDemo.astro';
+import GroupingColumnsDefaultDemo from '@components/demos/grouping-columns/GroupingColumnsDefaultDemo.astro';
 import ShowSource from '@components/ShowSource.astro';
 
 
@@ -20,11 +20,11 @@ import '@toolbox-web/grid/features/grouping-columns';
 
 ## Basic Usage
 
-There are two ways to define column groups:
+There are three ways to define column groups, from most to least recommended:
 
-### Option 1: Declarative `columnGroups` (Recommended)
+### Option 1: Feature config `columnGroups` (Recommended)
 
-Define groups once at the grid level, referencing columns by field name:
+Define everything in one place — groups, renderers, and plugin behavior:
 
 <Tabs syncKey="framework">
   <TabItem label="Vanilla JS">
@@ -34,10 +34,6 @@ import '@toolbox-web/grid/features/grouping-columns';
 
 const grid = document.querySelector('tbw-grid');
 grid.gridConfig = {
-  columnGroups: [
-    { id: 'personal', header: 'Personal Info', children: ['firstName', 'lastName', 'email'] },
-    { id: 'work', header: 'Work Info', children: ['department', 'title', 'salary'] },
-  ],
   columns: [
     { field: 'firstName', header: 'First Name' },
     { field: 'lastName', header: 'Last Name' },
@@ -46,7 +42,14 @@ grid.gridConfig = {
     { field: 'title', header: 'Title' },
     { field: 'salary', header: 'Salary' },
   ],
-  features: { groupingColumns: true },
+  features: {
+    groupingColumns: {
+      columnGroups: [
+        { header: 'Personal Info', children: ['firstName', 'lastName', 'email'] },
+        { header: 'Work Info', children: ['department', 'title', 'salary'] },
+      ],
+    },
+  },
 };
 ```
   </TabItem>
@@ -67,13 +70,12 @@ function MyGrid({ data }) {
         { field: 'title', header: 'Title' },
         { field: 'salary', header: 'Salary' },
       ]}
-      gridConfig={{
+      groupingColumns={{
         columnGroups: [
-          { id: 'personal', header: 'Personal Info', children: ['firstName', 'lastName', 'email'] },
-          { id: 'work', header: 'Work Info', children: ['department', 'title', 'salary'] },
+          { header: 'Personal Info', children: ['firstName', 'lastName', 'email'] },
+          { header: 'Work Info', children: ['department', 'title', 'salary'] },
         ],
       }}
-      groupingColumns
       style={{ height: '400px' }}
     />
   );
@@ -86,21 +88,20 @@ function MyGrid({ data }) {
 import '@toolbox-web/grid-vue/features/grouping-columns';
 import { TbwGrid, TbwGridColumn } from '@toolbox-web/grid-vue';
 
-const data = [
-  { firstName: 'Alice', lastName: 'Johnson', email: 'alice@example.com', department: 'Engineering', title: 'Developer', salary: 95000 },
-  { firstName: 'Bob', lastName: 'Smith', email: 'bob@example.com', department: 'Marketing', title: 'Manager', salary: 85000 },
-];
-
-const gridConfig = {
-  columnGroups: [
-    { id: 'personal', header: 'Personal Info', children: ['firstName', 'lastName', 'email'] },
-    { id: 'work', header: 'Work Info', children: ['department', 'title', 'salary'] },
-  ],
-};
+const data = [...];
 </script>
 
 <template>
-  <TbwGrid :rows="data" :grid-config="gridConfig" grouping-columns style="height: 400px">
+  <TbwGrid
+    :rows="data"
+    :grouping-columns="{
+      columnGroups: [
+        { header: 'Personal Info', children: ['firstName', 'lastName', 'email'] },
+        { header: 'Work Info', children: ['department', 'title', 'salary'] },
+      ],
+    }"
+    style="height: 400px"
+  >
     <TbwGridColumn field="firstName" header="First Name" />
     <TbwGridColumn field="lastName" header="Last Name" />
     <TbwGridColumn field="email" header="Email" />
@@ -113,13 +114,11 @@ const gridConfig = {
   </TabItem>
   <TabItem label="Angular">
 ```typescript
-// Feature import - enables the [groupingColumns] input
 import '@toolbox-web/grid-angular/features/grouping-columns';
 
 import { Component } from '@angular/core';
 import { Grid } from '@toolbox-web/grid-angular';
 import type { ColumnConfig } from '@toolbox-web/grid';
-import type { ColumnGroupDefinition } from '@toolbox-web/grid/plugins/grouping-columns';
 
 @Component({
   selector: 'app-my-grid',
@@ -128,19 +127,18 @@ import type { ColumnGroupDefinition } from '@toolbox-web/grid/plugins/grouping-c
     <tbw-grid
       [rows]="rows"
       [columns]="columns"
-      [gridConfig]="{ columnGroups: columnGroups }"
-      [groupingColumns]="true"
+      [groupingColumns]="{
+        columnGroups: [
+          { header: 'Personal Info', children: ['firstName', 'lastName', 'email'] },
+          { header: 'Work Info', children: ['department', 'title', 'salary'] },
+        ]
+      }"
       style="height: 400px; display: block;">
     </tbw-grid>
   `,
 })
 export class MyGridComponent {
   rows = [...];
-
-  columnGroups: ColumnGroupDefinition[] = [
-    { id: 'personal', header: 'Personal Info', children: ['firstName', 'lastName', 'email'] },
-    { id: 'work', header: 'Work Info', children: ['department', 'title', 'salary'] },
-  ];
 
   columns: ColumnConfig[] = [
     { field: 'firstName', header: 'First Name' },
@@ -155,27 +153,53 @@ export class MyGridComponent {
   </TabItem>
 </Tabs>
 
-### Option 2: Inline `group` Property
+:::tip[Auto-generated IDs]
+The `id` property on each group is optional. When omitted, it is auto-generated as a slug of the `header` (e.g. `'Personal Info'` → `'personal-info'`). Provide an explicit `id` when you need a stable identifier for programmatic access or custom renderers.
+:::
 
-Add group information directly to each column:
+### Option 2: Grid config `columnGroups`
+
+If your groups are part of a server-provided layout or shared data model, define them on `gridConfig.columnGroups`:
 
 ```ts
-const grid = document.querySelector('tbw-grid');
+grid.gridConfig = {
+  columnGroups: [
+    { header: 'Personal Info', children: ['firstName', 'lastName', 'email'] },
+    { header: 'Work Info', children: ['department', 'title', 'salary'] },
+  ],
+  columns: [...],
+  features: { groupingColumns: true },
+};
+```
+
+:::note[Precedence]
+If `columnGroups` is defined in **both** the feature config and `gridConfig`, the feature config wins and a console warning is emitted.
+:::
+
+### Option 3: Inline `group` property
+
+For simple cases, assign group membership directly on each column. The `group` string becomes the group id:
+
+```ts
 grid.gridConfig = {
   columns: [
-    { field: 'firstName', header: 'First Name', group: { id: 'personal', label: 'Personal Info' } },
-    { field: 'lastName', header: 'Last Name', group: { id: 'personal', label: 'Personal Info' } },
-    { field: 'department', header: 'Department', group: { id: 'work', label: 'Work Info' } },
+    { field: 'firstName', header: 'First Name', group: 'personal' },
+    { field: 'lastName', header: 'Last Name', group: 'personal' },
+    { field: 'department', header: 'Department', group: 'work' },
   ],
   features: { groupingColumns: true },
 };
 ```
 
-You can also use a simple string for the group (the string becomes both the id and label):
+You can also pass an object with an explicit label:
 
 ```ts
-{ field: 'firstName', header: 'First Name', group: 'Personal' }
+{ field: 'firstName', header: 'First Name', group: { id: 'personal', label: 'Personal Info' } }
 ```
+
+:::caution
+The inline `group` property is strictly for declaring group membership. It does not support custom renderers — use `columnGroups` with `renderer` or `groupHeaderRenderer` for that.
+:::
 
 ## Demos
 
@@ -190,7 +214,295 @@ You can also use a simple string for the group (the string becomes both the id a
 
 ### Custom Group Header Renderer
 
-Use `groupHeaderRenderer` to customize the content of group header cells. The renderer receives a `GroupHeaderRenderParams` object and can return an `HTMLElement`, an HTML string, or `void` to keep the default label.
+Use `groupHeaderRenderer` to customize the content of group header cells. The renderer is called once per group, receives a `GroupHeaderRenderParams` object (including the group `id`), and can return an `HTMLElement`, an HTML string, or `void` to keep the default label.
+
+Since the renderer receives `params.id`, a single function can differentiate rendering per group:
+
+<Tabs syncKey="framework">
+  <TabItem label="Vanilla JS">
+```ts
+grid.gridConfig = {
+  columns: [...],
+  features: {
+    groupingColumns: {
+      columnGroups: [
+        { header: 'Personal Info', children: ['firstName', 'lastName', 'email'] },
+        { header: 'Work Info', children: ['department', 'title', 'salary'] },
+      ],
+      groupHeaderRenderer: (params) => {
+        const icons: Record<string, string> = {
+          'personal-info': '👤',
+          'work-info': '💼',
+        };
+        const icon = icons[params.id] ?? '📁';
+        return `${icon} <strong>${params.label}</strong> (${params.columns.length})`;
+      },
+    },
+  },
+};
+```
+  </TabItem>
+  <TabItem label="React">
+```tsx
+import '@toolbox-web/grid-react/features/grouping-columns';
+import { DataGrid } from '@toolbox-web/grid-react';
+
+const icons: Record<string, string> = {
+  'personal-info': '👤',
+  'work-info': '💼',
+};
+
+<DataGrid
+  rows={data}
+  columns={columns}
+  groupingColumns={{
+    columnGroups: [
+      { header: 'Personal Info', children: ['firstName', 'lastName', 'email'] },
+      { header: 'Work Info', children: ['department', 'title', 'salary'] },
+    ],
+    groupHeaderRenderer: (params) => (
+      <span>
+        {icons[params.id] ?? '📁'} <strong>{params.label}</strong> ({params.columns.length})
+      </span>
+    ),
+  }}
+/>
+```
+  </TabItem>
+  <TabItem label="Vue">
+```html
+<script setup>
+import { h } from 'vue';
+import '@toolbox-web/grid-vue/features/grouping-columns';
+import { TbwGrid } from '@toolbox-web/grid-vue';
+
+const icons: Record<string, string> = {
+  'personal-info': '👤',
+  'work-info': '💼',
+};
+
+const groupingConfig = {
+  columnGroups: [
+    { header: 'Personal Info', children: ['firstName', 'lastName', 'email'] },
+    { header: 'Work Info', children: ['department', 'title', 'salary'] },
+  ],
+  groupHeaderRenderer: (params) =>
+    h('span', [
+      `${icons[params.id] ?? '📁'} `,
+      h('strong', params.label),
+      ` (${params.columns.length})`,
+    ]),
+};
+</script>
+
+<template>
+  <TbwGrid :rows="data" :grouping-columns="groupingConfig">
+    <!-- columns -->
+  </TbwGrid>
+</template>
+```
+  </TabItem>
+  <TabItem label="Angular">
+You can pass a component class as the renderer. The adapter bridges it automatically.
+
+```typescript
+import '@toolbox-web/grid-angular/features/grouping-columns';
+
+import { Component, input } from '@angular/core';
+import { Grid } from '@toolbox-web/grid-angular';
+import type { ColumnConfig } from '@toolbox-web/grid';
+
+// Group header component — receives params as inputs
+@Component({
+  selector: 'app-group-header',
+  template: `{{ icon() }} <strong>{{ label() }}</strong> ({{ columns().length }})`,
+})
+export class GroupHeaderComponent {
+  id = input.required<string>();
+  label = input.required<string>();
+  columns = input.required<ColumnConfig[]>();
+  firstIndex = input.required<number>();
+  isImplicit = input.required<boolean>();
+
+  private icons: Record<string, string> = {
+    'personal-info': '👤',
+    'work-info': '💼',
+  };
+
+  icon = () => this.icons[this.id()] ?? '📁';
+}
+
+@Component({
+  selector: 'app-my-grid',
+  imports: [Grid],
+  template: `
+    <tbw-grid
+      [rows]="rows"
+      [columns]="columns"
+      [groupingColumns]="groupingConfig"
+      style="height: 400px; display: block;">
+    </tbw-grid>
+  `,
+})
+export class MyGridComponent {
+  rows = [...];
+  columns = [...];
+
+  groupingConfig = {
+    columnGroups: [
+      { header: 'Personal Info', children: ['firstName', 'lastName', 'email'] },
+      { header: 'Work Info', children: ['department', 'title', 'salary'] },
+    ],
+    groupHeaderRenderer: GroupHeaderComponent,
+  };
+}
+```
+  </TabItem>
+</Tabs>
+
+You can also define a `renderer` directly on individual group definitions. A per-group renderer takes precedence over `groupHeaderRenderer` for that specific group:
+
+<Tabs syncKey="framework">
+  <TabItem label="Vanilla JS">
+```ts
+grid.gridConfig = {
+  columns: [...],
+  features: {
+    groupingColumns: {
+      columnGroups: [
+        {
+          header: 'Personal Info',
+          children: ['firstName', 'lastName', 'email'],
+          renderer: (params) => `👤 <strong>${params.label}</strong>`,
+        },
+        { header: 'Work Info', children: ['department', 'title', 'salary'] },
+      ],
+      // Fallback for groups without their own renderer (Work Info in this case)
+      groupHeaderRenderer: (params) => `<strong>${params.label}</strong>`,
+    },
+  },
+};
+```
+  </TabItem>
+  <TabItem label="React">
+```tsx
+import '@toolbox-web/grid-react/features/grouping-columns';
+import { DataGrid } from '@toolbox-web/grid-react';
+
+<DataGrid
+  rows={data}
+  columns={columns}
+  groupingColumns={{
+    columnGroups: [
+      {
+        header: 'Personal Info',
+        children: ['firstName', 'lastName', 'email'],
+        renderer: (params) => (
+          <span>👤 <strong>{params.label}</strong></span>
+        ),
+      },
+      { header: 'Work Info', children: ['department', 'title', 'salary'] },
+    ],
+    // Fallback for groups without their own renderer (Work Info in this case)
+    groupHeaderRenderer: (params) => <strong>{params.label}</strong>,
+  }}
+/>
+```
+  </TabItem>
+  <TabItem label="Vue">
+```html
+<script setup>
+import { h } from 'vue';
+import '@toolbox-web/grid-vue/features/grouping-columns';
+import { TbwGrid } from '@toolbox-web/grid-vue';
+
+const groupingConfig = {
+  columnGroups: [
+    {
+      header: 'Personal Info',
+      children: ['firstName', 'lastName', 'email'],
+      renderer: (params) => h('span', ['👤 ', h('strong', params.label)]),
+    },
+    { header: 'Work Info', children: ['department', 'title', 'salary'] },
+  ],
+  // Fallback for groups without their own renderer (Work Info in this case)
+  groupHeaderRenderer: (params) => h('strong', params.label),
+};
+</script>
+
+<template>
+  <TbwGrid :rows="data" :grouping-columns="groupingConfig">
+    <!-- columns -->
+  </TbwGrid>
+</template>
+```
+  </TabItem>
+  <TabItem label="Angular">
+Per-group renderers can also be component classes:
+
+```typescript
+import '@toolbox-web/grid-angular/features/grouping-columns';
+
+import { Component, input } from '@angular/core';
+import { Grid } from '@toolbox-web/grid-angular';
+import type { ColumnConfig } from '@toolbox-web/grid';
+
+@Component({
+  selector: 'app-personal-group-header',
+  template: `👤 <strong>{{ label() }}</strong>`,
+})
+export class PersonalGroupHeaderComponent {
+  id = input.required<string>();
+  label = input.required<string>();
+  columns = input.required<ColumnConfig[]>();
+  firstIndex = input.required<number>();
+  isImplicit = input.required<boolean>();
+}
+
+@Component({
+  selector: 'app-default-group-header',
+  template: `<strong>{{ label() }}</strong>`,
+})
+export class DefaultGroupHeaderComponent {
+  id = input.required<string>();
+  label = input.required<string>();
+  columns = input.required<ColumnConfig[]>();
+  firstIndex = input.required<number>();
+  isImplicit = input.required<boolean>();
+}
+
+@Component({
+  selector: 'app-my-grid',
+  imports: [Grid],
+  template: `
+    <tbw-grid
+      [rows]="rows"
+      [columns]="columns"
+      [groupingColumns]="groupingConfig"
+      style="height: 400px; display: block;">
+    </tbw-grid>
+  `,
+})
+export class MyGridComponent {
+  rows = [...];
+  columns = [...];
+
+  groupingConfig = {
+    columnGroups: [
+      {
+        header: 'Personal Info',
+        children: ['firstName', 'lastName', 'email'],
+        renderer: PersonalGroupHeaderComponent,
+      },
+      { header: 'Work Info', children: ['department', 'title', 'salary'] },
+    ],
+    // Fallback for groups without their own renderer
+    groupHeaderRenderer: DefaultGroupHeaderComponent,
+  };
+}
+```
+  </TabItem>
+</Tabs>
 
 <ShowSource file="demos/grouping-columns/GroupingColumnsCustomRendererDemo.astro">
   <GroupingColumnsCustomRendererDemo />
@@ -200,11 +512,23 @@ Use `groupHeaderRenderer` to customize the content of group header cells. The re
 
 ## Configuration Options
 
-- **Plugin options**: [`GroupingColumnsConfig`](./interfaces/groupingcolumnsconfig/) — `showGroupBorders`, `groupHeaderRenderer`, `lockGroupOrder`
-- **Group header renderer params**: [`GroupHeaderRenderParams`](./interfaces/groupheaderrenderparams/) — passed to `groupHeaderRenderer`
-- **Grid config `columnGroups`**: [`ColumnGroupDefinition`](./interfaces/columngroupdefinition/) — declarative group definitions (`id`, `header`, `children`)
+### Where to configure what
+
+| What | Where | Notes |
+| --- | --- | --- |
+| Group definitions | `features.groupingColumns.columnGroups` | Recommended — keeps everything in one place |
+| Group definitions (alt) | `gridConfig.columnGroups` | Useful for server-driven layouts |
+| Group membership | `columns[].group` | Simplest — just assigns a column to a group |
+| Custom rendering | `groupHeaderRenderer` or per-group `renderer` | On the feature config or group definition |
+| Plugin behavior | `showGroupBorders`, `lockGroupOrder` | On the feature config |
+
+### Type reference
+
+- **Plugin options**: [`GroupingColumnsConfig`](./interfaces/groupingcolumnsconfig/) — `columnGroups`, `groupHeaderRenderer`, `showGroupBorders`, `lockGroupOrder`
+- **Group definition**: [`ColumnGroupDefinition`](./interfaces/columngroupdefinition/) — `id` (optional), `header`, `children`, `renderer`
+- **Renderer params**: [`GroupHeaderRenderParams`](./interfaces/groupheaderrenderparams/) — `id`, `label`, `columns`, `firstIndex`, `isImplicit`
 - **Runtime group data**: [`ColumnGroup`](./interfaces/columngroup/) — computed group objects returned by `getGroups()`
-- **Column config `group`**: `string` (simple group ID used as both id and label) or `{ id: string; label?: string }`
+- **Column config `group`**: `string` (group ID) or `{ id: string; label?: string }`
 
 ## Programmatic API
 

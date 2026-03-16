@@ -980,13 +980,28 @@ export class GridAdapter implements FrameworkAdapter {
    * @returns Processed GroupingColumnsConfig with actual renderer functions
    */
   processGroupingColumnsConfig(config: GroupingColumnsConfig): GroupingColumnsConfig {
+    const processed = { ...config };
+    let changed = false;
+
+    // Bridge top-level groupHeaderRenderer component class
     if (config.groupHeaderRenderer && isComponentClass(config.groupHeaderRenderer)) {
-      return {
-        ...config,
-        groupHeaderRenderer: this.createComponentGroupHeaderRenderer(config.groupHeaderRenderer),
-      };
+      processed.groupHeaderRenderer = this.createComponentGroupHeaderRenderer(config.groupHeaderRenderer);
+      changed = true;
     }
-    return config;
+
+    // Bridge per-group renderer component classes inside columnGroups
+    if (Array.isArray(config.columnGroups)) {
+      const mappedGroups = config.columnGroups.map((def) => {
+        if (def.renderer && isComponentClass(def.renderer)) {
+          changed = true;
+          return { ...def, renderer: this.createComponentGroupHeaderRenderer(def.renderer) };
+        }
+        return def;
+      });
+      if (changed) processed.columnGroups = mappedGroups;
+    }
+
+    return changed ? processed : config;
   }
 
   /**

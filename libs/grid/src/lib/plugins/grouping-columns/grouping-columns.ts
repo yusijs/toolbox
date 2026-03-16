@@ -7,7 +7,41 @@
 // Import types to enable module augmentation
 import type { ColumnConfig } from '../../core/types';
 import './types';
-import type { ColumnGroup, ColumnGroupInternal, GroupHeaderRenderParams, GroupingColumnsConfig } from './types';
+import type {
+  ColumnGroup,
+  ColumnGroupDefinition,
+  ColumnGroupInternal,
+  GroupHeaderRenderParams,
+  GroupingColumnsConfig,
+} from './types';
+
+/**
+ * Generate a stable slug from a header string for use as auto-generated group id.
+ * E.g. `'Personal Info'` → `'personal-info'`
+ */
+export function slugifyHeader(header: string): string {
+  return header
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+/**
+ * Validate column group definitions and resolve auto-generated ids.
+ * Throws if a group has neither `id` nor `header`.
+ *
+ * @returns A new array with `id` resolved on every definition.
+ */
+export function resolveColumnGroupDefs(defs: ColumnGroupDefinition[]): (ColumnGroupDefinition & { id: string })[] {
+  return defs.map((def) => {
+    if (def.id) return def as ColumnGroupDefinition & { id: string };
+    if (!def.header) {
+      throw new Error('[tbw-grid] ColumnGroupDefinition requires either an "id" or a "header" to generate an id from.');
+    }
+    return { ...def, id: slugifyHeader(def.header) };
+  });
+}
 
 /**
  * Compute column groups from column configuration.
@@ -214,8 +248,9 @@ export function buildGroupHeaderRow(
     cell.setAttribute('data-group', gid);
     cell.style.gridColumn = `${startIndex + 1} / span ${span}`;
 
-    // Apply custom renderer for explicit groups, fall back to plain text
-    if (renderer && !isImplicit) {
+    // Apply per-group renderer → fallback renderer → plain text label
+    const activeRenderer = (!isImplicit && (g.renderer || renderer)) || undefined;
+    if (activeRenderer && !isImplicit) {
       const params: GroupHeaderRenderParams = {
         id: gid,
         label: String(label),
@@ -223,7 +258,7 @@ export function buildGroupHeaderRow(
         firstIndex: startIndex,
         isImplicit: false,
       };
-      const result = renderer(params);
+      const result = activeRenderer(params);
       if (result instanceof HTMLElement) {
         cell.appendChild(result);
       } else if (typeof result === 'string') {
@@ -232,6 +267,7 @@ export function buildGroupHeaderRow(
         cell.textContent = label;
       }
     } else {
+      // Always use textContent for non-rendered labels to prevent HTML injection
       cell.textContent = label;
     }
 

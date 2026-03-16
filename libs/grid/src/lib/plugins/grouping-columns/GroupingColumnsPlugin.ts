@@ -16,9 +16,10 @@ import {
   computeColumnGroups,
   findEmbeddedImplicitGroups,
   hasColumnGroups,
+  resolveColumnGroupDefs,
 } from './grouping-columns';
 import styles from './grouping-columns.css?inline';
-import type { ColumnGroup, GroupingColumnsConfig } from './types';
+import type { ColumnGroup, ColumnGroupDefinition, GroupingColumnsConfig } from './types';
 
 /**
  * Column Grouping Plugin for tbw-grid
@@ -139,6 +140,10 @@ export class GroupingColumnsPlugin extends BaseGridPlugin<GroupingColumnsConfig>
   private isActive = false;
   /** Fields that are the last column in a group (for group-end border class). */
   #groupEndFields = new Set<string>();
+  /** Resolved column group definitions (with auto-generated ids). */
+  #resolvedGroupDefs: (ColumnGroupDefinition & { id: string })[] = [];
+  /** Map of group id → per-group renderer from ColumnGroupDefinition.renderer */
+  #groupRenderers = new Map<string, NonNullable<ColumnGroupDefinition['renderer']>>();
   // #endregion
 
   // #region Lifecycle
@@ -158,6 +163,8 @@ export class GroupingColumnsPlugin extends BaseGridPlugin<GroupingColumnsConfig>
     this.groups = [];
     this.isActive = false;
     this.#groupEndFields.clear();
+    this.#resolvedGroupDefs = [];
+    this.#groupRenderers.clear();
   }
 
   // #region Column Move Guard
@@ -285,10 +292,9 @@ export class GroupingColumnsPlugin extends BaseGridPlugin<GroupingColumnsConfig>
   #getStableColumnGrouping(): ColumnGroupInfo[] {
     let result: ColumnGroupInfo[];
 
-    // 1. Prefer declarative columnGroups - always complete, visibility-independent
-    const columnGroups = this.grid?.gridConfig?.columnGroups;
-    if (columnGroups && Array.isArray(columnGroups) && columnGroups.length > 0) {
-      result = columnGroups
+    // 1. Prefer resolved declarative columnGroups (from plugin config or gridConfig)
+    if (this.#resolvedGroupDefs.length > 0) {
+      result = this.#resolvedGroupDefs
         .filter((g) => g.children.length > 0)
         .map((g) => ({
           id: g.id,
@@ -358,7 +364,17 @@ export class GroupingColumnsPlugin extends BaseGridPlugin<GroupingColumnsConfig>
    * Detects both inline `column.group` properties and declarative `columnGroups` config.
    */
   static detect(rows: readonly any[], config: any): boolean {
-    // Check for declarative columnGroups in config
+    // Check for declarative columnGroups in plugin feature config
+    const featureConfig = config?.features?.groupingColumns;
+    if (
+      featureConfig &&
+      typeof featureConfig === 'object' &&
+      Array.isArray(featureConfig.columnGroups) &&
+      featureConfig.columnGroups.length > 0
+    ) {
+      return true;
+    }
+    // Check for declarative columnGroups in gridConfig
     if (config?.columnGroups && Array.isArray(config.columnGroups) && config.columnGroups.length > 0) {
       return true;
     }
@@ -373,14 +389,42 @@ export class GroupingColumnsPlugin extends BaseGridPlugin<GroupingColumnsConfig>
 
   /** @internal */
   override processColumns(columns: readonly ColumnConfig[]): ColumnConfig[] {
-    // First, check if gridConfig.columnGroups is defined and apply to columns
-    const columnGroups = this.grid?.gridConfig?.columnGroups;
+    // Resolve columnGroups source — plugin config takes precedence over gridConfig
+    const pluginColumnGroups = this.config?.columnGroups;
+    const gridColumnGroups = this.grid?.gridConfig?.columnGroups;
+    let columnGroupDefs: ColumnGroupDefinition[] | undefined;
+
+    if (pluginColumnGroups && Array.isArray(pluginColumnGroups) && pluginColumnGroups.length > 0) {
+      // Warn if both sources are defined
+      if (gridColumnGroups && Array.isArray(gridColumnGroups) && gridColumnGroups.length > 0) {
+        console.warn(
+          '[tbw-grid] columnGroups defined in both gridConfig and groupingColumns feature config. ' +
+            'Using feature config (higher precedence).',
+        );
+      }
+      columnGroupDefs = pluginColumnGroups;
+    } else if (gridColumnGroups && Array.isArray(gridColumnGroups) && gridColumnGroups.length > 0) {
+      columnGroupDefs = gridColumnGroups;
+    }
+
     let processedColumns: ColumnConfig[];
 
-    if (columnGroups && Array.isArray(columnGroups) && columnGroups.length > 0) {
-      // Build a map of field -> group info from the declarative config
+    if (columnGroupDefs && columnGroupDefs.length > 0) {
+      // Resolve ids (auto-generate from header when missing) and validate
+      const resolved = resolveColumnGroupDefs(columnGroupDefs);
+      this.#resolvedGroupDefs = resolved;
+
+      // Collect per-group renderers
+      this.#groupRenderers.clear();
+      for (const def of resolved) {
+        if (def.renderer) {
+          this.#groupRenderers.set(def.id, def.renderer);
+        }
+      }
+
+      // Build a map of field → group info from the declarative config
       const fieldToGroup = new Map<string, { id: string; label: string }>();
-      for (const group of columnGroups) {
+      for (const group of resolved) {
         for (const field of group.children) {
           fieldToGroup.set(field, { id: group.id, label: group.header });
         }
@@ -395,6 +439,8 @@ export class GroupingColumnsPlugin extends BaseGridPlugin<GroupingColumnsConfig>
         return col;
       });
     } else {
+      this.#resolvedGroupDefs = [];
+      this.#groupRenderers.clear();
       processedColumns = [...columns];
     }
 
@@ -405,6 +451,14 @@ export class GroupingColumnsPlugin extends BaseGridPlugin<GroupingColumnsConfig>
       this.isActive = false;
       this.groups = [];
       return processedColumns;
+    }
+
+    // Attach per-group renderers to computed groups
+    if (this.#groupRenderers.size > 0) {
+      for (const g of groups) {
+        const r = this.#groupRenderers.get(g.id);
+        if (r) g.renderer = r;
+      }
     }
 
     this.isActive = true;
@@ -446,6 +500,14 @@ export class GroupingColumnsPlugin extends BaseGridPlugin<GroupingColumnsConfig>
     const finalColumns = this.visibleColumns as ColumnConfig[];
     const groups = computeColumnGroups(finalColumns);
     if (groups.length === 0) return;
+
+    // Attach per-group renderers from resolved definitions
+    if (this.#groupRenderers.size > 0) {
+      for (const g of groups) {
+        const r = this.#groupRenderers.get(g.id);
+        if (r) g.renderer = r;
+      }
+    }
 
     // Keep #groupEndFields in sync for afterCellRender (covers scheduler-driven renders)
     this.#groupEndFields.clear();

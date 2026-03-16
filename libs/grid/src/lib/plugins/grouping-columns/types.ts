@@ -55,7 +55,64 @@ declare module '../../core/types' {
 
 /** Configuration options for the column groups plugin */
 export interface GroupingColumnsConfig {
-  /** Custom group header renderer */
+  /**
+   * Declarative column group definitions.
+   * When provided here, takes precedence over `gridConfig.columnGroups`.
+   *
+   * @example
+   * ```ts
+   * features: {
+   *   groupingColumns: {
+   *     columnGroups: [
+   *       { header: 'Personal Info', children: ['firstName', 'lastName', 'email'] },
+   *       { header: 'Work Info', children: ['department', 'title', 'salary'] },
+   *     ],
+   *   }
+   * }
+   * ```
+   */
+  columnGroups?: ColumnGroupDefinition[];
+  /**
+   * Group header renderer called for each column group.
+   * Receives the group's `id`, `label`, and `columns` in the params,
+   * so a single function can handle all groups or differentiate per group via `params.id`.
+   *
+   * When a {@link ColumnGroupDefinition.renderer | per-group renderer} is also defined,
+   * the per-group renderer takes precedence for that specific group.
+   *
+   * @example Uniform rendering for all groups:
+   * ```ts
+   * groupHeaderRenderer: (params) => {
+   *   return `<strong>${params.label}</strong> (${params.columns.length} cols)`;
+   * }
+   * ```
+   *
+   * @example Per-group rendering via switch on `params.id`:
+   * ```ts
+   * groupHeaderRenderer: (params) => {
+   *   const icons: Record<string, string> = { personal: '👤', work: '💼' };
+   *   return `${icons[params.id] ?? '📁'} <strong>${params.label}</strong>`;
+   * }
+   * ```
+   *
+   * @example Return an HTMLElement for full control:
+   * ```ts
+   * groupHeaderRenderer: (params) => {
+   *   const el = document.createElement('span');
+   *   el.style.cssText = 'display: flex; align-items: center; gap: 0.4em;';
+   *   el.textContent = `${params.label} — ${params.columns.length} columns`;
+   *   return el;
+   * }
+   * ```
+   *
+   * @example Return void to keep the default text label:
+   * ```ts
+   * groupHeaderRenderer: (params) => {
+   *   if (params.id === 'misc') return; // default label for this group
+   *   return `<em>${params.label}</em>`;
+   * }
+   * ```
+   */
   groupHeaderRenderer?: (params: GroupHeaderRenderParams) => HTMLElement | string | void;
   /** Whether to show group borders (default: true) */
   showGroupBorders?: boolean;
@@ -69,12 +126,14 @@ export interface GroupingColumnsConfig {
 }
 
 /**
- * Parameters passed to the {@link GroupingColumnsConfig.groupHeaderRenderer | groupHeaderRenderer} callback.
+ * Parameters passed to the {@link GroupingColumnsConfig.groupHeaderRenderer | groupHeaderRenderer}
+ * and {@link ColumnGroupDefinition.renderer | per-group renderer} callbacks.
  *
- * @example Return an HTML string with the group label and column count:
+ * @example Render all groups with a shared function, differentiated by id:
  * ```ts
  * groupHeaderRenderer: (params) => {
- *   return `<strong>${params.label}</strong> (${params.columns.length} cols)`;
+ *   const icons = { personal: '👤', work: '💼' };
+ *   return `${icons[params.id] ?? '📁'} <strong>${params.label}</strong>`;
  * }
  * ```
  *
@@ -118,16 +177,42 @@ export interface GroupingColumnsState {
 }
 
 /**
- * Declarative column group definition for GridConfig.columnGroups.
- * Maps group metadata to column field names.
+ * Declarative column group definition for GridConfig.columnGroups or
+ * {@link GroupingColumnsConfig.columnGroups}.
+ *
+ * @example Minimal (id auto-generated from header)
+ * ```ts
+ * { header: 'Personal Info', children: ['firstName', 'lastName'] }
+ * ```
+ *
+ * @example With explicit id and per-group renderer
+ * ```ts
+ * {
+ *   id: 'personal',
+ *   header: 'Personal Info',
+ *   children: ['firstName', 'lastName'],
+ *   renderer: (params) => `<strong>${params.label}</strong>`,
+ * }
+ * ```
  */
 export interface ColumnGroupDefinition {
-  /** Unique group identifier */
-  id: string;
+  /**
+   * Unique group identifier.
+   * When omitted, auto-generated as a slug of {@link header}
+   * (e.g. `'Personal Info'` → `'personal-info'`).
+   *
+   * Required when {@link renderer} is provided without a {@link header}.
+   */
+  id?: string;
   /** Display label for the group header */
   header: string;
   /** Array of column field names belonging to this group */
   children: string[];
+  /**
+   * Custom renderer for this specific group's header cell.
+   * Takes precedence over {@link GroupingColumnsConfig.groupHeaderRenderer}.
+   */
+  renderer?: (params: GroupHeaderRenderParams) => HTMLElement | string | void;
 }
 
 /** Column group definition (computed at runtime) */
@@ -140,6 +225,11 @@ export interface ColumnGroup<T = any> {
   columns: CoreColumnConfig<T>[];
   /** Index of first column in this group */
   firstIndex: number;
+  /**
+   * Per-group renderer. Resolved from the originating
+   * {@link ColumnGroupDefinition.renderer} when present.
+   */
+  renderer?: (params: GroupHeaderRenderParams) => HTMLElement | string | void;
 }
 
 /** Extended column group with implicit flag */

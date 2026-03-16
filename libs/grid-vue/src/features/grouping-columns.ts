@@ -32,11 +32,31 @@
 
 import {
   GroupingColumnsPlugin,
+  type ColumnGroupDefinition,
   type GroupHeaderRenderParams,
   type GroupingColumnsConfig,
 } from '@toolbox-web/grid/plugins/grouping-columns';
 import { createApp, type VNode } from 'vue';
 import { registerFeature } from '../lib/feature-registry';
+
+/** Bridge a Vue render function to a vanilla DOM render function. */
+function bridgeRenderer(
+  vueFn: (params: GroupHeaderRenderParams) => VNode,
+): (params: GroupHeaderRenderParams) => HTMLElement {
+  return (params: GroupHeaderRenderParams) => {
+    const wrapper = document.createElement('div');
+    wrapper.style.display = 'contents';
+
+    const app = createApp({
+      render() {
+        return vueFn(params);
+      },
+    });
+
+    app.mount(wrapper);
+    return wrapper;
+  };
+}
 
 registerFeature('groupingColumns', (rawConfig) => {
   if (rawConfig === true) {
@@ -46,25 +66,25 @@ registerFeature('groupingColumns', (rawConfig) => {
     return new GroupingColumnsPlugin();
   }
 
-  const config = rawConfig as GroupingColumnsConfig & { groupHeaderRenderer?: unknown };
+  const config = rawConfig as GroupingColumnsConfig & {
+    groupHeaderRenderer?: unknown;
+    columnGroups?: (ColumnGroupDefinition & { renderer?: unknown })[];
+  };
   const options = { ...config } as GroupingColumnsConfig;
 
   // Bridge Vue groupHeaderRenderer (returns VNode) to vanilla (returns HTMLElement | string | void)
   if (typeof config.groupHeaderRenderer === 'function') {
     const vueFn = config.groupHeaderRenderer as unknown as (params: GroupHeaderRenderParams) => VNode;
-    options.groupHeaderRenderer = (params: GroupHeaderRenderParams) => {
-      const wrapper = document.createElement('div');
-      wrapper.style.display = 'contents';
+    options.groupHeaderRenderer = bridgeRenderer(vueFn);
+  }
 
-      const app = createApp({
-        render() {
-          return vueFn(params);
-        },
-      });
-
-      app.mount(wrapper);
-      return wrapper;
-    };
+  // Bridge per-group renderers inside columnGroups
+  if (Array.isArray(config.columnGroups)) {
+    options.columnGroups = config.columnGroups.map((def) => {
+      if (typeof def.renderer !== 'function') return def as ColumnGroupDefinition;
+      const vueFn = def.renderer as unknown as (params: GroupHeaderRenderParams) => VNode;
+      return { ...def, renderer: bridgeRenderer(vueFn) } as ColumnGroupDefinition;
+    });
   }
 
   return new GroupingColumnsPlugin(options);

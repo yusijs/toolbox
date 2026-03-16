@@ -11,6 +11,8 @@ import {
   findEmbeddedImplicitGroups,
   getColumnGroupId,
   hasColumnGroups,
+  resolveColumnGroupDefs,
+  slugifyHeader,
 } from './grouping-columns';
 import type { ColumnGroup } from './types';
 
@@ -416,5 +418,94 @@ describe('GroupingColumnsPlugin.handleQuery (getColumnGrouping)', async () => {
     const plugin = new GroupingColumnsPlugin();
     const result = plugin.handleQuery({ type: 'unknownQuery', context: undefined });
     expect(result).toBeUndefined();
+  });
+});
+
+describe('slugifyHeader', () => {
+  it('converts header to lowercase slug', () => {
+    expect(slugifyHeader('Personal Info')).toBe('personal-info');
+  });
+
+  it('removes leading/trailing dashes', () => {
+    expect(slugifyHeader('  Hello World!  ')).toBe('hello-world');
+  });
+
+  it('collapses multiple non-alphanumeric chars', () => {
+    expect(slugifyHeader('Work & Finance --- Data')).toBe('work-finance-data');
+  });
+
+  it('handles single word', () => {
+    expect(slugifyHeader('Personal')).toBe('personal');
+  });
+
+  it('handles empty string', () => {
+    expect(slugifyHeader('')).toBe('');
+  });
+});
+
+describe('resolveColumnGroupDefs', () => {
+  it('passes through defs with explicit id', () => {
+    const defs = [{ id: 'personal', header: 'Personal Info', children: ['name', 'email'] }];
+    const result = resolveColumnGroupDefs(defs);
+    expect(result).toEqual(defs);
+  });
+
+  it('auto-generates id from header when id is omitted', () => {
+    const defs = [{ header: 'Personal Info', children: ['name', 'email'] }];
+    const result = resolveColumnGroupDefs(defs);
+    expect(result[0].id).toBe('personal-info');
+    expect(result[0].header).toBe('Personal Info');
+  });
+
+  it('throws when neither id nor header is provided', () => {
+    const defs = [{ children: ['name'] } as any];
+    expect(() => resolveColumnGroupDefs(defs)).toThrow('requires either an "id" or a "header"');
+  });
+
+  it('preserves renderer on definitions', () => {
+    const renderer = () => 'custom';
+    const defs = [{ header: 'Group', children: ['a'], renderer }];
+    const result = resolveColumnGroupDefs(defs);
+    expect(result[0].renderer).toBe(renderer);
+  });
+});
+
+describe('buildGroupHeaderRow with per-group renderer', () => {
+  it('uses per-group renderer over fallback renderer', () => {
+    const cols = [
+      { field: 'a', header: 'A' },
+      { field: 'b', header: 'B' },
+    ];
+    const perGroupRenderer = () => '<em>Custom</em>';
+    const fallbackRenderer = () => '<em>Fallback</em>';
+    const groups: ColumnGroup[] = [
+      { id: 'G1', label: 'Group One', columns: cols, firstIndex: 0, renderer: perGroupRenderer },
+    ];
+    const row = buildGroupHeaderRow(groups, cols, fallbackRenderer);
+
+    expect(row!.children[0].innerHTML).toBe('<em>Custom</em>');
+  });
+
+  it('falls back to groupHeaderRenderer when no per-group renderer', () => {
+    const cols = [
+      { field: 'a', header: 'A' },
+      { field: 'b', header: 'B' },
+    ];
+    const fallbackRenderer = () => '<em>Fallback</em>';
+    const groups: ColumnGroup[] = [{ id: 'G1', label: 'Group One', columns: cols, firstIndex: 0 }];
+    const row = buildGroupHeaderRow(groups, cols, fallbackRenderer);
+
+    expect(row!.children[0].innerHTML).toBe('<em>Fallback</em>');
+  });
+
+  it('uses textContent (not innerHTML) for non-rendered labels', () => {
+    const cols = [{ field: 'a', header: 'A' }];
+    // Label contains HTML-like content — should NOT be parsed as HTML
+    const groups: ColumnGroup[] = [{ id: 'G1', label: '<b>XSS</b>', columns: cols, firstIndex: 0 }];
+    const row = buildGroupHeaderRow(groups, cols);
+
+    // textContent preserves the raw string, innerHTML would parse it
+    expect(row!.children[0].textContent).toBe('<b>XSS</b>');
+    expect(row!.children[0].querySelector('b')).toBe(null);
   });
 });

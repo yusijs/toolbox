@@ -3,7 +3,7 @@
  *
  * Tests the GroupingColumnsPlugin with real grid elements.
  */
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextFrame } from '../../../../test/helpers';
 import '../../../index';
 import type { GridElement } from '../../../public';
@@ -199,5 +199,150 @@ describe('GroupingColumnsPlugin groupHeaderRenderer', () => {
     expect(receivedParams[0].columns).toBe(2);
     expect(receivedParams[0].isImplicit).toBe(false);
     expect(typeof receivedParams[0].firstIndex).toBe('number');
+  });
+});
+
+describe('GroupingColumnsPlugin with plugin config columnGroups', () => {
+  let grid: GridElement;
+
+  beforeEach(() => {
+    grid = document.createElement('tbw-grid') as GridElement;
+    document.body.appendChild(grid);
+  });
+
+  afterEach(() => {
+    grid.remove();
+  });
+
+  it('applies columnGroups from plugin config', async () => {
+    grid.gridConfig = {
+      columns: [
+        { field: 'firstName', header: 'First Name' },
+        { field: 'lastName', header: 'Last Name' },
+        { field: 'department', header: 'Dept' },
+        { field: 'salary', header: 'Salary' },
+      ],
+      plugins: [
+        new GroupingColumnsPlugin({
+          columnGroups: [
+            { header: 'Personal Info', children: ['firstName', 'lastName'] },
+            { header: 'Work Info', children: ['department', 'salary'] },
+          ],
+        }),
+      ],
+    };
+    grid.rows = [{ firstName: 'Alice', lastName: 'Smith', department: 'Eng', salary: 100000 }];
+
+    await customElements.whenDefined('tbw-grid');
+    await grid.ready?.();
+    await nextFrame();
+
+    const plugin = grid.getPluginByName('groupingColumns');
+    expect(plugin).toBeDefined();
+    expect(plugin!.isGroupingActive()).toBe(true);
+
+    const groups = plugin!.getGroups();
+    expect(groups.length).toBe(2);
+    // id should be auto-generated from header
+    expect(groups[0].id).toBe('personal-info');
+    expect(groups[0].label).toBe('Personal Info');
+    expect(groups[1].id).toBe('work-info');
+  });
+
+  it('plugin config columnGroups takes precedence over gridConfig.columnGroups', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    grid.gridConfig = {
+      columnGroups: [{ id: 'grid-level', header: 'Grid Level', children: ['firstName', 'lastName'] }],
+      columns: [
+        { field: 'firstName', header: 'First Name' },
+        { field: 'lastName', header: 'Last Name' },
+        { field: 'department', header: 'Dept' },
+      ],
+      plugins: [
+        new GroupingColumnsPlugin({
+          columnGroups: [
+            { id: 'plugin-level', header: 'Plugin Level', children: ['firstName', 'lastName', 'department'] },
+          ],
+        }),
+      ],
+    };
+    grid.rows = [{ firstName: 'Alice', lastName: 'Smith', department: 'Eng' }];
+
+    await customElements.whenDefined('tbw-grid');
+    await grid.ready?.();
+    await nextFrame();
+
+    const plugin = grid.getPluginByName('groupingColumns');
+    const groups = plugin!.getGroups();
+    // Plugin config should win
+    expect(groups[0].id).toBe('plugin-level');
+
+    // Should have warned about both being defined
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('columnGroups defined in both gridConfig and groupingColumns'),
+    );
+
+    warnSpy.mockRestore();
+  });
+
+  it('applies per-group renderer from columnGroups definition', async () => {
+    grid.gridConfig = {
+      columns: [
+        { field: 'a', header: 'A' },
+        { field: 'b', header: 'B' },
+        { field: 'c', header: 'C' },
+      ],
+      plugins: [
+        new GroupingColumnsPlugin({
+          columnGroups: [
+            {
+              id: 'g1',
+              header: 'Group 1',
+              children: ['a', 'b'],
+              renderer: (params) => `<em>${params.label}</em>`,
+            },
+            { id: 'g2', header: 'Group 2', children: ['c'] },
+          ],
+          // Fallback renderer for groups without specific renderer
+          groupHeaderRenderer: (params) => `<strong>${params.label}</strong>`,
+        }),
+      ],
+    };
+    grid.rows = [{ a: 1, b: 2, c: 3 }];
+
+    await customElements.whenDefined('tbw-grid');
+    await grid.ready?.();
+    await nextFrame();
+
+    const cells = grid.querySelectorAll('.header-group-cell:not(.implicit-group)');
+    expect(cells.length).toBe(2);
+    // g1 uses per-group renderer
+    expect(cells[0].innerHTML).toBe('<em>Group 1</em>');
+    // g2 falls back to groupHeaderRenderer
+    expect(cells[1].innerHTML).toBe('<strong>Group 2</strong>');
+  });
+
+  it('auto-generates id from header when id is omitted', async () => {
+    grid.gridConfig = {
+      columns: [
+        { field: 'a', header: 'A' },
+        { field: 'b', header: 'B' },
+      ],
+      plugins: [
+        new GroupingColumnsPlugin({
+          columnGroups: [{ header: 'My Group', children: ['a', 'b'] }],
+        }),
+      ],
+    };
+    grid.rows = [{ a: 1, b: 2 }];
+
+    await customElements.whenDefined('tbw-grid');
+    await grid.ready?.();
+    await nextFrame();
+
+    const plugin = grid.getPluginByName('groupingColumns');
+    const groups = plugin!.getGroups();
+    expect(groups[0].id).toBe('my-group');
   });
 });
