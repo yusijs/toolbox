@@ -44,7 +44,7 @@ import type { EditingConfig } from '@toolbox-web/grid/plugins/editing';
 import type { FilterPanelParams } from '@toolbox-web/grid/plugins/filtering';
 import type { ReactNode } from 'react';
 
-// #region React-specific Filter Config
+// #region React-specific Config Overrides
 /**
  * React-specific filter config that allows React components as `filterPanelRenderer`.
  *
@@ -54,6 +54,16 @@ import type { ReactNode } from 'react';
  */
 type ReactFilterConfig<TRow = unknown> = Omit<FilterConfig<TRow>, 'filterPanelRenderer'> & {
   filterPanelRenderer?: FilterConfig<TRow>['filterPanelRenderer'] | ((params: FilterPanelParams) => ReactNode);
+};
+
+/**
+ * React-specific grouping columns config that allows React components as `groupHeaderRenderer`.
+ *
+ * Extends the base GroupingColumnsConfig to accept a React render function
+ * returning `ReactNode` instead of only `HTMLElement | string | void`.
+ */
+type ReactGroupingColumnsConfig = Omit<GroupingColumnsConfig, 'groupHeaderRenderer'> & {
+  groupHeaderRenderer?: GroupingColumnsConfig['groupHeaderRenderer'] | ((...args: Parameters<NonNullable<GroupingColumnsConfig['groupHeaderRenderer']>>) => ReactNode);
 };
 // #endregion
 
@@ -244,7 +254,7 @@ export interface FeatureProps<TRow = unknown> {
    * }} />
    * ```
    */
-  groupingColumns?: boolean | GroupingColumnsConfig;
+  groupingColumns?: boolean | ReactGroupingColumnsConfig;
 
   /**
    * Enable horizontal column virtualization for wide grids.
