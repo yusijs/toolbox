@@ -415,5 +415,206 @@ describe('RowReorderPlugin', () => {
       // Plugin should be in clean state (no throws)
       expect(() => plugin.canMoveRow(0, 1)).not.toThrow();
     });
+
+    it('should clear pending debounce timer on detach', () => {
+      vi.useFakeTimers();
+      const plugin = new RowReorderPlugin({ debounceMs: 300 });
+      const grid = createGridMock([{ id: 1 }, { id: 2 }, { id: 3 }]);
+      grid.dispatchEvent = vi.fn(() => true);
+      plugin.attach(grid as any);
+
+      // Start a keyboard move to create a pending debounce timer
+      grid._focusRow = 0;
+      const event = new KeyboardEvent('keydown', { key: 'ArrowDown', ctrlKey: true });
+      Object.defineProperty(event, 'preventDefault', { value: vi.fn() });
+      Object.defineProperty(event, 'stopPropagation', { value: vi.fn() });
+      plugin.onKeyDown(event);
+
+      // Detach should clear the timer
+      plugin.detach();
+
+      // Advancing time should not cause any event emission
+      vi.advanceTimersByTime(500);
+      expect(grid.dispatchEvent).not.toHaveBeenCalled();
+
+      vi.useRealTimers();
+    });
+  });
+
+  describe('moveRow edge cases', () => {
+    it('should not move when fromIndex is out of bounds (negative)', () => {
+      const plugin = new RowReorderPlugin();
+      const grid = createGridMock([{ id: 1 }, { id: 2 }]);
+      plugin.attach(grid as any);
+
+      plugin.moveRow(-1, 1);
+
+      expect(grid.dispatchEvent).not.toHaveBeenCalled();
+    });
+
+    it('should not move when fromIndex is out of bounds (too large)', () => {
+      const plugin = new RowReorderPlugin();
+      const grid = createGridMock([{ id: 1 }, { id: 2 }]);
+      plugin.attach(grid as any);
+
+      plugin.moveRow(5, 0);
+
+      expect(grid.dispatchEvent).not.toHaveBeenCalled();
+    });
+
+    it('should not move when toIndex is out of bounds', () => {
+      const plugin = new RowReorderPlugin();
+      const grid = createGridMock([{ id: 1 }, { id: 2 }]);
+      plugin.attach(grid as any);
+
+      plugin.moveRow(0, 10);
+
+      expect(grid.dispatchEvent).not.toHaveBeenCalled();
+    });
+
+    it('should produce correct row order when moving up', () => {
+      const plugin = new RowReorderPlugin();
+      const rows = [{ id: 1 }, { id: 2 }, { id: 3 }];
+      const grid = createGridMock(rows);
+      grid.dispatchEvent = vi.fn(() => true);
+      plugin.attach(grid as any);
+
+      plugin.moveRow(2, 0);
+
+      const event = grid.dispatchEvent.mock.calls[0][0] as CustomEvent<RowMoveDetail<any>>;
+      expect(event.detail.fromIndex).toBe(2);
+      expect(event.detail.toIndex).toBe(0);
+      expect(event.detail.rows).toEqual([{ id: 3 }, { id: 1 }, { id: 2 }]);
+      expect(event.detail.source).toBe('keyboard');
+    });
+  });
+
+  describe('onCellClick (flush pending)', () => {
+    it('should flush pending keyboard move when cell is clicked', () => {
+      vi.useFakeTimers();
+      const plugin = new RowReorderPlugin({ debounceMs: 300 });
+      const rows = [{ id: 1 }, { id: 2 }, { id: 3 }];
+      const grid = createGridMock(rows);
+      grid.dispatchEvent = vi.fn(() => true);
+      plugin.attach(grid as any);
+
+      // Move a row via keyboard (creates a pending move)
+      grid._focusRow = 0;
+      const event = new KeyboardEvent('keydown', { key: 'ArrowDown', ctrlKey: true });
+      Object.defineProperty(event, 'preventDefault', { value: vi.fn() });
+      Object.defineProperty(event, 'stopPropagation', { value: vi.fn() });
+      plugin.onKeyDown(event);
+
+      expect(grid.dispatchEvent).not.toHaveBeenCalled();
+
+      // Click a cell should flush the pending move immediately
+      plugin.onCellClick();
+
+      expect(grid.dispatchEvent).toHaveBeenCalledTimes(1);
+      const emittedEvent = grid.dispatchEvent.mock.calls[0][0] as CustomEvent<RowMoveDetail<any>>;
+      expect(emittedEvent.type).toBe('row-move');
+
+      vi.useRealTimers();
+    });
+
+    it('should not throw when no pending move exists', () => {
+      const plugin = new RowReorderPlugin();
+      const grid = createGridMock([{ id: 1 }]);
+      plugin.attach(grid as any);
+
+      expect(() => plugin.onCellClick()).not.toThrow();
+    });
+  });
+
+  describe('canMove callback interactions', () => {
+    it('should pass correct direction for upward move', () => {
+      const canMove = vi.fn().mockReturnValue(true);
+      const plugin = new RowReorderPlugin({ canMove });
+      const grid = createGridMock([{ id: 1 }, { id: 2 }, { id: 3 }]);
+      grid.dispatchEvent = vi.fn(() => true);
+      plugin.attach(grid as any);
+
+      plugin.moveRow(2, 0);
+
+      expect(canMove).toHaveBeenCalledWith({ id: 3 }, 2, 0, 'up');
+    });
+
+    it('should pass correct direction for downward move', () => {
+      const canMove = vi.fn().mockReturnValue(true);
+      const plugin = new RowReorderPlugin({ canMove });
+      const grid = createGridMock([{ id: 1 }, { id: 2 }, { id: 3 }]);
+      grid.dispatchEvent = vi.fn(() => true);
+      plugin.attach(grid as any);
+
+      plugin.moveRow(0, 2);
+
+      expect(canMove).toHaveBeenCalledWith({ id: 1 }, 0, 2, 'down');
+    });
+
+    it('should prevent keyboard moves when canMove returns false', () => {
+      const canMove = vi.fn().mockReturnValue(false);
+      const plugin = new RowReorderPlugin({ canMove, debounceMs: 0 });
+      const rows = [{ id: 1, locked: true }, { id: 2 }];
+      const grid = createGridMock(rows);
+      grid.dispatchEvent = vi.fn(() => true);
+      plugin.attach(grid as any);
+
+      grid._focusRow = 0;
+      const event = new KeyboardEvent('keydown', { key: 'ArrowDown', ctrlKey: true });
+
+      const result = plugin.onKeyDown(event);
+
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('animation config', () => {
+    it('should use flip animation by default', () => {
+      const plugin = new RowReorderPlugin();
+      const grid = createGridMock([{ id: 1 }, { id: 2 }]);
+      grid.dispatchEvent = vi.fn(() => true);
+      plugin.attach(grid as any);
+
+      // Move should succeed (animation details are internal)
+      plugin.moveRow(0, 1);
+
+      expect(grid.dispatchEvent).toHaveBeenCalled();
+    });
+
+    it('should work with animation disabled', () => {
+      const plugin = new RowReorderPlugin({ animation: false });
+      const grid = createGridMock([{ id: 1 }, { id: 2 }]);
+      grid.dispatchEvent = vi.fn(() => true);
+      plugin.attach(grid as any);
+
+      plugin.moveRow(0, 1);
+
+      // Should update rows directly
+      expect(grid.rows).toEqual([{ id: 2 }, { id: 1 }]);
+    });
+  });
+
+  describe('drag handle viewRenderer', () => {
+    it('should create a draggable element', () => {
+      const plugin = new RowReorderPlugin();
+      const grid = createGridMock([]);
+      plugin.attach(grid as any);
+
+      const result = plugin.processColumns([{ field: 'id' }]);
+      const dragCol = result.find((c) => c.field === ROW_DRAG_HANDLE_FIELD);
+
+      const el = dragCol!.viewRenderer!({} as any);
+      expect(el.draggable).toBe(true);
+      expect(el.getAttribute('role')).toBe('button');
+      expect(el.getAttribute('aria-label')).toBe('Drag to reorder');
+      expect(el.getAttribute('tabindex')).toBe('-1');
+    });
+  });
+
+  describe('aliases', () => {
+    it('should have alias "rowReorder"', () => {
+      const plugin = new RowReorderPlugin();
+      expect(plugin.aliases).toContain('rowReorder');
+    });
   });
 });
