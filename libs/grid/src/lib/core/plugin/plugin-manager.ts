@@ -10,8 +10,8 @@
  * add FilteringPlugin before GroupingRowsPlugin in the array.
  */
 
-import { Diagnostic, errorDiagnostic, warnDiagnostic } from '../internal/diagnostics';
-import { gridPrefix, isDevelopment } from '../internal/utils';
+import { DEPRECATED_HOOK, PLUGIN_EVENT_ERROR, errorDiagnostic, warnDiagnostic } from '../internal/diagnostics';
+import { isDevelopment } from '../internal/utils';
 import { validatePluginDependencies } from '../internal/validate-config';
 import type { ColumnConfig } from '../types';
 import type {
@@ -89,11 +89,6 @@ export class PluginManager {
 
   // #region Lifecycle
   constructor(private grid: GridElement) {}
-
-  /** Build log prefix: `[tbw-grid]` or `[tbw-grid#my-id]` */
-  private get logPrefix(): string {
-    return gridPrefix(this.grid.getAttribute('id') ?? undefined);
-  }
 
   /**
    * Attach all plugins from the config.
@@ -194,7 +189,7 @@ export class PluginManager {
     if (hasOldHooks && !hasNewHook) {
       PluginManager.deprecationWarned.add(PluginClass);
       warnDiagnostic(
-        Diagnostic.DEPRECATED_HOOK,
+        DEPRECATED_HOOK,
         `"${plugin.name}" uses getExtraHeight() / getExtraHeightBefore() ` +
           `which are deprecated and will be removed in v2.0.\n` +
           `  → Migrate to getRowHeight(row, index) for better variable row height support.`,
@@ -625,7 +620,7 @@ export class PluginManager {
           callback(detail);
         } catch (error) {
           errorDiagnostic(
-            Diagnostic.PLUGIN_EVENT_ERROR,
+            PLUGIN_EVENT_ERROR,
             `Error in plugin event handler for "${eventType}": ${error}`,
             this.grid.getAttribute('id') ?? undefined,
           );

@@ -1,5 +1,12 @@
 import type { ColumnInternal, ColumnViewRenderer, GridHost, InternalGrid, RowElementInternal } from '../types';
-import { Diagnostic, warnDiagnostic } from './diagnostics';
+import {
+  CELL_CLASS_ERROR,
+  FORMAT_ERROR,
+  ROW_CLASS_ERROR,
+  VIEW_DISPATCH_ERROR,
+  VIEW_MOUNT_ERROR,
+  warnDiagnostic,
+} from './diagnostics';
 import { ensureCellVisible } from './keyboard';
 import { evalTemplateString, finalCellScrub, sanitizeHTML } from './sanitize';
 import { booleanCellHTML, clearCellFocus, formatDateValue, getRowIndexFromCell } from './utils';
@@ -358,7 +365,7 @@ export function renderVisibleRows(
           rowEl.removeAttribute('data-dynamic-classes');
         }
       } catch (e) {
-        warnDiagnostic(Diagnostic.ROW_CLASS_ERROR, `rowClass callback error: ${e}`, grid.id);
+        warnDiagnostic(ROW_CLASS_ERROR, `rowClass callback error: ${e}`, grid.id);
         rowEl.removeAttribute('data-dynamic-classes');
       }
     }
@@ -533,11 +540,7 @@ function fastPatchRow(grid: GridHost, rowEl: HTMLElement, rowData: any, rowIndex
           cell.removeAttribute('data-dynamic-classes');
         }
       } catch (e) {
-        warnDiagnostic(
-          Diagnostic.CELL_CLASS_ERROR,
-          `cellClass callback error for column '${col.field}': ${e}`,
-          grid.id,
-        );
+        warnDiagnostic(CELL_CLASS_ERROR, `cellClass callback error for column '${col.field}': ${e}`, grid.id);
         cell.removeAttribute('data-dynamic-classes');
       }
     }
@@ -661,7 +664,7 @@ function fastPatchRow(grid: GridHost, rowEl: HTMLElement, rowData: any, rowIndex
         displayStr = formatted == null ? '' : String(formatted);
       } catch (e) {
         // Log format errors as warnings (user configuration issue)
-        warnDiagnostic(Diagnostic.FORMAT_ERROR, `Format error in column '${col.field}': ${e}`, grid.id);
+        warnDiagnostic(FORMAT_ERROR, `Format error in column '${col.field}': ${e}`, grid.id);
         displayStr = value == null ? '' : String(value);
       }
       cell.textContent = displayStr;
@@ -751,7 +754,7 @@ export function renderInlineRow(grid: GridHost, rowEl: HTMLElement, rowData: any
         value = formatFn(value, rowData);
       } catch (e) {
         // Log format errors as warnings (user configuration issue)
-        warnDiagnostic(Diagnostic.FORMAT_ERROR, `Format error in column '${col.field}': ${e}`, grid.id);
+        warnDiagnostic(FORMAT_ERROR, `Format error in column '${col.field}': ${e}`, grid.id);
       }
     }
 
@@ -797,11 +800,7 @@ export function renderInlineRow(grid: GridHost, rowEl: HTMLElement, rowData: any
           spec.mount({ placeholder, context, spec });
         } catch (e) {
           // Log mount errors as warnings (user configuration issue)
-          warnDiagnostic(
-            Diagnostic.VIEW_MOUNT_ERROR,
-            `External view mount error for column '${col.field}': ${e}`,
-            grid.id,
-          );
+          warnDiagnostic(VIEW_MOUNT_ERROR, `External view mount error for column '${col.field}': ${e}`, grid.id);
         }
       } else {
         queueMicrotask(() => {
@@ -816,7 +815,7 @@ export function renderInlineRow(grid: GridHost, rowEl: HTMLElement, rowData: any
           } catch (e) {
             // Log dispatch errors as warnings
             warnDiagnostic(
-              Diagnostic.VIEW_DISPATCH_ERROR,
+              VIEW_DISPATCH_ERROR,
               `External view event dispatch error for column '${col.field}': ${e}`,
               grid.id,
             );
@@ -911,11 +910,7 @@ export function renderInlineRow(grid: GridHost, rowEl: HTMLElement, rowData: any
           cell.setAttribute('data-dynamic-classes', dynamicClassStr);
         }
       } catch (e) {
-        warnDiagnostic(
-          Diagnostic.CELL_CLASS_ERROR,
-          `cellClass callback error for column '${col.field}': ${e}`,
-          grid.id,
-        );
+        warnDiagnostic(CELL_CLASS_ERROR, `cellClass callback error for column '${col.field}': ${e}`, grid.id);
       }
     }
 

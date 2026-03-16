@@ -8,8 +8,7 @@
 // Injected by Vite at build time from package.json (same as grid.ts)
 declare const __GRID_VERSION__: string;
 
-import { type DiagnosticCode, formatDiagnostic } from '../internal/diagnostics';
-import { gridPrefix } from '../internal/utils';
+import { type DiagnosticCode, formatDiagnostic, gridPrefix } from '../internal/diagnostics';
 import type {
   ColumnConfig,
   ColumnState,
@@ -889,7 +888,7 @@ export abstract class BaseGridPlugin<TConfig = unknown> implements GridPlugin {
    * @example
    * ```ts
    * this.warn('Something went wrong');                          // plain
-   * this.warn(Diagnostic.MISSING_BREAKPOINT, 'Set a breakpoint'); // with code + docs link
+   * this.warn(MISSING_BREAKPOINT, 'Set a breakpoint'); // with code + docs link
    * ```
    */
   protected warn(message: string): void;

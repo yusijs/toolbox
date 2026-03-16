@@ -7,7 +7,7 @@
  * @module internal/style-injector
  */
 
-import { Diagnostic, warnDiagnostic } from './diagnostics';
+import { STYLE_EXTRACT_FAILED, STYLE_NOT_FOUND, warnDiagnostic } from './diagnostics';
 
 // #region State
 /** ID for the consolidated grid stylesheet in document.head */
@@ -96,7 +96,7 @@ export function extractGridCssFromDocument(): string | null {
       }
     }
   } catch (err) {
-    warnDiagnostic(Diagnostic.STYLE_EXTRACT_FAILED, `Failed to extract grid.css from document stylesheets: ${err}`);
+    warnDiagnostic(STYLE_EXTRACT_FAILED, `Failed to extract grid.css from document stylesheets: ${err}`);
   }
 
   return null;
@@ -135,7 +135,7 @@ export async function injectStyles(inlineStyles: string): Promise<void> {
   } else if (typeof process === 'undefined' || process.env?.['NODE_ENV'] !== 'test') {
     // Only warn in non-test environments - test environments (happy-dom, jsdom) don't load stylesheets
     warnDiagnostic(
-      Diagnostic.STYLE_NOT_FOUND,
+      STYLE_NOT_FOUND,
       'Could not find grid.css in document.styleSheets. Grid styling will not work. ' +
         `Available stylesheets: ${Array.from(document.styleSheets)
           .map((s) => s.href || '(inline)')

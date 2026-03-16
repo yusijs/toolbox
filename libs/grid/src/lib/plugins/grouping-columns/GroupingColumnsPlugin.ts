@@ -6,7 +6,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { Diagnostic } from '../../core/internal/diagnostics';
+import { COLUMN_GROUPS_CONFLICT } from '../../core/internal/diagnostics';
 import type { AfterCellRenderContext, PluginManifest, PluginQuery } from '../../core/plugin/base-plugin';
 import { BaseGridPlugin } from '../../core/plugin/base-plugin';
 import type { ColumnConfig } from '../../core/types';
@@ -399,7 +399,7 @@ export class GroupingColumnsPlugin extends BaseGridPlugin<GroupingColumnsConfig>
       // Warn if both sources are defined
       if (gridColumnGroups && Array.isArray(gridColumnGroups) && gridColumnGroups.length > 0) {
         this.warn(
-          Diagnostic.COLUMN_GROUPS_CONFLICT,
+          COLUMN_GROUPS_CONFLICT,
           'columnGroups defined in both gridConfig and groupingColumns feature config. ' +
             'Using feature config (higher precedence).',
         );

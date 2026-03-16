@@ -1,6 +1,6 @@
 import type { ColumnConfig, ColumnInternal, ElementWithPart, GridHost, PrimitiveColumnType } from '../types';
 import { FitModeEnum } from '../types';
-import { Diagnostic, warnDiagnostic } from './diagnostics';
+import { INVALID_COLUMN_WIDTH, warnDiagnostic } from './diagnostics';
 
 // #region Light DOM Parsing
 /** Global DataGridElement class (may or may not be registered) */
@@ -255,7 +255,7 @@ function resolveWidth(width: string | number, field?: string): string {
   if (typeof width === 'number') return `${width}px`;
   if (!VALID_CSS_WIDTH.test(width)) {
     warnDiagnostic(
-      Diagnostic.INVALID_COLUMN_WIDTH,
+      INVALID_COLUMN_WIDTH,
       `Column '${field ?? '?'}' has an invalid CSS width value: '${width}'. Expected a number (px) or a valid CSS unit string (e.g. '30%', '2fr', 'calc(...)').`,
     );
   }

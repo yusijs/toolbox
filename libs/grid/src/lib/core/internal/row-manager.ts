@@ -11,7 +11,7 @@
  * can never live outside the grid).
  */
 import type { CellChangeDetail, GridHost, UpdateSource } from '../types';
-import { Diagnostic, throwDiagnostic } from './diagnostics';
+import { MISSING_ROW_ID, ROW_NOT_FOUND, throwDiagnostic } from './diagnostics';
 import { RenderPhase } from './render-scheduler';
 import { animateRow } from './row-animation';
 import { invalidateCellCache } from './rows';
@@ -46,7 +46,7 @@ export function resolveRowIdOrThrow<T>(row: T, gridId: string, getRowId?: (row: 
   const id = tryResolveRowId(row, getRowId);
   if (id === undefined) {
     throwDiagnostic(
-      Diagnostic.MISSING_ROW_ID,
+      MISSING_ROW_ID,
       'Cannot determine row ID. ' + 'Configure getRowId in gridConfig or ensure rows have an "id" property.',
       gridId,
     );
@@ -88,7 +88,7 @@ export class RowManager<T = any> {
     const entry = grid._getRowEntry(id);
     if (!entry) {
       throwDiagnostic(
-        Diagnostic.ROW_NOT_FOUND,
+        ROW_NOT_FOUND,
         `Row with ID "${id}" not found. ` + `Ensure the row exists and getRowId is correctly configured.`,
         grid.id,
       );
@@ -148,7 +148,7 @@ export class RowManager<T = any> {
       const entry = grid._getRowEntry(id);
       if (!entry) {
         throwDiagnostic(
-          Diagnostic.ROW_NOT_FOUND,
+          ROW_NOT_FOUND,
           `Row with ID "${id}" not found. ` + `Ensure the row exists and getRowId is correctly configured.`,
           grid.id,
         );

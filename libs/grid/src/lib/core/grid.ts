@@ -1,7 +1,7 @@
 import { createAriaState, updateAriaCounts, updateAriaLabels, type AriaState } from './internal/aria';
 import { autoSizeColumns, updateTemplate } from './internal/columns';
 import { ConfigManager } from './internal/config-manager';
-import { Diagnostic, warnDiagnostic } from './internal/diagnostics';
+import { INVALID_ATTRIBUTE_JSON, warnDiagnostic } from './internal/diagnostics';
 import { setupCellEventDelegation, setupRootEventDelegation } from './internal/event-delegation';
 import { resolveFeatures } from './internal/feature-hook';
 import { FocusManager } from './internal/focus-manager';
@@ -1279,7 +1279,7 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
         else if (name === 'columns') this.columns = parsed;
         else if (name === 'grid-config') this.gridConfig = parsed;
       } catch {
-        warnDiagnostic(Diagnostic.INVALID_ATTRIBUTE_JSON, `Invalid JSON for '${name}' attribute: ${newValue}`, this.id);
+        warnDiagnostic(INVALID_ATTRIBUTE_JSON, `Invalid JSON for '${name}' attribute: ${newValue}`, this.id);
       }
     } else if (name === 'fit-mode') {
       this.fitMode = newValue as FitMode;

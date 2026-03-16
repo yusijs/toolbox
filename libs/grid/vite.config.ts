@@ -57,10 +57,7 @@ function externalizeCore(): Plugin {
     resolveId(source, importer) {
       const norm = importer?.replace(/\\/g, '/');
       if (!norm?.includes('/plugins/')) return null;
-      // Don't externalize core/internal/utils — only gridPrefix is used at runtime
-      // and it's a tiny function that should be inlined into the plugin bundle.
-      // Don't externalize core/internal/diagnostics — diagnostic codes and
-      // formatting helpers should be inlined into each plugin bundle.
+      // Don't externalize utils/diagnostics — small utilities that should be inlined.
       if (source.endsWith('core/internal/utils') || source.endsWith('core/internal/diagnostics')) return null;
       if (source.startsWith('../../components/') || source.startsWith('../../../')) {
         return { id: '@toolbox-web/grid', external: true };
@@ -166,8 +163,7 @@ function externalizeForFeatures(): Plugin {
       const norm = importer?.replace(/\\/g, '/');
       if (!norm?.includes('/features/')) return null;
 
-      // Core imports → @toolbox-web/grid
-      // Exception: diagnostics and utils are small utilities that should be inlined
+      // Don't externalize utils/diagnostics — small utilities that should be inlined.
       if (source.endsWith('core/internal/diagnostics') || source.endsWith('core/internal/utils')) return null;
       if (source.includes('/core/') || source.startsWith('../../core/') || source.startsWith('../core/')) {
         return { id: '@toolbox-web/grid', external: true };

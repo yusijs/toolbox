@@ -8,7 +8,7 @@
  * @internal
  */
 
-import { Diagnostic, warnDiagnostic } from '../../../core/internal/diagnostics';
+import { EDITOR_MOUNT_ERROR, warnDiagnostic } from '../../../core/internal/diagnostics';
 import type { ColumnConfig, ColumnInternal, GridHost, RowElementInternal } from '../../../core/types';
 import { defaultEditorFor, getInputValue } from '../editors';
 import type { EditingConfig, EditorContext } from '../types';
@@ -300,7 +300,7 @@ export function injectEditor<T>(
         editorSpec.mount({ placeholder, context: context as any, spec: editorSpec });
       } catch (e) {
         warnDiagnostic(
-          Diagnostic.EDITOR_MOUNT_ERROR,
+          EDITOR_MOUNT_ERROR,
           `External editor mount error for column '${column.field}': ${e}`,
           deps.grid.id,
         );

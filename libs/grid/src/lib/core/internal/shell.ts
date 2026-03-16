@@ -16,7 +16,15 @@ import type {
   ToolPanelDefinition,
 } from '../types';
 import { DEFAULT_GRID_ICONS } from '../types';
-import { Diagnostic, warnDiagnostic } from './diagnostics';
+import {
+  HEADER_CONTENT_DUPLICATE,
+  NO_TOOL_PANELS,
+  TOOL_PANEL_DUPLICATE,
+  TOOL_PANEL_MISSING_ATTR,
+  TOOL_PANEL_NOT_FOUND,
+  TOOLBAR_CONTENT_DUPLICATE,
+  warnDiagnostic,
+} from './diagnostics';
 import { escapeHtml } from './sanitize';
 
 // #region Types & State
@@ -466,7 +474,7 @@ export function parseLightDomToolPanels(
     // Skip if required attributes are missing
     if (!id || !title) {
       warnDiagnostic(
-        Diagnostic.TOOL_PANEL_MISSING_ATTR,
+        TOOL_PANEL_MISSING_ATTR,
         `Tool panel missing required id or title attribute: id="${id ?? ''}", title="${title ?? ''}"`,
       );
       return;
@@ -1021,7 +1029,7 @@ export function createShellController(state: ShellState, grid: InternalGrid): Sh
     openToolPanel() {
       if (state.isPanelOpen) return;
       if (state.toolPanels.size === 0) {
-        warnDiagnostic(Diagnostic.NO_TOOL_PANELS, 'No tool panels registered', grid.id);
+        warnDiagnostic(NO_TOOL_PANELS, 'No tool panels registered', grid.id);
         return;
       }
 
@@ -1084,7 +1092,7 @@ export function createShellController(state: ShellState, grid: InternalGrid): Sh
     toggleToolPanelSection(sectionId: string) {
       const panel = state.toolPanels.get(sectionId);
       if (!panel) {
-        warnDiagnostic(Diagnostic.TOOL_PANEL_NOT_FOUND, `Tool panel section "${sectionId}" not found`, grid.id);
+        warnDiagnostic(TOOL_PANEL_NOT_FOUND, `Tool panel section "${sectionId}" not found`, grid.id);
         return;
       }
 
@@ -1139,7 +1147,7 @@ export function createShellController(state: ShellState, grid: InternalGrid): Sh
 
     registerToolPanel(panel: ToolPanelDefinition) {
       if (state.toolPanels.has(panel.id)) {
-        warnDiagnostic(Diagnostic.TOOL_PANEL_DUPLICATE, `Tool panel "${panel.id}" already registered`, grid.id);
+        warnDiagnostic(TOOL_PANEL_DUPLICATE, `Tool panel "${panel.id}" already registered`, grid.id);
         return;
       }
       state.toolPanels.set(panel.id, panel);
@@ -1173,11 +1181,7 @@ export function createShellController(state: ShellState, grid: InternalGrid): Sh
 
     registerHeaderContent(content: HeaderContentDefinition) {
       if (state.headerContents.has(content.id)) {
-        warnDiagnostic(
-          Diagnostic.HEADER_CONTENT_DUPLICATE,
-          `Header content "${content.id}" already registered`,
-          grid.id,
-        );
+        warnDiagnostic(HEADER_CONTENT_DUPLICATE, `Header content "${content.id}" already registered`, grid.id);
         return;
       }
       state.headerContents.set(content.id, content);
@@ -1212,11 +1216,7 @@ export function createShellController(state: ShellState, grid: InternalGrid): Sh
 
     registerToolbarContent(content: ToolbarContentDefinition) {
       if (state.toolbarContents.has(content.id)) {
-        warnDiagnostic(
-          Diagnostic.TOOLBAR_CONTENT_DUPLICATE,
-          `Toolbar content "${content.id}" already registered`,
-          grid.id,
-        );
+        warnDiagnostic(TOOLBAR_CONTENT_DUPLICATE, `Toolbar content "${content.id}" already registered`, grid.id);
         return;
       }
       state.toolbarContents.set(content.id, content);

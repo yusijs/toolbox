@@ -5,7 +5,7 @@
  * and uses CSS to hide everything else on the page during printing.
  */
 
-import { Diagnostic, warnDiagnostic } from '../../core/internal/diagnostics';
+import { PRINT_DUPLICATE_ID, warnDiagnostic } from '../../core/internal/diagnostics';
 import type { PrintOrientation } from './types';
 
 export interface PrintIsolatedOptions {
@@ -125,7 +125,7 @@ export async function printGridIsolated(gridElement: HTMLElement, options: Print
   const elementsWithId = document.querySelectorAll(`#${CSS.escape(gridId)}`);
   if (elementsWithId.length > 1) {
     warnDiagnostic(
-      Diagnostic.PRINT_DUPLICATE_ID,
+      PRINT_DUPLICATE_ID,
       `Multiple elements found with id="${gridId}". ` +
         `Print isolation may not work correctly. Ensure each grid has a unique ID.`,
       gridId,

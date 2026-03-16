@@ -24,7 +24,12 @@
  * @module Features
  */
 
-import { Diagnostic, warnDiagnostic } from '../core/internal/diagnostics';
+import {
+  FEATURE_MISSING_DEP,
+  FEATURE_NOT_IMPORTED,
+  FEATURE_REREGISTERED,
+  warnDiagnostic,
+} from '../core/internal/diagnostics';
 import { setFeatureResolver } from '../core/internal/feature-hook';
 import type { FeatureConfig, GridPlugin } from '../core/types';
 
@@ -68,10 +73,7 @@ export function registerFeature<K extends FeatureName>(name: K, factory: PluginF
 export function registerFeature(name: string, factory: PluginFactory): void;
 export function registerFeature(name: string, factory: PluginFactory): void {
   if (isDev() && featureRegistry.has(name)) {
-    warnDiagnostic(
-      Diagnostic.FEATURE_REREGISTERED,
-      `Feature "${name}" was re-registered. Previous registration overwritten.`,
-    );
+    warnDiagnostic(FEATURE_REREGISTERED, `Feature "${name}" was re-registered. Previous registration overwritten.`);
   }
   featureRegistry.set(name, { factory, name });
 }
@@ -132,7 +134,7 @@ export function createPluginFromFeature(name: string, config: unknown): GridPlug
       warnedFeatures.add(name);
       const kebab = name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
       warnDiagnostic(
-        Diagnostic.FEATURE_NOT_IMPORTED,
+        FEATURE_NOT_IMPORTED,
         `Feature "${name}" is configured but not registered.\n` +
           `Add this import to enable it:\n\n` +
           `  import '@toolbox-web/grid/features/${kebab}';\n`,
@@ -158,7 +160,7 @@ function validateDependencies(featureNames: string[]): void {
       if (!featureSet.has(dep)) {
         if (isDev()) {
           warnDiagnostic(
-            Diagnostic.FEATURE_MISSING_DEP,
+            FEATURE_MISSING_DEP,
             `Feature "${feature}" requires "${dep}" to be enabled. ` + `Add "${dep}" to your features configuration.`,
           );
         }

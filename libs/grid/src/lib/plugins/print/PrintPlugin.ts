@@ -6,7 +6,7 @@
  * @media print CSS for print-optimized styling.
  */
 
-import { Diagnostic, errorDiagnostic } from '../../core/internal/diagnostics';
+import { PRINT_FAILED, PRINT_IN_PROGRESS, PRINT_NO_GRID, errorDiagnostic } from '../../core/internal/diagnostics';
 import { BaseGridPlugin } from '../../core/plugin/base-plugin';
 import type { InternalGrid, ToolbarContentDefinition } from '../../core/types';
 import { printGridIsolated } from './print-isolated';
@@ -158,13 +158,13 @@ export class PrintPlugin extends BaseGridPlugin<PrintConfig> {
    */
   async print(params?: PrintParams): Promise<void> {
     if (this.#printing) {
-      this.warn(Diagnostic.PRINT_IN_PROGRESS, 'Print already in progress');
+      this.warn(PRINT_IN_PROGRESS, 'Print already in progress');
       return;
     }
 
     const grid = this.gridElement;
     if (!grid) {
-      this.warn(Diagnostic.PRINT_NO_GRID, 'Grid not available');
+      this.warn(PRINT_NO_GRID, 'Grid not available');
       return;
     }
 
@@ -259,7 +259,7 @@ export class PrintPlugin extends BaseGridPlugin<PrintConfig> {
         duration: Math.round(performance.now() - startTime),
       });
     } catch (error) {
-      errorDiagnostic(Diagnostic.PRINT_FAILED, `Print failed: ${error}`, this.gridElement?.id, this.name);
+      errorDiagnostic(PRINT_FAILED, `Print failed: ${error}`, this.gridElement?.id, this.name);
       this.emit<PrintCompleteDetail>('print-complete', {
         success: false,
         rowCount: 0,

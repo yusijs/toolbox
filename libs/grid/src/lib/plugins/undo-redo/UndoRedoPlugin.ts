@@ -5,7 +5,7 @@
  * Supports Ctrl+Z/Cmd+Z for undo and Ctrl+Y/Cmd+Y (or Ctrl+Shift+Z) for redo.
  */
 
-import { Diagnostic, throwDiagnostic } from '../../core/internal/diagnostics';
+import { NO_TRANSACTION, TRANSACTION_IN_PROGRESS, throwDiagnostic } from '../../core/internal/diagnostics';
 import { FOCUSABLE_EDITOR_SELECTOR } from '../../core/internal/rows';
 import { BaseGridPlugin, type GridElement, type PluginDependency } from '../../core/plugin/base-plugin';
 import type { GridHost } from '../../core/types';
@@ -354,10 +354,7 @@ export class UndoRedoPlugin extends BaseGridPlugin<UndoRedoConfig> {
    */
   beginTransaction(): void {
     if (this.#transactionBuffer) {
-      throwDiagnostic(
-        Diagnostic.TRANSACTION_IN_PROGRESS,
-        'Transaction already in progress. Call endTransaction() first.',
-      );
+      throwDiagnostic(TRANSACTION_IN_PROGRESS, 'Transaction already in progress. Call endTransaction() first.');
     }
     this.#transactionBuffer = [];
   }
@@ -378,7 +375,7 @@ export class UndoRedoPlugin extends BaseGridPlugin<UndoRedoConfig> {
   endTransaction(): void {
     const buffer = this.#transactionBuffer;
     if (!buffer) {
-      throwDiagnostic(Diagnostic.NO_TRANSACTION, 'No transaction in progress. Call beginTransaction() first.');
+      throwDiagnostic(NO_TRANSACTION, 'No transaction in progress. Call beginTransaction() first.');
     }
     this.#transactionBuffer = null;
 

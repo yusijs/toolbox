@@ -12,7 +12,18 @@
 
 import type { BaseGridPlugin, PluginManifest, PluginPropertyDefinition } from '../plugin';
 import type { ColumnConfig, GridConfig } from '../types';
-import { Diagnostic, infoDiagnostic, throwDiagnostic, warnDiagnostic } from './diagnostics';
+import {
+  CONFIG_RULE_ERROR,
+  CONFIG_RULE_WARN,
+  INCOMPATIBLE_PLUGINS,
+  MISSING_DEPENDENCY,
+  MISSING_PLUGIN,
+  MISSING_PLUGIN_CONFIG,
+  OPTIONAL_DEPENDENCY,
+  infoDiagnostic,
+  throwDiagnostic,
+  warnDiagnostic,
+} from './diagnostics';
 import { isDevelopment } from './utils';
 
 /**
@@ -241,9 +252,7 @@ export function validatePluginProperties<T>(
     }
 
     // Use MISSING_PLUGIN for column-level errors, MISSING_PLUGIN_CONFIG for config-level
-    const code = [...missingPlugins.values()].some((e) => e.isConfigProperty)
-      ? Diagnostic.MISSING_PLUGIN_CONFIG
-      : Diagnostic.MISSING_PLUGIN;
+    const code = [...missingPlugins.values()].some((e) => e.isConfigProperty) ? MISSING_PLUGIN_CONFIG : MISSING_PLUGIN;
     throwDiagnostic(
       code,
       `Configuration error:\n\n${errors.join('\n\n')}\n\n` +
@@ -292,13 +301,13 @@ export function validatePluginConfigRules(plugins: readonly BaseGridPlugin[], gr
   // Log warnings only in development (don't pollute production logs)
   if (warnings.length > 0 && isDevelopment()) {
     for (const warning of warnings) {
-      warnDiagnostic(Diagnostic.CONFIG_RULE_WARN, warning, gridId);
+      warnDiagnostic(CONFIG_RULE_WARN, warning, gridId);
     }
   }
 
   // Throw consolidated error if any (always, regardless of environment)
   if (errors.length > 0) {
-    throwDiagnostic(Diagnostic.CONFIG_RULE_ERROR, `Configuration error:\n\n${errors.join('\n\n')}`, gridId);
+    throwDiagnostic(CONFIG_RULE_ERROR, `Configuration error:\n\n${errors.join('\n\n')}`, gridId);
   }
 }
 // #endregion
@@ -341,7 +350,7 @@ export function validatePluginDependencies(
 
       if (required) {
         throwDiagnostic(
-          Diagnostic.MISSING_DEPENDENCY,
+          MISSING_DEPENDENCY,
           `Plugin dependency error:\n\n` +
             `${reasonText}.\n\n` +
             `  → Add the plugin to your gridConfig.plugins array BEFORE ${capitalize(pluginName)}Plugin:\n` +
@@ -352,7 +361,7 @@ export function validatePluginDependencies(
       } else {
         // Soft dependency - log info message but continue
         infoDiagnostic(
-          Diagnostic.OPTIONAL_DEPENDENCY,
+          OPTIONAL_DEPENDENCY,
           `${capitalize(pluginName)}Plugin: Optional "${requiredPlugin}" plugin not found. ` +
             `Some features may be unavailable.`,
           gridId,
@@ -393,7 +402,7 @@ export function validatePluginIncompatibilities(plugins: readonly BaseGridPlugin
         warned.add(key);
 
         warnDiagnostic(
-          Diagnostic.INCOMPATIBLE_PLUGINS,
+          INCOMPATIBLE_PLUGINS,
           `${capitalize(plugin.name)}Plugin and ${capitalize(incompatibility.name)}Plugin are both loaded, ` +
             `but they are currently incompatible.\n\n` +
             `  → ${incompatibility.reason}\n\n` +
