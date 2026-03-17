@@ -707,6 +707,146 @@ describe('SelectionPlugin', () => {
       // The pendingKeyboardUpdate should have shiftKey: true (Arrow extends)
       expect(plugin['pendingKeyboardUpdate']).toEqual({ shiftKey: true });
     });
+
+    it('should set pendingRowKeyUpdate with Shift+ArrowDown in row mode', () => {
+      const rows = [{ id: 1 }, { id: 2 }, { id: 3 }];
+      const mockGrid = createMockGrid(rows, [{ field: 'name' }]);
+      mockGrid._focusRow = 0;
+      const plugin = new SelectionPlugin({ mode: 'row' });
+      plugin.attach(mockGrid);
+
+      plugin.onKeyDown(new KeyboardEvent('keydown', { key: 'ArrowDown', shiftKey: true }));
+
+      expect(plugin['pendingRowKeyUpdate']).toEqual({ shiftKey: true });
+      expect(plugin['anchor']).toBe(0); // Anchor captured synchronously
+      expect(plugin['explicitSelection']).toBe(true);
+    });
+
+    it('should extend row selection from anchor to focusRow in afterRender', () => {
+      const rows = [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }];
+      const mockGrid = createMockGrid(rows, [{ field: 'name' }]);
+      mockGrid._focusRow = 1;
+      const plugin = new SelectionPlugin({ mode: 'row' });
+      plugin.attach(mockGrid);
+
+      // Simulate: anchor at row 1, then Shift+ArrowDown twice → focus moves to row 3
+      plugin['anchor'] = 1;
+      plugin['selected'].add(1);
+      plugin['lastSyncedFocusRow'] = 1;
+      mockGrid._focusRow = 3; // Grid moved focus
+      plugin['pendingRowKeyUpdate'] = { shiftKey: true };
+      plugin['explicitSelection'] = true;
+
+      plugin.afterRender();
+
+      expect(plugin['selected'].has(1)).toBe(true);
+      expect(plugin['selected'].has(2)).toBe(true);
+      expect(plugin['selected'].has(3)).toBe(true);
+      expect(plugin['selected'].size).toBe(3);
+      // Anchor should remain at 1, not be overwritten
+      expect(plugin['anchor']).toBe(1);
+    });
+
+    it('should single-select in afterRender for plain ArrowDown (no Shift)', () => {
+      const rows = [{ id: 1 }, { id: 2 }, { id: 3 }];
+      const mockGrid = createMockGrid(rows, [{ field: 'name' }]);
+      mockGrid._focusRow = 0;
+      const plugin = new SelectionPlugin({ mode: 'row' });
+      plugin.attach(mockGrid);
+
+      plugin['anchor'] = 0;
+      plugin['selected'].add(0);
+      plugin['lastSyncedFocusRow'] = 0;
+      mockGrid._focusRow = 1; // Grid moved focus
+      plugin['pendingRowKeyUpdate'] = { shiftKey: false };
+      plugin['explicitSelection'] = true;
+
+      plugin.afterRender();
+
+      expect(plugin['selected'].size).toBe(1);
+      expect(plugin['selected'].has(1)).toBe(true);
+      expect(plugin['anchor']).toBe(1); // Anchor resets on plain nav
+    });
+
+    it('should handle Shift+PageDown in row mode', () => {
+      const rows = Array.from({ length: 30 }, (_, i) => ({ id: i }));
+      const mockGrid = createMockGrid(rows, [{ field: 'name' }]);
+      mockGrid._focusRow = 5;
+      const plugin = new SelectionPlugin({ mode: 'row' });
+      plugin.attach(mockGrid);
+
+      plugin.onKeyDown(new KeyboardEvent('keydown', { key: 'PageDown', shiftKey: true }));
+
+      expect(plugin['pendingRowKeyUpdate']).toEqual({ shiftKey: true });
+      expect(plugin['anchor']).toBe(5);
+      expect(plugin['explicitSelection']).toBe(true);
+    });
+
+    it('should handle Shift+Ctrl+Home in row mode', () => {
+      const rows = Array.from({ length: 10 }, (_, i) => ({ id: i }));
+      const mockGrid = createMockGrid(rows, [{ field: 'name' }]);
+      mockGrid._focusRow = 5;
+      const plugin = new SelectionPlugin({ mode: 'row' });
+      plugin.attach(mockGrid);
+
+      plugin.onKeyDown(new KeyboardEvent('keydown', { key: 'Home', shiftKey: true, ctrlKey: true }));
+
+      expect(plugin['pendingRowKeyUpdate']).toEqual({ shiftKey: true });
+      expect(plugin['anchor']).toBe(5);
+    });
+
+    it('should not set pendingRowKeyUpdate for non-nav keys in row mode', () => {
+      const rows = [{ id: 1 }, { id: 2 }];
+      const mockGrid = createMockGrid(rows, [{ field: 'name' }]);
+      mockGrid._focusRow = 0;
+      const plugin = new SelectionPlugin({ mode: 'row' });
+      plugin.attach(mockGrid);
+
+      // ArrowLeft/Right don't change row, shouldn't trigger row selection
+      plugin.onKeyDown(new KeyboardEvent('keydown', { key: 'ArrowLeft', shiftKey: true }));
+
+      expect(plugin['pendingRowKeyUpdate']).toBeNull();
+    });
+
+    it('should not extend selection with Shift when multiSelect is false', () => {
+      const rows = [{ id: 1 }, { id: 2 }, { id: 3 }];
+      const mockGrid = createMockGrid(rows, [{ field: 'name' }]);
+      mockGrid._focusRow = 0;
+      const plugin = new SelectionPlugin({ mode: 'row', multiSelect: false });
+      plugin.attach(mockGrid);
+
+      plugin.onKeyDown(new KeyboardEvent('keydown', { key: 'ArrowDown', shiftKey: true }));
+
+      // Should still navigate but shiftKey should be false (multiSelect disabled)
+      expect(plugin['pendingRowKeyUpdate']).toEqual({ shiftKey: false });
+    });
+
+    it('should preserve anchor across multiple Shift+Arrow presses', () => {
+      const rows = [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }];
+      const mockGrid = createMockGrid(rows, [{ field: 'name' }]);
+      mockGrid._focusRow = 1;
+      const plugin = new SelectionPlugin({ mode: 'row' });
+      plugin.attach(mockGrid);
+
+      // First Shift+ArrowDown: sets anchor to 1
+      plugin.onKeyDown(new KeyboardEvent('keydown', { key: 'ArrowDown', shiftKey: true }));
+      expect(plugin['anchor']).toBe(1);
+
+      // Process in afterRender (grid moved focus to 2)
+      mockGrid._focusRow = 2;
+      plugin.afterRender();
+      expect(plugin['selected'].size).toBe(2); // rows 1, 2
+
+      // Second Shift+ArrowDown: anchor should still be 1
+      plugin.onKeyDown(new KeyboardEvent('keydown', { key: 'ArrowDown', shiftKey: true }));
+      expect(plugin['anchor']).toBe(1); // Not overwritten
+
+      // Process in afterRender (grid moved focus to 3)
+      mockGrid._focusRow = 3;
+      plugin.afterRender();
+      expect(plugin['selected'].size).toBe(3); // rows 1, 2, 3
+      expect(plugin['anchor']).toBe(1);
+    });
   });
 
   describe('mouse drag selection (range mode)', () => {
@@ -1085,7 +1225,7 @@ describe('SelectionPlugin', () => {
           { id: 2, status: 'locked' },
         ];
         const mockGrid = createMockGrid(rows, [{ field: 'name' }]);
-        Object.assign(mockGrid, { _focusRow: 1, _focusCol: 0 });
+        Object.assign(mockGrid, { _focusRow: 0, _focusCol: 0 });
 
         const plugin = new SelectionPlugin({
           mode: 'row',
@@ -1099,13 +1239,13 @@ describe('SelectionPlugin', () => {
         // Simulate keyboard navigation to locked row 1
         plugin.onKeyDown(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
 
-        // Wait for microtask
-        return new Promise<void>((resolve) => {
-          queueMicrotask(() => {
-            expect(plugin.getSelection().ranges).toEqual([]);
-            resolve();
-          });
-        });
+        // Grid moves focus to row 1 (locked)
+        mockGrid._focusRow = 1;
+
+        // Process in afterRender (where pendingRowKeyUpdate is handled)
+        plugin.afterRender();
+
+        expect(plugin.getSelection().ranges).toEqual([]);
       });
     });
 

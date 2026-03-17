@@ -220,6 +220,9 @@ export class SelectionPlugin extends BaseGridPlugin<SelectionConfig> {
   /** Pending keyboard navigation update (processed in afterRender) */
   private pendingKeyboardUpdate: { shiftKey: boolean } | null = null;
 
+  /** Pending row-mode keyboard update (processed in afterRender) */
+  private pendingRowKeyUpdate: { shiftKey: boolean } | null = null;
+
   /** Cell selection state (cell mode) */
   private selectedCell: { row: number; col: number } | null = null;
 
@@ -325,6 +328,7 @@ export class SelectionPlugin extends BaseGridPlugin<SelectionConfig> {
     this.isDragging = false;
     this.selectedCell = null;
     this.pendingKeyboardUpdate = null;
+    this.pendingRowKeyUpdate = null;
     this.lastSyncedFocusRow = -1;
     this.lastSyncedFocusCol = -1;
   }
@@ -560,48 +564,33 @@ export class SelectionPlugin extends BaseGridPlugin<SelectionConfig> {
       return false; // Let grid handle navigation
     }
 
-    // ROW MODE: Arrow keys move selection, Shift+Arrow extends, Ctrl+A selects all
+    // ROW MODE: Arrow/Page/Home/End keys move selection, Shift extends, Ctrl+A selects all
     if (mode === 'row') {
       const multiSelect = this.config.multiSelect !== false;
+      const isRowNavKey =
+        event.key === 'ArrowUp' ||
+        event.key === 'ArrowDown' ||
+        event.key === 'PageUp' ||
+        event.key === 'PageDown' ||
+        ((event.ctrlKey || event.metaKey) && (event.key === 'Home' || event.key === 'End'));
 
-      if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+      if (isRowNavKey) {
         const shiftKey = event.shiftKey && multiSelect;
 
-        // Set anchor before grid moves focus
+        // Set anchor SYNCHRONOUSLY before grid moves focus
         if (shiftKey && this.anchor === null) {
           this.anchor = this.grid._focusRow;
         }
 
-        // Let grid move focus first, then sync row selection
-        queueMicrotask(() => {
-          const focusRow = this.grid._focusRow;
+        // Mark explicit selection SYNCHRONOUSLY so #syncSelectionToFocus
+        // won't overwrite the anchor if afterRender fires before our update
+        this.explicitSelection = true;
 
-          if (shiftKey && this.anchor !== null) {
-            // Shift+Arrow: Extend selection from anchor
-            this.selected.clear();
-            const start = Math.min(this.anchor, focusRow);
-            const end = Math.max(this.anchor, focusRow);
-            for (let i = start; i <= end; i++) {
-              if (this.isRowSelectable(i)) {
-                this.selected.add(i);
-              }
-            }
-          } else {
-            // Plain arrow: Single select
-            if (this.isRowSelectable(focusRow)) {
-              this.selected.clear();
-              this.selected.add(focusRow);
-              this.anchor = focusRow;
-            } else {
-              this.selected.clear();
-            }
-          }
+        // Store pending update — processed in afterRender when grid has updated focusRow
+        this.pendingRowKeyUpdate = { shiftKey };
 
-          this.lastSelected = focusRow;
-          this.explicitSelection = true;
-          this.emit<SelectionChangeDetail>('selection-change', this.#buildEvent());
-          this.requestAfterRender();
-        });
+        // Schedule afterRender (grid's refreshVirtualWindow(false) may skip it)
+        queueMicrotask(() => this.requestAfterRender());
         return false; // Let grid handle navigation
       }
 
@@ -1068,6 +1057,39 @@ export class SelectionPlugin extends BaseGridPlugin<SelectionConfig> {
 
     const container = gridEl.children[0];
     const { mode } = this.config;
+
+    // Process pending row keyboard navigation update (row mode)
+    // This runs AFTER the grid has updated focusRow
+    if (this.pendingRowKeyUpdate && mode === 'row') {
+      const { shiftKey } = this.pendingRowKeyUpdate;
+      this.pendingRowKeyUpdate = null;
+
+      const focusRow = this.grid._focusRow;
+
+      if (shiftKey && this.anchor !== null) {
+        // Shift+nav: Extend selection from anchor to new focus
+        this.selected.clear();
+        const start = Math.min(this.anchor, focusRow);
+        const end = Math.max(this.anchor, focusRow);
+        for (let i = start; i <= end; i++) {
+          if (this.isRowSelectable(i)) {
+            this.selected.add(i);
+          }
+        }
+      } else {
+        // Plain nav: Single select
+        if (this.isRowSelectable(focusRow)) {
+          this.selected.clear();
+          this.selected.add(focusRow);
+          this.anchor = focusRow;
+        } else {
+          this.selected.clear();
+        }
+      }
+
+      this.lastSelected = focusRow;
+      this.emit<SelectionChangeDetail>('selection-change', this.#buildEvent());
+    }
 
     // Process pending keyboard navigation update (range mode)
     // This runs AFTER the grid has updated focusRow/focusCol

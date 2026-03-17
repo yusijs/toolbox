@@ -46,6 +46,9 @@ Row selection. Clicking any cell selects the entire row.
 - **Click**: Select single row
 - **Ctrl+Click**: Toggle row in selection
 - **Shift+Click**: Select range from last selected row
+- **Shift+Arrow Up/Down**: Extend selection from anchor row
+- **Shift+Page Up/Down**: Extend selection by page
+- **Shift+Ctrl+Home/End**: Extend selection to first/last row
 
 ### Range Mode (`'range'`)
 

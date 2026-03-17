@@ -836,6 +836,7 @@ new SelectionPlugin({
   checkboxPosition?: 'left' | 'right',
   selectOnClick?: boolean,           // Select on click (default: true in row mode)
 })
+// Keyboard: Shift+Arrow/Page/Home/End extends selection in row and range modes.
 // Plugin queries (for inter-plugin communication via grid.query()):
 //   'getSelection'           → returns current selection state
 //   'selectRows'             → select rows by index array (row mode)
