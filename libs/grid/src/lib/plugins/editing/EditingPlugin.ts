@@ -1140,6 +1140,13 @@ export class EditingPlugin<T = unknown> extends BaseGridPlugin<EditingConfig> {
     // Set aria-readonly on non-editable cells so screen readers can distinguish
     if (!editable) {
       cellElement.setAttribute('aria-readonly', 'true');
+      // In grid mode, tear down stale editors on cells that are no longer editable
+      // (e.g., after virtualization recycles a row element for different row data)
+      if (this.#isGridMode && cellElement.classList.contains('editing')) {
+        cellElement.classList.remove('editing');
+        const value = (row as Record<string, unknown>)[(column as ColumnConfig<T>).field as string];
+        cellElement.textContent = value == null ? '' : String(value);
+      }
     } else {
       cellElement.removeAttribute('aria-readonly');
     }
@@ -1154,7 +1161,8 @@ export class EditingPlugin<T = unknown> extends BaseGridPlugin<EditingConfig> {
     if (cellElement.classList.contains('editing')) return;
 
     // Inject editor (don't track in editingCells - we're always editing in grid mode)
-    this.#injectEditor(row as T, rowIndex, column as ColumnConfig<T>, colIndex, cellElement, true);
+    // Pass rowElement so incrementEditingCount works even when cell is in a DocumentFragment
+    this.#injectEditor(row as T, rowIndex, column as ColumnConfig<T>, colIndex, cellElement, true, context.rowElement);
   }
 
   /**
@@ -2190,8 +2198,9 @@ export class EditingPlugin<T = unknown> extends BaseGridPlugin<EditingConfig> {
     colIndex: number,
     cell: HTMLElement,
     skipFocus: boolean,
+    parentRowEl?: HTMLElement,
   ): void {
-    injectEditorImpl(this.#editorDeps, rowData, rowIndex, column, colIndex, cell, skipFocus);
+    injectEditorImpl(this.#editorDeps, rowData, rowIndex, column, colIndex, cell, skipFocus, parentRowEl);
   }
 
   /**

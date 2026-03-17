@@ -258,7 +258,9 @@ export function renderVisibleRows(
       // Full rebuild needed - epoch changed, cell count mismatch, or external view missing
       // Use cached editing state for O(1) check instead of querySelector
       const hasEditing = hasEditingCells(rowEl);
-      const isActivelyEditedRow = isGridEditMode || grid._activeEditRows === rowIndex;
+      // In grid edit mode, treat recycled rows (different data ref) as needing a rebuild
+      // so afterCellRender can re-evaluate per-cell editability for the new row data.
+      const isActivelyEditedRow = (isGridEditMode && !dataRefChanged) || grid._activeEditRows === rowIndex;
 
       // If DOM element has editors but this is NOT the actively edited row, clear them
       // (This happens when virtualization recycles the DOM element for a different row)
@@ -292,7 +294,9 @@ export function renderVisibleRows(
       // Same structure, different row data - fast update
       // Use cached editing state for O(1) check instead of querySelector
       const hasEditing = hasEditingCells(rowEl);
-      const isActivelyEditedRow = isGridEditMode || grid._activeEditRows === rowIndex;
+      // In grid edit mode with changed data ref, clear editors and rebuild
+      // so afterCellRender can re-evaluate per-cell editability for the new row.
+      const isActivelyEditedRow = grid._activeEditRows === rowIndex;
 
       // If DOM element has editors but this is NOT the actively edited row, clear them
       if (hasEditing && !isActivelyEditedRow) {
@@ -309,6 +313,7 @@ export function renderVisibleRows(
       // Same row data reference - just patch if any values changed
       // Use cached editing state for O(1) check instead of querySelector
       const hasEditing = hasEditingCells(rowEl);
+      // Same data ref means no recycling — safe to preserve editors in grid mode.
       const isActivelyEditedRow = isGridEditMode || grid._activeEditRows === rowIndex;
 
       // If DOM element has editors but this is NOT the actively edited row, clear them

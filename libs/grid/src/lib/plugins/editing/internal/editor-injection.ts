@@ -66,6 +66,7 @@ export function injectEditor<T>(
   colIndex: number,
   cell: HTMLElement,
   skipFocus: boolean,
+  parentRowEl?: HTMLElement,
 ): void {
   if (!column.editable) return;
   if (cell.classList.contains('editing')) return;
@@ -93,7 +94,9 @@ export function injectEditor<T>(
   cell.classList.add('editing');
   editingCells.add(`${rowIndex}:${colIndex}`);
 
-  const rowEl = cell.parentElement as RowElementInternal | null;
+  // Use explicit parentRowEl when cell is in a DocumentFragment (not yet in DOM),
+  // otherwise fall back to cell.parentElement for cells already attached to a row.
+  const rowEl = (parentRowEl ?? cell.parentElement) as RowElementInternal | null;
   if (rowEl) incrementEditingCount(rowEl);
 
   let editFinalized = false;
