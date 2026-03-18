@@ -488,21 +488,22 @@ export class GridAdapter implements FrameworkAdapter {
       // Trigger change detection
       viewRef.detectChanges();
 
-      // Get the first root node (the component's host element)
-      const rootNode = viewRef.rootNodes[0] as HTMLElement;
+      // Use a stable wrapper so Angular's rootNodes (which may include comment
+      // placeholders from <ng-container>) are always inside one element node.
+      const container = document.createElement('span');
+      container.style.display = 'contents';
+      syncRootNodes(viewRef, container);
 
       // Auto-wire: Listen for commit/cancel events on the rendered component.
       // This allows components to just emit (commit) and (cancel) without
       // requiring explicit template bindings like (commit)="onCommit($event)".
-      if (rootNode && rootNode.addEventListener) {
-        rootNode.addEventListener('commit', (e: Event) => {
-          const customEvent = e as CustomEvent<TValue>;
-          ctx.commit(customEvent.detail);
-        });
-        rootNode.addEventListener('cancel', () => {
-          ctx.cancel();
-        });
-      }
+      container.addEventListener('commit', (e: Event) => {
+        const customEvent = e as CustomEvent<TValue>;
+        ctx.commit(customEvent.detail);
+      });
+      container.addEventListener('cancel', () => {
+        ctx.cancel();
+      });
 
       // Auto-update editor when value changes externally (e.g., via updateRow cascade).
       // This keeps Angular template editors in sync without manual DOM patching.
@@ -510,20 +511,20 @@ export class GridAdapter implements FrameworkAdapter {
         context.$implicit = newVal as TValue;
         context.value = newVal as TValue;
         viewRef.markForCheck();
+        // Re-sync rootNodes in case Angular control flow changed them
+        syncRootNodes(viewRef, container);
         // Also patch raw DOM inputs as a fallback for editors that don't bind to context
-        if (rootNode) {
-          const input = rootNode.querySelector?.('input,textarea,select') as HTMLInputElement | null;
-          if (input) {
-            if (input instanceof HTMLInputElement && input.type === 'checkbox') {
-              input.checked = !!newVal;
-            } else {
-              input.value = String(newVal ?? '');
-            }
+        const input = container.querySelector?.('input,textarea,select') as HTMLInputElement | null;
+        if (input) {
+          if (input instanceof HTMLInputElement && input.type === 'checkbox') {
+            input.checked = !!newVal;
+          } else {
+            input.value = String(newVal ?? '');
           }
         }
       });
 
-      return rootNode;
+      return container;
     };
   }
 
