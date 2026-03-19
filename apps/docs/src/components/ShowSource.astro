@@ -38,160 +38,173 @@ const rawContent = demoFiles[`./${file}`] ?? '';
 // ---------------------------------------------------------------------------
 // 2. Extract and clean the <script> content
 // ---------------------------------------------------------------------------
+
+/**
+ * Unwrap a top-level `if (guardVar) { ... }` block by removing the if-line
+ * and closing brace, then dedenting the inner lines to match surrounding code.
+ */
+function unwrapGuardBlock(lines: string[], guardVar: string): string[] {
+  const nonEmpty = lines.filter((l) => l.trim().length > 0);
+  if (nonEmpty.length === 0) return lines;
+  const baseIndent = Math.min(...nonEmpty.map((l) => l.search(/\S/)));
+
+  // Find a top-level if-guard (within 2 spaces of base indent)
+  let guardIndex = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const indent = lines[i].search(/\S/);
+    if (indent < 0 || indent > baseIndent + 2) continue;
+    const trimmed = lines[i].trim();
+    if (new RegExp(`^if\\s*\\(\\s*${guardVar}\\b`).test(trimmed) && trimmed.endsWith('{')) {
+      guardIndex = i;
+      break;
+    }
+  }
+
+  if (guardIndex === -1) return lines;
+
+  // Find matching closing brace via brace-depth counting
+  let braceDepth = 0;
+  let closeIndex = -1;
+  for (let i = guardIndex; i < lines.length; i++) {
+    for (const ch of lines[i]) {
+      if (ch === '{') braceDepth++;
+      if (ch === '}') braceDepth--;
+    }
+    if (braceDepth === 0) {
+      closeIndex = i;
+      break;
+    }
+  }
+
+  if (closeIndex === -1) return lines; // Unbalanced — bail out
+
+  const before = lines.slice(0, guardIndex);
+  const inner = lines.slice(guardIndex + 1, closeIndex);
+  const after = lines.slice(closeIndex + 1);
+
+  // Dedent inner lines to align with the if-statement's indent level
+  const guardIndent = lines[guardIndex].search(/\S/);
+  const innerNonEmpty = inner.filter((l) => l.trim().length > 0);
+  if (innerNonEmpty.length === 0) return [...before, ...after];
+  const innerMinIndent = Math.min(...innerNonEmpty.map((l) => l.search(/\S/)));
+  const stripAmount = innerMinIndent - guardIndent;
+
+  const dedented = inner.map((line) => {
+    if (line.trim() === '') return '';
+    return stripAmount > 0 && line.length > stripAmount ? line.slice(stripAmount) : line;
+  });
+
+  return [...before, ...dedented, ...after];
+}
+
 function extractSource(content: string): string {
   const scriptMatch = content.match(/<script(?:\s[^>]*)?>(\r?\n)?([\s\S]*?)<\/script>/);
   if (!scriptMatch) return '';
 
   const code = scriptMatch[2];
-  const lines = code.split('\n');
-  const imports: string[] = [];
-  const bodyLines: string[] = [];
-  let inIfBlock = false;
-  let ifIndent = -1;
+  let lines = code.split('\n');
 
-  // Pre-scan lines BEFORE the first `if (` guard to detect:
-  //   - gridVar: the queryGrid variable (the actual grid element)
-  //   - querySelector vars: any document.getElementById/querySelector variables
-  //   - ifGuardVar: the variable tested in the `if (xxx)` condition
-  // Then derive containerVar only if the if-guard references a querySelector var
-  // (not the grid). This prevents arbitrary querySelector calls like
-  // `const toggleBtn = document.querySelector(...)` from being misidentified.
+  // ── Step 1: Identify boilerplate variables ──
+  // gridVar: the queryGrid result variable
   let gridVar: string | null = null;
-  let ifGuardVar: string | null = null;
-  const querySelectorVars: string[] = [];
-  for (const l of lines) {
-    const trimmed = l.trim();
-    // At the first if-guard, extract the tested variable and stop scanning
-    const guardMatch = trimmed.match(/^if\s*\(\s*(\w+)/);
-    if (guardMatch) {
-      ifGuardVar = guardMatch[1];
-      break;
-    }
-    const cm = trimmed.match(/^const\s+(\w+)\s*=\s*document\.(?:getElementById|querySelector)\b/);
-    if (cm) querySelectorVars.push(cm[1]);
-    if (!gridVar) {
-      const gm = trimmed.match(/^const\s+(\w+)\s*=\s*(?:await\s+)?queryGrid\b/);
-      if (gm) gridVar = gm[1];
-    }
+  const gridMatch = code.match(/const\s+(\w+)\s*=\s*(?:await\s+)?queryGrid\b/);
+  if (gridMatch) gridVar = gridMatch[1];
+
+  // containerVar: the second arg to queryGrid (if it's a variable, not true/false/null)
+  let containerVar: string | null = null;
+  const containerMatch = code.match(/queryGrid\b[^(]*\(\s*(?:'[^']*'|"[^"]*")\s*,\s*([a-zA-Z_]\w*)/);
+  if (containerMatch && !['true', 'false', 'null', 'undefined'].includes(containerMatch[1])) {
+    containerVar = containerMatch[1];
   }
 
-  // containerVar is the guard variable ONLY if it's a querySelector var (not the grid)
-  const containerVar = ifGuardVar && ifGuardVar !== gridVar && querySelectorVars.includes(ifGuardVar) ? ifGuardVar : null;
-  // The guard variable is the container if one exists, otherwise the grid
-  const guardVar = containerVar ?? gridVar;
+  // ── Step 2: Unwrap if-guard block (if present) ──
+  const guardVar = containerVar || gridVar;
+  if (guardVar) {
+    lines = unwrapGuardBlock(lines, guardVar);
+  }
 
-  // Track multi-line container.addEventListener blocks to skip
+  // ── Step 3: Filter and sanitize lines ──
+  const imports: string[] = [];
+  const body: string[] = [];
   let skipParenDepth = 0;
-
-  /** Sanitize a queryGrid declaration into a clean one-liner for the reader */
-  function sanitizeGridDecl(processed: string): string {
-    const hasAwait = /\bawait\b/.test(processed);
-    return `const ${gridVar} = ${hasAwait ? 'await ' : ''}queryGrid('tbw-grid');`;
-  }
 
   for (const line of lines) {
     const trimmed = line.trim();
 
-    // Collect non-type imports
-    if (trimmed.startsWith('import ') && !trimmed.startsWith('import type')) {
+    // Skip import type
+    if (trimmed.startsWith('import type')) continue;
+
+    // Collect imports
+    if (trimmed.startsWith('import ')) {
       imports.push(trimmed);
       continue;
     }
-    if (trimmed.startsWith('import type')) continue;
 
-    // Skip container variable declaration (demo wrapper, not user code)
-    if (containerVar && new RegExp(`^const\\s+${containerVar}\\s*=\\s*document\\.`).test(trimmed)) continue;
+    // Skip container variable declaration
+    if (containerVar && new RegExp(`^const\\s+${containerVar}\\s*=`).test(trimmed)) continue;
 
-    // Grid variable declaration OUTSIDE the if-block: keep with sanitized selector
-    if (gridVar && !inIfBlock && new RegExp(`^const\\s+${gridVar}\\s*=\\s*(?:await\\s+)?queryGrid\\b`).test(trimmed)) {
-      bodyLines.push(sanitizeGridDecl(trimmed));
+    // Skip negative guard one-liners: if (!grid) throw/return
+    if (gridVar && new RegExp(`^if\\s*\\(\\s*!\\s*${gridVar}\\s*\\)`).test(trimmed)) continue;
+
+    // Skip control-change addEventListener blocks (DemoControls wiring)
+    if (skipParenDepth > 0) {
+      for (const ch of trimmed) {
+        if (ch === '(') skipParenDepth++;
+        if (ch === ')') skipParenDepth--;
+      }
+      if (skipParenDepth <= 0) skipParenDepth = 0;
+      continue;
+    }
+    if (containerVar && new RegExp(`\\b${containerVar}\\.addEventListener\\s*\\(\\s*'control-change'`).test(trimmed)) {
+      skipParenDepth = 0;
+      for (const ch of trimmed) {
+        if (ch === '(') skipParenDepth++;
+        if (ch === ')') skipParenDepth--;
+      }
+      if (skipParenDepth <= 0) skipParenDepth = 0;
       continue;
     }
 
-    // Detect the `if (guardVar) {` or `if (guardVar && ...)` guard
-    if (
-      !inIfBlock &&
-      /^if\s*\(/.test(trimmed) &&
-      guardVar &&
-      new RegExp(`\\b${guardVar}\\b`).test(trimmed)
-    ) {
-      inIfBlock = true;
-      ifIndent = line.search(/\S/);
-      continue;
+    // Sanitize
+    let processed = line;
+
+    // Sanitize gridVar declaration: normalize queryGrid call to queryGrid('tbw-grid')
+    if (gridVar && new RegExp(`^\\s*const\\s+${gridVar}\\s*=\\s*(?:await\\s+)?queryGrid\\b`).test(processed)) {
+      const indent = processed.match(/^(\s*)/)?.[1] ?? '';
+      const hasAwait = /\bawait\b/.test(processed);
+      processed = `${indent}const ${gridVar} = ${hasAwait ? 'await ' : ''}queryGrid('tbw-grid');`;
+    } else {
+      // Sanitize any other inline queryGrid calls
+      processed = processed.replace(
+        /queryGrid(?:<[^>]+>)?\s*\(\s*(?:'[^']*'|"[^"]*")(?:\s*,\s*[^)]*?)?\)/g,
+        "queryGrid('tbw-grid')",
+      );
     }
 
-    if (inIfBlock) {
-      const lineIndent = line.length === 0 ? Infinity : line.search(/\S/);
+    // container.querySelector(All) → document.querySelector(All)
+    if (containerVar) {
+      processed = processed.replace(new RegExp(`\\b${containerVar}\\.(querySelector(?:All)?)`, 'g'), 'document.$1');
+    }
 
-      // Closing brace of the if block
-      if (trimmed === '}' && lineIndent !== Infinity && lineIndent <= ifIndent) {
-        inIfBlock = false;
-        continue;
+    // Strip TypeScript type assertions
+    processed = processed.replace(/\s+as\s+HTMLElement\s*&\s*\{[^}]*\}/g, '');
+    processed = processed.replace(/\s+as\s+(?:HTMLElement|Element|GridElement|EventListener|[A-Z]\w+)(?:<[^>]+>)?/g, '');
+
+    body.push(processed);
+  }
+
+  // ── Step 4: Strip common indent from body lines ──
+  const bodyNonEmpty = body.filter((l) => l.trim().length > 0);
+  if (bodyNonEmpty.length > 0) {
+    const minIndent = Math.min(...bodyNonEmpty.map((l) => l.search(/\S/)));
+    if (minIndent > 0) {
+      for (let i = 0; i < body.length; i++) {
+        body[i] = body[i].trim() === '' ? '' : body[i].slice(minIndent);
       }
-
-      // Un-indent by the if body's extra indentation
-      const stripCount = ifIndent + 2;
-      let processed = line.length > stripCount ? line.slice(stripCount) : line.trimStart() === '' ? '' : line.trimStart();
-
-      // Skip container.addEventListener('control-change', ...) blocks — DemoControls wiring
-      if (containerVar) {
-        if (skipParenDepth > 0) {
-          for (const ch of trimmed) {
-            if (ch === '(') skipParenDepth++;
-            if (ch === ')') skipParenDepth--;
-          }
-          if (skipParenDepth <= 0) skipParenDepth = 0;
-          continue;
-        }
-        if (new RegExp(`\\b${containerVar}\\.addEventListener\\(\\s*'control-change'`).test(processed)) {
-          skipParenDepth = 0;
-          for (const ch of trimmed) {
-            if (ch === '(') skipParenDepth++;
-            if (ch === ')') skipParenDepth--;
-          }
-          if (skipParenDepth <= 0) skipParenDepth = 0;
-          continue;
-        }
-      }
-
-      // Grid variable declaration INSIDE the if-block: keep with sanitized selector
-      if (gridVar && new RegExp(`^const\\s+${gridVar}\\s*=\\s*(?:await\\s+)?queryGrid\\b`).test(processed.trim())) {
-        bodyLines.push(sanitizeGridDecl(processed));
-        continue;
-      }
-
-      // guardVar.querySelector → document.querySelector
-      if (guardVar) {
-        processed = processed.replace(new RegExp(`${guardVar}\\.querySelector`, 'g'), 'document.querySelector');
-      }
-
-      // queryGrid('selector', guardVar) → queryGrid('selector')
-      // queryGrid('selector', guardVar, true) → queryGrid('selector')
-      if (guardVar) {
-        processed = processed.replace(
-          new RegExp(`(queryGrid\\('[^']+')\\s*,\\s*${guardVar}(?:\\s*,\\s*true)?\\)`, 'g'),
-          '$1)',
-        );
-      }
-
-      // Strip TypeScript type assertions: as HTMLElement & { ... }
-      processed = processed.replace(/\s+as\s+HTMLElement\s*&\s*\{[^}]*\}/g, '');
-      processed = processed.replace(/\s+as\s+(?:HTMLElement|Element|GridElement|[A-Z]\w+)(?:<[^>]+>)?/g, '');
-
-      bodyLines.push(processed);
     }
   }
 
-  // If we never entered an if block, the script has no container guard — use raw lines
-  if (!inIfBlock && bodyLines.length === 0) {
-    const nonImportLines = lines.filter((l) => {
-      const t = l.trim();
-      return !t.startsWith('import ') && t.length > 0;
-    });
-    bodyLines.push(...nonImportLines);
-  }
-
-  const result = [...imports, '', ...bodyLines].join('\n');
+  const result = [...imports, '', ...body].join('\n');
   return result.replace(/^\n+/, '').replace(/\n{3,}/g, '\n\n').trim();
 }
 
@@ -199,53 +212,32 @@ function extractSource(content: string): string {
 // 3. Extract meaningful HTML from the demo file
 // ---------------------------------------------------------------------------
 function extractHtml(content: string): string {
-  // Strip frontmatter (between first and second ---) then get HTML before <script>
   const withoutFrontmatter = content.replace(/^---[\s\S]*?---\s*\n/, '');
   const htmlSection = withoutFrontmatter.match(/^([\s\S]*?)<script/);
   if (!htmlSection) return '';
 
   const html = htmlSection[1].trim();
-  if (!html) return '';
+  if (!html || !html.includes('<tbw-grid')) return '';
 
-  // Only show HTML if there's a <tbw-grid element
-  if (!html.includes('<tbw-grid')) return '';
+  // Extract the <tbw-grid>...</tbw-grid> block (handles child elements like <tbw-grid-column>)
+  const gridMatch = html.match(/<tbw-grid[\s\S]*<\/tbw-grid>/);
+  if (!gridMatch) return '';
 
-  // Remove multi-line Astro component blocks (e.g. <DemoControls ... />)
-  const withoutComponents = html.replace(/<[A-Z]\w+[\s\S]*?\/>/g, '');
+  let result = gridMatch[0];
 
-  // Remove description paragraphs (may span multiple lines)
-  const withoutDesc = withoutComponents.replace(/<p\s+class="grid-demo-description"[\s\S]*?<\/p>/g, '');
+  // Strip demo-specific IDs
+  result = result.replace(/\s+id="[^"]*"/g, '');
 
-  const lines = withoutDesc.split('\n');
-  const cleaned: string[] = [];
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    // Skip description paragraphs
-    if (trimmed.startsWith('<p class="grid-demo-description')) continue;
-    // Skip Astro component tags (DemoControls, etc.)
-    if (trimmed.startsWith('<DemoControls')) continue;
-    // Skip playground control containers
-    if (trimmed.includes('data-controls-id=')) continue;
-    // Skip demo wrapper open/close: <div class="grid-demo ...">
-    if (/^<div\s+class="grid-demo/.test(trimmed)) continue;
-    // Skip the closing </div> for the wrapper (last line)
-    if (trimmed === '</div>' && line === lines[lines.length - 1]) continue;
-
-    cleaned.push(line);
-  }
-
-  // Re-indent: find minimum indent and strip it
-  const nonEmpty = cleaned.filter((l) => l.trim().length > 0);
+  // Re-indent from zero
+  const lines = result.split('\n');
+  const nonEmpty = lines.filter((l) => l.trim().length > 0);
   if (nonEmpty.length === 0) return '';
   const minIndent = Math.min(...nonEmpty.map((l) => l.search(/\S/)));
-  const result = cleaned
+
+  return lines
     .map((l) => (l.trim() ? l.slice(minIndent) : ''))
     .join('\n')
     .trim();
-
-  // Strip demo-specific IDs (id="demo-xxx" or id="editing-xxx-demo")
-  return result.replace(/\s+id="[^"]*"/g, '');
 }
 
 const source = extractSource(rawContent);
