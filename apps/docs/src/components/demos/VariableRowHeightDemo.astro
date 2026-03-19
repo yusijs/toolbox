@@ -1,0 +1,68 @@
+---
+// VariableRowHeightDemo.astro — Demonstrates per-row variable heights via rowHeight function
+---
+
+<div id="variable-row-height-demo" class="not-content">
+  <tbw-grid></tbw-grid>
+</div>
+
+<script>
+  import '@toolbox-web/grid';
+import { queryGrid } from '@toolbox-web/grid';
+
+  interface Employee {
+    id: number;
+    name: string;
+    role: string;
+    department: string;
+    notes: string;
+  }
+
+  // Generate 150 rows — a handful have long notes that warrant taller rows
+  const tallRowIds = new Set([5, 18, 42, 77, 130]);
+  const departments = ['Engineering', 'Marketing', 'Sales', 'Support', 'Finance', 'HR', 'Legal', 'Design'];
+  const roles = ['Manager', 'Senior', 'Junior', 'Lead', 'Intern', 'Director', 'VP', 'Analyst'];
+
+  const rows: Employee[] = Array.from({ length: 150 }, (_, i) => {
+    const id = i + 1;
+    const isTall = tallRowIds.has(id);
+    return {
+      id,
+      name: `Employee ${id}`,
+      role: roles[i % roles.length],
+      department: departments[i % departments.length],
+      notes: isTall
+        ? `This employee has extended notes that require a taller row. ` +
+          `Additional context: performance review pending, cross-team ` +
+          `collaboration active, mentoring two junior engineers.`
+        : `Standard note for employee ${id}.`,
+    };
+  });
+
+  const container = document.getElementById('variable-row-height-demo');
+  const grid = queryGrid<Employee>('tbw-grid', container!);
+  if (!grid) throw new Error('Grid not found');
+
+  grid.gridConfig = {
+    columns: [
+      { field: 'id', header: 'ID', width: 60 },
+      { field: 'name', header: 'Name', width: 140 },
+      { field: 'role', header: 'Role', width: 100 },
+      { field: 'department', header: 'Department', width: 120 },
+      { field: 'notes', header: 'Notes' },
+    ],
+    getRowId: (row) => String(row.id),
+    rowHeight: (row) => {
+      // Rows with ids in tallRowIds get a taller height
+      if (tallRowIds.has(row.id)) return 56;
+      return undefined; // use default height
+    },
+  };
+  grid.rows = rows;
+</script>
+
+<style>
+  #variable-row-height-demo tbw-grid {
+    height: 400px;
+  }
+</style>

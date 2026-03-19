@@ -251,7 +251,14 @@ export class Grid implements OnInit, AfterContentInit, OnDestroy {
       if (columnsValue === undefined) return;
 
       const grid = this.elementRef.nativeElement;
-      grid.columns = columnsValue as BaseColumnConfig[] | ColumnConfigMap;
+      // Process columns through the adapter to convert Angular component classes
+      // (renderer/editor) to functions — the grid's columns setter does NOT call
+      // processConfig, unlike gridConfig. Without this, raw component classes
+      // would be invoked without `new`, causing runtime errors.
+      const processed = this.adapter
+        ? (columnsValue as ColumnConfig[]).map((col) => this.adapter!.processColumn(col))
+        : columnsValue;
+      grid.columns = processed as BaseColumnConfig[] | ColumnConfigMap;
     });
 
     // Effect to sync fitMode to the grid element

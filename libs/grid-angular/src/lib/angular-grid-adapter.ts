@@ -505,23 +505,16 @@ export class GridAdapter implements FrameworkAdapter {
         ctx.cancel();
       });
 
-      // Auto-update editor when value changes externally (e.g., via updateRow cascade).
-      // This keeps Angular template editors in sync without manual DOM patching.
+      // Auto-update editor when value changes externally (e.g., via updateRow cascade
+      // or Escape-revert in grid mode). Update the template context and run synchronous
+      // detectChanges() — Angular's own bindings and control flow (@for, @if) handle
+      // re-rendering regardless of editor type (inputs, chips, contenteditable, etc.).
       ctx.onValueChange?.((newVal: unknown) => {
         context.$implicit = newVal as TValue;
         context.value = newVal as TValue;
-        viewRef.markForCheck();
+        viewRef.detectChanges();
         // Re-sync rootNodes in case Angular control flow changed them
         syncRootNodes(viewRef, container);
-        // Also patch raw DOM inputs as a fallback for editors that don't bind to context
-        const input = container.querySelector?.('input,textarea,select') as HTMLInputElement | null;
-        if (input) {
-          if (input instanceof HTMLInputElement && input.type === 'checkbox') {
-            input.checked = !!newVal;
-          } else {
-            input.value = String(newVal ?? '');
-          }
-        }
       });
 
       return container;
@@ -844,13 +837,13 @@ export class GridAdapter implements FrameworkAdapter {
         () => ctx.cancel(),
       );
 
-      // Auto-update editor when value changes externally (e.g., via updateRow cascade).
-      // This keeps Angular component editors in sync without manual DOM patching.
+      // Auto-update editor when value changes externally (e.g., via updateRow cascade
+      // or Escape-revert). Update the component input and run detectChanges() —
+      // the component's own template handles rendering regardless of editor type.
       ctx.onValueChange?.((newVal: unknown) => {
         try {
           // Notify the editor so it can clear stale internal state (e.g., searchText
-          // in autocomplete editors) before the value input updates. This ensures the
-          // template reads fresh state during the synchronous detectChanges() below.
+          // in autocomplete editors) before the value input updates.
           const instance = componentRef.instance;
           if (typeof (instance as Record<string, unknown>)['onExternalValueChange'] === 'function') {
             (instance as { onExternalValueChange: (v: unknown) => void }).onExternalValueChange(newVal);
@@ -858,15 +851,7 @@ export class GridAdapter implements FrameworkAdapter {
           componentRef.setInput('value', newVal);
           componentRef.changeDetectorRef.detectChanges();
         } catch {
-          // Input doesn't exist or component is destroyed — fall back to DOM patching
-          const input = hostElement.querySelector?.('input,textarea,select') as HTMLInputElement | null;
-          if (input) {
-            if (input instanceof HTMLInputElement && input.type === 'checkbox') {
-              input.checked = !!newVal;
-            } else {
-              input.value = String(newVal ?? '');
-            }
-          }
+          // Component is destroyed — nothing to update.
         }
       });
 

@@ -670,6 +670,35 @@ describe('editor-injection', () => {
       const span = cell.querySelector('span');
       expect(span?.textContent).toBe('ID: 42');
     });
+
+    it('should skip auto-update for non-primitive values (arrays, objects)', () => {
+      const deps = createDeps();
+      const { cell } = createCellInRow();
+      const column = col('tags') as ColumnInternal<any>;
+
+      const tplHolder = document.createElement('div');
+      tplHolder.innerHTML = '<input type="text" />';
+      column.__editorTemplate = tplHolder as any;
+
+      injectEditor(deps, { id: '1', tags: 'initial' }, 0, column, 0, cell, true);
+
+      const input = cell.querySelector('input') as HTMLInputElement;
+      expect(input.value).toBe('initial');
+
+      // Trigger value-change callback with an array — should be skipped
+      const cb = deps.editorValueCallbacks.get('0:tags');
+      expect(cb).toBeDefined();
+      cb!(['a', 'b', 'c']);
+      expect(input.value).toBe('initial'); // unchanged
+
+      // Trigger with an object — should also be skipped
+      cb!({ nested: true });
+      expect(input.value).toBe('initial'); // unchanged
+
+      // Trigger with a primitive string — should update
+      cb!('updated');
+      expect(input.value).toBe('updated');
+    });
   });
 
   // #endregion

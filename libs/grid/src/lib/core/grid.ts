@@ -1435,8 +1435,17 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
       return;
     }
 
-    const firstRow = this._bodyEl?.querySelector('.data-grid-row');
+    const firstRow = this._bodyEl?.querySelector('.data-grid-row') as HTMLElement | null;
     if (!firstRow) return;
+
+    // Skip if the observed row has a per-row --tbw-row-height override.
+    // Variable-height rows set this inline, and measuring them would ratchet
+    // the global s.rowHeight up, corrupting the position cache for ALL rows.
+    // Normal rows (no override) are still measured so s.rowHeight reflects the
+    // true default height from CSS/themes.
+    if (firstRow.style.getPropertyValue('--tbw-row-height')) {
+      return;
+    }
 
     // Find the tallest cell in the row (custom renderers may push some cells taller)
     const cells = firstRow.querySelectorAll('.cell');
@@ -2048,6 +2057,10 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
     this.#configManager.parseLightDomColumns(this);
     this.#configManager.merge();
     this.#updatePluginConfigs();
+
+    // Re-check variable heights after config merge: rowHeight may have changed
+    // from a number to a function (or vice versa) without any plugin changes.
+    this.#configureVariableHeights();
 
     // Parse light DOM tool panels AFTER plugins are initialized
     parseLightDomToolPanels(this, this.#shellState, this.#getToolPanelRendererFactory());

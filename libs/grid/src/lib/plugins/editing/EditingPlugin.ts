@@ -1756,6 +1756,31 @@ export class EditingPlugin<T = unknown> extends BaseGridPlugin<EditingConfig> {
       previousValue: snapshot.value,
     });
 
+    // After reverting, clean up dirty tracking if the row is no longer dirty.
+    // Without this, changedRowIds retains the row even though data matches baseline.
+    if (this.config.dirtyTracking && rowData) {
+      let rowId: string | undefined;
+      try {
+        rowId = this.grid.getRowId(rowData);
+      } catch {
+        // Row has no ID
+      }
+      if (rowId && !this.#dirty.isRowDirty(rowId, rowData as T)) {
+        this.#dirty.changedRowIds.delete(rowId);
+        this.emit<DirtyChangeDetail<T>>('dirty-change', {
+          rowId,
+          row: rowData as T,
+          original: this.#dirty.getOriginalRow(rowId),
+          type: 'reverted',
+        });
+      }
+    }
+
+    // Always re-render after revert so rowClass callbacks re-evaluate
+    // (e.g., consumer may toggle a 'changed' class based on local state
+    // updated in response to the cell-cancel event above).
+    this.requestRender();
+
     this.#gridModeCellSnapshot = null;
   }
 

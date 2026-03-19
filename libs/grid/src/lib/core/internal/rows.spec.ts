@@ -1071,3 +1071,61 @@ describe('renderVisibleRows — epoch-based row reuse', () => {
     expect(secondCell.classList.contains('cell-focus')).toBe(false);
   });
 });
+
+describe('renderVisibleRows — variable row height CSS property', () => {
+  it('sets --tbw-row-height on rows where rowHeight function returns a value', () => {
+    const g = makeGrid();
+    g._rows = [
+      { id: 1, name: 'Short', aliases: [] },
+      { id: 2, name: 'Tall', aliases: ['a', 'b', 'c', 'd', 'e', 'f', 'g'] },
+      { id: 3, name: 'Short2', aliases: [] },
+    ];
+    g._columns = [{ field: 'name' }];
+    g._virtualization = { variableHeights: true, rowHeight: 35 };
+    g.effectiveConfig = {
+      rowHeight: (row: any) => {
+        if (row.aliases && row.aliases.length > 5) {
+          return 70;
+        }
+        return undefined;
+      },
+    };
+
+    renderVisibleRows(g, 0, 3, 1);
+
+    const rows = g._bodyEl.querySelectorAll('.data-grid-row');
+    expect(rows.length).toBe(3);
+
+    // Row 0: normal height → no CSS variable override
+    expect((rows[0] as HTMLElement).style.getPropertyValue('--tbw-row-height')).toBe('');
+    // Row 1: tall → CSS variable set to 70px
+    expect((rows[1] as HTMLElement).style.getPropertyValue('--tbw-row-height')).toBe('70px');
+    // Row 2: normal height → no CSS variable override
+    expect((rows[2] as HTMLElement).style.getPropertyValue('--tbw-row-height')).toBe('');
+  });
+
+  it('clears --tbw-row-height when row pool recycling assigns a normal row to a previously tall element', () => {
+    const g = makeGrid();
+    g._rows = [{ id: 1, name: 'Tall', aliases: ['a', 'b', 'c', 'd', 'e', 'f'] }];
+    g._columns = [{ field: 'name' }];
+    g._virtualization = { variableHeights: true, rowHeight: 35 };
+    g.effectiveConfig = {
+      rowHeight: (row: any) => {
+        if (row.aliases && row.aliases.length > 5) {
+          return 70;
+        }
+        return undefined;
+      },
+    };
+
+    // Render the tall row
+    renderVisibleRows(g, 0, 1, 1);
+    const row = g._bodyEl.querySelector('.data-grid-row') as HTMLElement;
+    expect(row.style.getPropertyValue('--tbw-row-height')).toBe('70px');
+
+    // Recycle the same pool element for a normal row
+    g._rows = [{ id: 2, name: 'Short', aliases: [] }];
+    renderVisibleRows(g, 0, 1, 2);
+    expect(row.style.getPropertyValue('--tbw-row-height')).toBe('');
+  });
+});

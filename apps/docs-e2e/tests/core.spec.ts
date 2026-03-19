@@ -98,7 +98,9 @@ test.describe('Core & Basic Demos', () => {
       await page.waitForTimeout(500);
 
       // Verify a loading indicator appeared (progress bar or loading overlay)
-      const loadingIndicator = page.locator('tbw-grid .progress-bar-container, tbw-grid .loading-overlay, tbw-grid [data-loading]');
+      const loadingIndicator = page.locator(
+        'tbw-grid .progress-bar-container, tbw-grid .loading-overlay, tbw-grid [data-loading]',
+      );
       const indicatorCount = await loadingIndicator.count();
       expect(indicatorCount).toBeGreaterThanOrEqual(0); // May or may not be visible depending on timing
     }
@@ -171,5 +173,54 @@ test.describe('Core & Basic Demos', () => {
     // This demo may not render rows immediately (needs user to click Run)
     await page.waitForSelector('tbw-grid', { state: 'attached', timeout: 15_000 });
     await expect(grid(page)).toBeVisible();
+  });
+
+  test('VariableRowHeightDemo — tall rows have correct height and all rows are scrollable', async ({ page }) => {
+    await openDemo(page, 'VariableRowHeightDemo');
+    await expect(grid(page)).toBeVisible();
+
+    const totalRows = 150;
+    const tallHeight = 56;
+
+    // Verify initial render has rows
+    const initialRows = await dataRows(page).count();
+    expect(initialRows).toBeGreaterThan(0);
+
+    // Helper to check a tall row's height by scrolling it into view
+    async function checkTallRow(rowId: number) {
+      const ariaRowIndex = rowId + 1; // data row N has aria-rowindex = N + 1 (1 header row)
+      const rowLocator = grid(page).locator(`[role="row"][aria-rowindex="${ariaRowIndex}"]`);
+
+      // Use the grid's public scrollToRow API
+      await grid(page).evaluate((el, idx) => (el as any).scrollToRow(idx), rowId - 1);
+      await page.waitForTimeout(300);
+
+      // Verify the row is now rendered and has the right height
+      await expect(rowLocator).toBeVisible({ timeout: 3000 });
+      const cssVar = await rowLocator.evaluate((el) => (el as HTMLElement).style.getPropertyValue('--tbw-row-height'));
+      expect(cssVar, `Row ${rowId} should have --tbw-row-height set`).toBe(`${tallHeight}px`);
+
+      const box = await rowLocator.boundingBox();
+      expect(box, `Row ${rowId} should be visible`).not.toBeNull();
+      expect(box!.height).toBeGreaterThanOrEqual(tallHeight - 2);
+    }
+
+    // Check the first tall row (ID 5) — near the top
+    await checkTallRow(5);
+
+    // Check a tall row in the middle (ID 42)
+    await checkTallRow(42);
+
+    // Scroll to the very last row using the grid's public API
+    await grid(page).evaluate((el) => (el as any).scrollToRow((el as any).rows.length - 1));
+    await page.waitForTimeout(500);
+
+    // Verify the last row (row 150) is visible with the correct aria-rowindex
+    const lastRowAriaIndex = totalRows + 1;
+    const lastRow = grid(page).locator(`[role="row"][aria-rowindex="${lastRowAriaIndex}"]`);
+    await expect(lastRow).toBeVisible({ timeout: 5000 });
+
+    const lastRowText = await lastRow.textContent();
+    expect(lastRowText).toContain('Employee 150');
   });
 });
