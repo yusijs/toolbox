@@ -86,17 +86,9 @@ export class ResponsivePlugin<T = unknown> extends BaseGridPlugin<ResponsivePlug
   override readonly styles = styles;
 
   /**
-   * Plugin manifest declaring incompatibilities with other plugins.
+   * Plugin manifest declaring queries this plugin handles.
    */
   static override readonly manifest: PluginManifest = {
-    incompatibleWith: [
-      {
-        name: 'groupingRows',
-        reason:
-          'Responsive card layout does not yet support row grouping. ' +
-          'The variable row heights (cards vs group headers) cause scroll calculation issues.',
-      },
-    ],
     queries: [
       {
         type: 'isCardMode',

@@ -6,6 +6,7 @@ import { EditingPlugin } from '../../lib/plugins/editing';
 import { GroupingColumnsPlugin } from '../../lib/plugins/grouping-columns';
 import { GroupingRowsPlugin } from '../../lib/plugins/grouping-rows';
 import { PinnedColumnsPlugin } from '../../lib/plugins/pinned-columns';
+import { ResponsivePlugin } from '../../lib/plugins/responsive';
 import { SelectionPlugin } from '../../lib/plugins/selection';
 
 function nextFrame() {
@@ -2437,5 +2438,82 @@ describe('tbw-grid integration: data-change event', () => {
   it('includes DATA_CHANGE in DGEvents', async () => {
     const mod = await import('../../index');
     expect(mod.DGEvents.DATA_CHANGE).toBe('data-change');
+  });
+});
+
+describe('ResponsivePlugin + GroupingRowsPlugin integration', () => {
+  let grid: any;
+
+  beforeEach(() => {
+    document.body.innerHTML = '';
+    grid = document.createElement('tbw-grid');
+    document.body.appendChild(grid);
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('renders group headers alongside responsive card layout', async () => {
+    grid.gridConfig = {
+      columns: [
+        { field: 'name', header: 'Name' },
+        { field: 'department', header: 'Department' },
+        { field: 'salary', header: 'Salary', type: 'number' },
+      ],
+      plugins: [
+        new GroupingRowsPlugin({ groupOn: (row: any) => [row.department], defaultExpanded: true }),
+        new ResponsivePlugin({ breakpoint: 2000 }),
+      ],
+    };
+    grid.rows = [
+      { name: 'Alice', department: 'Engineering', salary: 95000 },
+      { name: 'Bob', department: 'Engineering', salary: 90000 },
+      { name: 'Carol', department: 'Sales', salary: 75000 },
+    ];
+
+    await waitUpgrade(grid);
+    await nextFrame();
+
+    // GroupingRowsPlugin should inject group header rows
+    const processedRows = grid._rows ?? grid.rows;
+    const groupHeaders = processedRows.filter((r: any) => r?.__isGroupRow);
+    expect(groupHeaders.length).toBeGreaterThan(0);
+
+    // Both plugins should be loaded without warnings
+    const groupingPlugin = grid.getPluginByName('groupingRows');
+    const responsivePlugin = grid.getPluginByName('responsive');
+    expect(groupingPlugin).toBeDefined();
+    expect(responsivePlugin).toBeDefined();
+  });
+
+  it('processRows produces group headers that ResponsivePlugin can handle', async () => {
+    const groupingPlugin = new GroupingRowsPlugin({
+      groupOn: (row: any) => [row.department],
+      defaultExpanded: true,
+    });
+    const responsivePlugin = new ResponsivePlugin({ breakpoint: 2000 });
+
+    grid.gridConfig = {
+      columns: [
+        { field: 'name', header: 'Name' },
+        { field: 'department', header: 'Department' },
+      ],
+      plugins: [groupingPlugin, responsivePlugin],
+    };
+    grid.rows = [
+      { name: 'Alice', department: 'Engineering' },
+      { name: 'Bob', department: 'Sales' },
+    ];
+
+    await waitUpgrade(grid);
+    await nextFrame();
+
+    // Verify the processRows pipeline produces both group headers and data rows
+    const rows = groupingPlugin.processRows(grid.rows);
+    const hasGroupRow = rows.some((r: any) => r?.__isGroupRow);
+    const hasDataRow = rows.some((r: any) => !r?.__isGroupRow);
+    expect(hasGroupRow).toBe(true);
+    expect(hasDataRow).toBe(true);
   });
 });

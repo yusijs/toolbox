@@ -252,17 +252,12 @@ export function createGridConfig(options: GridConfigOptions): GridConfig<Employe
       columnVirtualization: true,
       visibility: true,
       // Responsive plugin for mobile/narrow layouts
-      // Disabled when row grouping is enabled (incompatible combination)
-      ...(!enableRowGrouping
-        ? {
-            responsive: {
-              breakpoint: 700,
-              cardRenderer: (row: Employee) => createResponsiveCardRenderer(row),
-              cardRowHeight: 80,
-              hiddenColumns: ['id', 'email', 'team', 'level', 'bonus', 'hireDate', 'isTopPerformer', 'location'],
-            },
-          }
-        : {}),
+      responsive: {
+        breakpoint: 700,
+        cardRenderer: (row: Employee) => createResponsiveCardRenderer(row),
+        cardRowHeight: 80,
+        hiddenColumns: ['id', 'email', 'team', 'level', 'bonus', 'hireDate', 'isTopPerformer', 'location'],
+      },
       // Row grouping (mutually exclusive with master-detail)
       ...(enableRowGrouping
         ? {

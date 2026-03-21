@@ -316,12 +316,16 @@ For the full development guide including lifecycle hooks, plugin communication, 
 
 ## Known Incompatibilities
 
-Some plugin combinations conflict and should not be used together:
+Some plugin combinations conflict and should not be used together. A development-mode warning is shown when conflicts are detected:
 
 | Plugin A | Plugin B | Reason |
 |----------|----------|--------|
-| PinnedColumnsPlugin | GroupingColumnsPlugin | Pinning reorders columns to edges, which breaks column group header layout |
-| ResponsivePlugin | GroupingRowsPlugin | Card layout doesn't support row grouping; variable row heights cause scroll issues |
+| GroupingRowsPlugin | TreePlugin | Both transform the entire row model in different ways |
+| GroupingRowsPlugin | PivotPlugin | Pivot creates its own aggregated row/column structure |
+| TreePlugin | PivotPlugin | Pivot replaces the data structure; tree hierarchy cannot coexist |
+| ServerSidePlugin | GroupingRowsPlugin | Grouping needs the full dataset; server-side loads blocks lazily |
+| ServerSidePlugin | TreePlugin | Tree needs the full hierarchy; server-side cannot provide children on demand |
+| ServerSidePlugin | PivotPlugin | Pivot needs the full dataset for aggregation |
 
 ## See Also
 

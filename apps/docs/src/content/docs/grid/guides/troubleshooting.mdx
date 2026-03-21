@@ -3,7 +3,7 @@ title: Troubleshooting
 description: Solutions to common issues when working with @toolbox-web/grid — height and virtualization problems, performance tuning, plugin conflicts, and framework adapter development.
 ---
 
-import { LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 
 The grid is designed to work out of the box with minimal setup. If you're hitting issues with basic configuration — TypeScript types, framework imports, or event handling — check the [Getting Started](/grid/getting-started/) guide first, which covers setup for all frameworks.
 
@@ -149,8 +149,10 @@ Plugins process columns and rows in registration order. If two plugins manipulat
 
 | Plugin A | Plugin B | Issue |
 |----------|----------|-------|
-| PinnedColumnsPlugin | GroupingColumnsPlugin | Pinning moves columns to edges, breaking group layouts |
-| ResponsivePlugin | GroupingRowsPlugin | Card mode doesn't support group rows |
+| GroupingRowsPlugin | TreePlugin | Both transform the entire row model |
+| GroupingRowsPlugin | PivotPlugin | Pivot creates its own row/column structure |
+| TreePlugin | PivotPlugin | Pivot replaces the data structure |
+| ServerSidePlugin | GroupingRows/Tree/Pivot | These require the full dataset; server-side loads lazily |
 
 See the [Plugins Overview → Known Incompatibilities](/grid/plugins/#known-incompatibilities) for the full list.
 

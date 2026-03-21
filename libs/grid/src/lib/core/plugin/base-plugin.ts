@@ -149,7 +149,7 @@ export interface PluginIncompatibility {
   /**
    * Human-readable reason for the incompatibility.
    * Should explain why the plugins conflict and any workarounds.
-   * @example "Responsive card layout does not support row grouping yet"
+   * @example "Both transform the entire row model in different ways"
    */
   reason: string;
 }
@@ -345,7 +345,7 @@ export interface PluginManifest<TConfig = unknown> {
    * @example
    * ```typescript
    * incompatibleWith: [
-   *   { name: 'groupingRows', reason: 'Responsive card layout does not support row grouping yet' },
+   *   { name: 'tree', reason: 'Both transform the entire row model in different ways' },
    * ],
    * ```
    */

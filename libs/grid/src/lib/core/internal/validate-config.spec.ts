@@ -725,18 +725,18 @@ describe('validatePluginIncompatibilities', () => {
       /* noop */
     });
 
-    const responsive = createMockPluginWithIncompatibilities('responsive', [
-      { name: 'groupingRows', reason: 'Responsive card layout does not support row grouping' },
+    const groupingRows = createMockPluginWithIncompatibilities('groupingRows', [
+      { name: 'tree', reason: 'Both transform the entire row model' },
     ]);
-    const groupingRows = createSimpleMockPlugin('groupingRows');
+    const tree = createSimpleMockPlugin('tree');
 
-    validatePluginIncompatibilities([responsive, groupingRows]);
+    validatePluginIncompatibilities([groupingRows, tree]);
 
     expect(warnSpy).toHaveBeenCalledOnce();
     expect(warnSpy.mock.calls[0]?.[0]).toContain('incompatib');
-    expect(warnSpy.mock.calls[0]?.[0]).toContain('ResponsivePlugin');
     expect(warnSpy.mock.calls[0]?.[0]).toContain('GroupingRowsPlugin');
-    expect(warnSpy.mock.calls[0]?.[0]).toContain('does not support row grouping');
+    expect(warnSpy.mock.calls[0]?.[0]).toContain('TreePlugin');
+    expect(warnSpy.mock.calls[0]?.[0]).toContain('row model');
     warnSpy.mockRestore();
   });
 
@@ -841,6 +841,12 @@ describe('validatePluginIncompatibilities', () => {
 
       expect(warnSpy).toHaveBeenCalledOnce();
       warnSpy.mockRestore();
+    });
+
+    it('ResponsivePlugin does not declare groupingRows as incompatible', async () => {
+      const { ResponsivePlugin } = await import('../../plugins/responsive/ResponsivePlugin');
+      const names = ResponsivePlugin.manifest?.incompatibleWith?.map((i) => i.name) ?? [];
+      expect(names).not.toContain('groupingRows');
     });
   });
 });
