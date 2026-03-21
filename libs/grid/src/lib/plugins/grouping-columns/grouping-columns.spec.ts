@@ -292,7 +292,7 @@ describe('findEmbeddedImplicitGroups', () => {
 
   it('detects implicit groups embedded within explicit group range', () => {
     const ticker = { field: 'ticker', header: 'Ticker', group: 'Security' };
-    const checkbox = { field: '__checkbox', header: '' };
+    const checkbox = { field: '__tbw_checkbox', header: '' };
     const company = { field: 'company', header: 'Company', group: 'Security' };
 
     const columns = [ticker, checkbox, company];
@@ -301,6 +301,19 @@ describe('findEmbeddedImplicitGroups', () => {
     const embedded = findEmbeddedImplicitGroups(groups);
     expect(embedded.size).toBe(1);
     expect(embedded.has('__implicit__1')).toBe(true);
+  });
+
+  it('does not embed implicit groups containing regular data columns', () => {
+    // A data column (id) sandwiched between two fragments of the same group
+    // should NOT be absorbed — the group must fragment around it.
+    const cols = [
+      { field: 'dept', header: 'Dept', group: 'org' },
+      { field: 'id', header: 'ID' }, // regular data column, NOT utility
+      { field: 'team', header: 'Team', group: 'org' },
+    ];
+    const groups = computeColumnGroups(cols);
+    const embedded = findEmbeddedImplicitGroups(groups);
+    expect(embedded.size).toBe(0);
   });
 
   it('returns empty set when no groups exist', () => {
@@ -324,7 +337,7 @@ describe('mergeAdjacentSameIdGroups', () => {
   it('merges same-ID fragments separated by embedded implicit groups', () => {
     const cols = [
       { field: 'a', header: 'A', group: 'G1' },
-      { field: 'b', header: 'B' }, // utility column
+      { field: '__tbw_checkbox', header: '' }, // utility column
       { field: 'c', header: 'C', group: 'G1' },
       { field: 'd', header: 'D', group: 'G2' },
     ];
@@ -338,6 +351,26 @@ describe('mergeAdjacentSameIdGroups', () => {
     expect(merged[0].columns[0].field).toBe('a');
     expect(merged[0].columns[1].field).toBe('c');
     expect(merged[1].id).toBe('G2');
+  });
+
+  it('does not merge fragments separated by a data column', () => {
+    const cols = [
+      { field: 'a', header: 'A', group: 'G1' },
+      { field: 'id', header: 'ID' }, // regular data column, not utility
+      { field: 'c', header: 'C', group: 'G1' },
+    ];
+    const groups = computeColumnGroups(cols);
+    const embedded = findEmbeddedImplicitGroups(groups);
+    const merged = mergeAdjacentSameIdGroups(groups, embedded);
+
+    // id is a data column, so the implicit group is NOT embedded
+    // G1 fragments remain separate
+    expect(merged.length).toBe(3);
+    expect(merged[0].id).toBe('G1');
+    expect(merged[0].columns.length).toBe(1);
+    expect(merged[1].columns[0].field).toBe('id');
+    expect(merged[2].id).toBe('G1');
+    expect(merged[2].columns.length).toBe(1);
   });
 
   it('does not merge fragments separated by a different explicit group', () => {
@@ -445,17 +478,17 @@ describe('applyGroupedHeaderCellClasses', () => {
   });
 
   it('does not apply group-end to embedded implicit group cells', () => {
-    // Simulate: ticker (G1), checkbox (no group), company (G1)
+    // Simulate: ticker (G1), checkbox (no group, utility), company (G1)
     container.innerHTML = `
       <div class="header-row">
         <div class="cell" data-field="ticker"></div>
-        <div class="cell" data-field="__checkbox"></div>
+        <div class="cell" data-field="__tbw_checkbox"></div>
         <div class="cell" data-field="company"></div>
       </div>
     `;
 
     const ticker = { field: 'ticker', header: 'Ticker', group: { id: 'G1', label: 'Security' } };
-    const checkbox = { field: '__checkbox', header: '' };
+    const checkbox = { field: '__tbw_checkbox', header: '' };
     const company = { field: 'company', header: 'Company', group: { id: 'G1', label: 'Security' } };
     const columns = [ticker, checkbox, company];
     const groups = computeColumnGroups(columns);
@@ -463,7 +496,7 @@ describe('applyGroupedHeaderCellClasses', () => {
     const headerRow = container.querySelector('.header-row') as HTMLElement;
     applyGroupedHeaderCellClasses(headerRow, groups, columns);
 
-    const checkboxCell = headerRow.querySelector('[data-field="__checkbox"]');
+    const checkboxCell = headerRow.querySelector('[data-field="__tbw_checkbox"]');
     // Checkbox should NOT have group-end since its implicit group is embedded
     expect(checkboxCell!.classList.contains('group-end')).toBe(false);
 

@@ -208,6 +208,11 @@ function computeGroupGridRange(group: ColumnGroup, columns: ColumnConfig[]): [nu
  * Find implicit groups that are sandwiched between two fragments of the same
  * explicit group (e.g. a utility column inserted between members of the same group).
  *
+ * Only implicit groups whose columns are **all** internal/utility fields (prefixed
+ * with `__tbw_`) qualify.  When a regular data column sits between two fragments
+ * of the same group it represents a genuine break introduced by column reordering
+ * and must NOT be absorbed.
+ *
  * @returns Set of implicit group IDs that are visually embedded.
  */
 export function findEmbeddedImplicitGroups(groups: ColumnGroup[]): Set<string> {
@@ -215,6 +220,11 @@ export function findEmbeddedImplicitGroups(groups: ColumnGroup[]): Set<string> {
 
   for (let i = 0; i < groups.length; i++) {
     if (!String(groups[i].id).startsWith('__implicit__')) continue;
+
+    // Only absorb implicit groups that contain exclusively utility columns.
+    // Data columns (user-visible fields) must always get their own header space.
+    const allUtility = groups[i].columns.every((c) => c.field?.startsWith('__tbw_'));
+    if (!allUtility) continue;
 
     // Find nearest explicit group before this implicit group
     let beforeId: string | null = null;
