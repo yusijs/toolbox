@@ -320,6 +320,292 @@ columns: [{
 }]
 ```
 
+## Live Data Updates (WebSocket/SSE)
+
+The grid's **Transaction API** lets you push real-time updates from any streaming source — WebSocket, Server-Sent Events, polling, or any other transport — into the grid efficiently.
+
+The grid deliberately does **not** manage transport connections. Your application owns the WebSocket/SSE lifecycle (authentication, reconnection, backoff), and the grid provides the efficient mutation primitives to apply incoming changes.
+
+### WebSocket Example
+
+<Tabs syncKey="framework">
+  <TabItem label="Vanilla JS">
+```ts
+import { queryGrid } from '@toolbox-web/grid';
+import '@toolbox-web/grid/features/server-side';
+import type { RowTransaction } from '@toolbox-web/grid';
+
+interface Employee {
+  id: string;
+  name: string;
+  status: string;
+}
+
+const grid = queryGrid<Employee>('tbw-grid');
+
+// 1. Set up server-side data source for initial load
+grid.ready().then(() => {
+  const plugin = grid.getPluginByName('serverSide');
+  plugin.setDataSource({
+    async getRows(params) {
+      const res = await fetch(`/api/employees?start=${params.startRow}&end=${params.endRow}`);
+      return res.json();
+    },
+  });
+});
+
+// 2. Connect WebSocket for live updates
+const ws = new WebSocket('wss://api.example.com/employees/live');
+
+ws.onmessage = (event) => {
+  const msg = JSON.parse(event.data);
+
+  // Build the transaction from the server event
+  const tx: RowTransaction<Employee> = {};
+  switch (msg.type) {
+    case 'insert':
+      tx.add = [msg.row];
+      break;
+    case 'update':
+      tx.update = [{ id: msg.rowId, changes: msg.changes }];
+      break;
+    case 'delete':
+      tx.remove = [{ id: msg.rowId }];
+      break;
+  }
+
+  // Apply with animation (default) for moderate streams
+  grid.applyTransaction(tx);
+};
+```
+  </TabItem>
+  <TabItem label="React">
+```tsx
+import '@toolbox-web/grid-react/features/server-side';
+import { DataGrid, useGrid } from '@toolbox-web/grid-react';
+import type { RowTransaction } from '@toolbox-web/grid';
+import { useEffect } from 'react';
+
+interface Employee {
+  id: string;
+  name: string;
+  status: string;
+}
+
+function LiveGrid() {
+  const { ref, element } = useGrid<Employee>();
+
+  // Set up server-side data source
+  useEffect(() => {
+    if (!element) return;
+    element.ready().then(() => {
+      element.getPluginByName('serverSide')?.setDataSource({
+        async getRows(params) {
+          const res = await fetch(`/api/employees?start=${params.startRow}&end=${params.endRow}`);
+          return res.json();
+        },
+      });
+    });
+  }, [element]);
+
+  // Connect WebSocket for live updates
+  useEffect(() => {
+    if (!element) return;
+    const ws = new WebSocket('wss://api.example.com/employees/live');
+
+    ws.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      const tx: RowTransaction<Employee> = {};
+      if (msg.type === 'insert') tx.add = [msg.row];
+      if (msg.type === 'update') tx.update = [{ id: msg.rowId, changes: msg.changes }];
+      if (msg.type === 'delete') tx.remove = [{ id: msg.rowId }];
+      element.applyTransaction(tx);
+    };
+
+    return () => ws.close();
+  }, [element]);
+
+  return (
+    <DataGrid
+      ref={ref}
+      columns={[
+        { field: 'id', header: 'ID' },
+        { field: 'name', header: 'Name' },
+        { field: 'status', header: 'Status' },
+      ]}
+      serverSide={{ pageSize: 50 }}
+      style={{ height: '400px' }}
+    />
+  );
+}
+```
+  </TabItem>
+  <TabItem label="Vue">
+```html
+<script setup lang="ts">
+import '@toolbox-web/grid-vue/features/server-side';
+import { TbwGrid, TbwGridColumn } from '@toolbox-web/grid-vue';
+import type { RowTransaction } from '@toolbox-web/grid';
+import { ref, onMounted, onUnmounted } from 'vue';
+
+interface Employee {
+  id: string;
+  name: string;
+  status: string;
+}
+
+const gridRef = ref(null);
+let ws: WebSocket | null = null;
+
+onMounted(async () => {
+  const grid = gridRef.value?.element;
+  await grid?.ready();
+  grid?.getPluginByName('serverSide')?.setDataSource({
+    async getRows(params) {
+      const res = await fetch(`/api/employees?start=${params.startRow}&end=${params.endRow}`);
+      return res.json();
+    },
+  });
+
+  // Connect WebSocket for live updates
+  ws = new WebSocket('wss://api.example.com/employees/live');
+  ws.onmessage = (event) => {
+    const msg = JSON.parse(event.data);
+    const tx: RowTransaction<Employee> = {};
+    if (msg.type === 'insert') tx.add = [msg.row];
+    if (msg.type === 'update') tx.update = [{ id: msg.rowId, changes: msg.changes }];
+    if (msg.type === 'delete') tx.remove = [{ id: msg.rowId }];
+    grid?.applyTransaction(tx);
+  };
+});
+
+onUnmounted(() => ws?.close());
+</script>
+
+<template>
+  <TbwGrid ref="gridRef" :server-side="{ pageSize: 50 }" style="height: 400px">
+    <TbwGridColumn field="id" header="ID" />
+    <TbwGridColumn field="name" header="Name" />
+    <TbwGridColumn field="status" header="Status" />
+  </TbwGrid>
+</template>
+```
+  </TabItem>
+  <TabItem label="Angular">
+```typescript
+import '@toolbox-web/grid-angular/features/server-side';
+import { Component, viewChild, ElementRef, OnDestroy } from '@angular/core';
+import { Grid } from '@toolbox-web/grid-angular';
+import type { ColumnConfig, GridElement, RowTransaction } from '@toolbox-web/grid';
+
+interface Employee {
+  id: string;
+  name: string;
+  status: string;
+}
+
+@Component({
+  selector: 'app-live-grid',
+  imports: [Grid],
+  template: `
+    <tbw-grid
+      #grid
+      [columns]="columns"
+      [serverSide]="{ pageSize: 50 }"
+      style="height: 400px; display: block;">
+    </tbw-grid>
+  `,
+})
+export class LiveGridComponent implements OnDestroy {
+  gridRef = viewChild<ElementRef<GridElement<Employee>>>('grid');
+  columns: ColumnConfig[] = [
+    { field: 'id', header: 'ID' },
+    { field: 'name', header: 'Name' },
+    { field: 'status', header: 'Status' },
+  ];
+
+  private ws: WebSocket | null = null;
+
+  ngAfterViewInit() {
+    const grid = this.gridRef()?.nativeElement;
+    grid?.ready().then(() => {
+      grid.getPluginByName('serverSide')?.setDataSource({
+        async getRows(params: any) {
+          const res = await fetch(`/api/employees?start=${params.startRow}&end=${params.endRow}`);
+          return res.json();
+        },
+      });
+    });
+
+    this.ws = new WebSocket('wss://api.example.com/employees/live');
+    this.ws.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      const tx: RowTransaction<Employee> = {};
+      if (msg.type === 'insert') tx.add = [msg.row];
+      if (msg.type === 'update') tx.update = [{ id: msg.rowId, changes: msg.changes }];
+      if (msg.type === 'delete') tx.remove = [{ id: msg.rowId }];
+      grid?.applyTransaction(tx);
+    };
+  }
+
+  ngOnDestroy() {
+    this.ws?.close();
+  }
+}
+```
+  </TabItem>
+</Tabs>
+
+### High-Frequency Streams
+
+For data feeds with many updates per second (e.g. financial tickers, IoT sensors), use `applyTransactionAsync()` to automatically batch all updates arriving within a single animation frame:
+
+```ts
+// All messages within one frame are merged into a single render
+ws.onmessage = (event) => {
+  const msg = JSON.parse(event.data);
+  grid.applyTransactionAsync({
+    update: [{ id: msg.id, changes: msg.changes }],
+  });
+};
+```
+
+### Choosing the Right Method
+
+| Scenario | Method | Animations |
+|----------|--------|------------|
+| User actions, moderate streams (< 10 msg/s) | `applyTransaction()` | Yes (configurable) |
+| High-frequency ticker (100+ msg/s) | `applyTransactionAsync()` | Disabled (batched) |
+| Bulk initial load from REST, then switch to streaming | `setDataSource()` + `applyTransaction()` | Mixed |
+
+:::tip
+Both methods return a `TransactionResult` with the actual `added`, `updated`, and `removed` row objects — useful for logging, analytics, or triggering side effects.
+:::
+
+### Server-Sent Events (SSE)
+
+SSE works the same way — just swap the transport:
+
+```ts
+const source = new EventSource('/api/employees/stream');
+
+source.addEventListener('insert', (e) => {
+  grid.applyTransaction({ add: [JSON.parse(e.data)] });
+});
+
+source.addEventListener('update', (e) => {
+  const { id, changes } = JSON.parse(e.data);
+  grid.applyTransaction({ update: [{ id, changes }] });
+});
+
+source.addEventListener('delete', (e) => {
+  const { id } = JSON.parse(e.data);
+  grid.applyTransaction({ remove: [{ id }] });
+});
+```
+
+---
+
 ## Combining with Other Plugins
 
 The ServerSidePlugin works well with:
@@ -344,6 +630,7 @@ The Server-Side plugin **cannot** be used with the following plugins:
 
 ## See Also
 
+- **[Common Patterns — Real-Time Data](/grid/guides/common-patterns/#real-time--streaming-data)** — Transport-agnostic streaming patterns
 - **[Filtering](/grid/plugins/filtering/)** — Client-side filtering
 - **[Multi-Sort](/grid/plugins/multi-sort/)** — Client-side multi-sort
 - **[Export](/grid/plugins/export/)** — Export grid data

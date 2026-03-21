@@ -113,6 +113,10 @@ export interface PublicGrid<T = any> {
   insertRow?(index: number, row: T, animate?: boolean): Promise<void>;
   /** Remove a row at a visible index, bypassing the sort/filter pipeline. Auto-animates by default. */
   removeRow?(index: number, animate?: boolean): Promise<T | undefined>;
+  /** Apply a batch of add/update/remove mutations in a single render cycle. */
+  applyTransaction?(transaction: RowTransaction<T>, animate?: boolean): Promise<TransactionResult<T>>;
+  /** Batch-friendly version — merges rapid calls within a single animation frame. */
+  applyTransactionAsync?(transaction: RowTransaction<T>): Promise<TransactionResult<T>>;
   /** Resolves once the component has finished initial work (layout, inference). */
   ready?: () => Promise<void>;
   /** Force a layout / measurement pass (e.g. after container resize). */
@@ -2705,6 +2709,58 @@ export interface RowUpdate<TRow = unknown> {
   id: string;
   /** Fields to update */
   changes: Partial<TRow>;
+}
+
+/**
+ * A batch of row mutations to apply atomically in a single render cycle.
+ *
+ * All adds, updates, and removes are processed together with one re-render,
+ * making this far more efficient than calling `insertRow`, `updateRow`, and
+ * `removeRow` individually — especially for high-frequency streaming data.
+ *
+ * Row identification for `update` and `remove` uses the grid's configured
+ * {@link GridConfig.getRowId | getRowId} function.
+ *
+ * @example
+ * ```typescript
+ * // Apply a mixed transaction from a WebSocket message
+ * const result = await grid.applyTransaction({
+ *   add: [{ id: 'new-1', name: 'Alice', status: 'Active' }],
+ *   update: [{ id: 'emp-5', changes: { status: 'Inactive' } }],
+ *   remove: [{ id: 'emp-3' }],
+ * });
+ *
+ * console.log(`Added: ${result.added.length}, Updated: ${result.updated.length}, Removed: ${result.removed.length}`);
+ * ```
+ *
+ * @see {@link TransactionResult} for the result structure
+ * @category Data Management
+ */
+export interface RowTransaction<TRow = unknown> {
+  /** Rows to insert. Appended at the end of the current view. */
+  add?: TRow[];
+  /** Rows to update in-place by ID. */
+  update?: RowUpdate<TRow>[];
+  /** Rows to remove by ID. */
+  remove?: Array<{ id: string }>;
+}
+
+/**
+ * Result of a {@link RowTransaction} applied via `applyTransaction`.
+ *
+ * Contains the actual row objects that were affected, useful for
+ * post-processing or logging.
+ *
+ * @see {@link RowTransaction} for the input structure
+ * @category Data Management
+ */
+export interface TransactionResult<TRow = unknown> {
+  /** Rows that were successfully added. */
+  added: TRow[];
+  /** Rows that were successfully updated (references to the mutated row objects). */
+  updated: TRow[];
+  /** Rows that were successfully removed. */
+  removed: TRow[];
 }
 
 // #endregion

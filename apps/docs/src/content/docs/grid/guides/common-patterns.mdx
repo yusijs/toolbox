@@ -826,6 +826,66 @@ export class LargeDataGridComponent {
 For datasets over 50k rows, consider `ServerSidePlugin` to paginate and filter on the server instead of loading all data upfront.
 :::
 
+---
+
+## Real-Time / Streaming Data
+
+**Goal:** Push live updates from a WebSocket, SSE, or polling source into the grid efficiently.
+
+Use `applyTransaction()` to batch add, update, and remove operations into a single render cycle.
+For high-frequency streams (many messages per second), `applyTransactionAsync()` automatically
+merges all calls within one animation frame.
+
+```typescript
+import { createGrid } from '@toolbox-web/grid';
+import type { RowTransaction } from '@toolbox-web/grid';
+
+const grid = createGrid<Trade>('#my-grid');
+
+// --- Low-to-moderate frequency: applyTransaction ---
+ws.onmessage = (e) => {
+  const msg = JSON.parse(e.data);
+  grid.applyTransaction({
+    add:    msg.type === 'add'    ? [msg.row]                               : undefined,
+    update: msg.type === 'update' ? [{ id: msg.id, changes: msg.changes }]  : undefined,
+    remove: msg.type === 'remove' ? [{ id: msg.id }]                        : undefined,
+  });
+};
+
+// --- High frequency: applyTransactionAsync ---
+// Merges rapid calls within a single animation frame
+ws.onmessage = (e) => {
+  const msg = JSON.parse(e.data);
+  grid.applyTransactionAsync({
+    update: [{ id: msg.id, changes: msg.changes }],
+  });
+};
+```
+
+### Transaction shape
+
+```typescript
+interface RowTransaction<T> {
+  add?:    T[];                           // Appended to the end
+  update?: { id: string; changes: Partial<T> }[];  // In-place mutation by row ID
+  remove?: { id: string }[];              // Removed by row ID
+}
+```
+
+Operations are applied in order: **removes → updates → adds**. This ensures updates don't target
+rows about to be removed, and new rows don't collide with existing IDs.
+
+### Choosing between sync and async
+
+| Scenario | Method | Animations |
+|----------|--------|------------|
+| User action, moderate stream (< 10 msg/s) | `applyTransaction()` | Yes (configurable) |
+| High-frequency ticker (100+ msg/s) | `applyTransactionAsync()` | Disabled (batched) |
+
+:::tip
+Both methods return a `TransactionResult` with the actual `added`, `updated`, and `removed` row objects — useful for logging or post-processing.
+:::
+
 ## See Also
 
 <CardGrid>

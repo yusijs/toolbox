@@ -10,7 +10,7 @@
  * Takes the grid reference directly (tightly coupled — this manager
  * can never live outside the grid).
  */
-import type { CellChangeDetail, GridHost, UpdateSource } from '../types';
+import type { CellChangeDetail, GridHost, RowTransaction, TransactionResult, UpdateSource } from '../types';
 import { MISSING_ROW_ID, ROW_NOT_FOUND, throwDiagnostic } from './diagnostics';
 import { RenderPhase } from './render-scheduler';
 import { animateRow } from './row-animation';
@@ -287,6 +287,196 @@ export class RowManager<T = any> {
     }
 
     return row;
+  }
+
+  // --- Transaction API ---
+
+  async applyTransaction(transaction: RowTransaction<T>, animate = true): Promise<TransactionResult<T>> {
+    const grid = this.#grid;
+    const result: TransactionResult<T> = { added: [], updated: [], removed: [] };
+
+    // 1. Process removes first (before indices shift from inserts)
+    if (transaction.remove?.length) {
+      for (const { id } of transaction.remove) {
+        const entry = grid._getRowEntry(id);
+        if (!entry) continue;
+
+        const { row } = entry;
+
+        if (animate) {
+          const idx = grid._rows.indexOf(row);
+          if (idx >= 0) await animateRow(grid, idx, 'remove');
+        }
+
+        // Find current position (may have shifted during animation)
+        const currentIdx = grid._rows.indexOf(row);
+        if (currentIdx < 0) {
+          result.removed.push(row);
+          continue;
+        }
+
+        const newRows = [...grid._rows];
+        newRows.splice(currentIdx, 1);
+        grid._rows = newRows;
+
+        const srcIdx = grid.sourceRows.indexOf(row);
+        if (srcIdx >= 0) {
+          const newSource = [...grid.sourceRows];
+          newSource.splice(srcIdx, 1);
+          grid.sourceRows = newSource;
+        }
+
+        if (grid._sortState) {
+          const origIdx = grid.__originalOrder.indexOf(row);
+          if (origIdx >= 0) {
+            const newOrig = [...grid.__originalOrder];
+            newOrig.splice(origIdx, 1);
+            grid.__originalOrder = newOrig;
+          }
+        }
+
+        result.removed.push(row);
+      }
+    }
+
+    // Collect removed IDs so updates don't target removed rows
+    const removedIds = new Set(transaction.remove?.map((r) => r.id));
+
+    // 2. Process updates (in-place mutation, no structural change)
+    if (transaction.update?.length) {
+      for (const { id, changes } of transaction.update) {
+        if (removedIds.has(id)) continue;
+        const entry = grid._getRowEntry(id);
+        if (!entry) continue;
+
+        const { row, index } = entry;
+        let changed = false;
+
+        for (const [field, newValue] of Object.entries(changes)) {
+          const oldValue = (row as Record<string, unknown>)[field];
+          if (oldValue !== newValue) {
+            changed = true;
+            (row as Record<string, unknown>)[field] = newValue;
+
+            grid.dispatchEvent(
+              new CustomEvent('cell-change', {
+                detail: {
+                  row,
+                  rowId: id,
+                  rowIndex: index,
+                  field,
+                  oldValue,
+                  newValue,
+                  changes,
+                  source: 'api',
+                } as CellChangeDetail<T>,
+                bubbles: true,
+                composed: true,
+              }),
+            );
+          }
+        }
+
+        if (changed) result.updated.push(row);
+      }
+    }
+
+    // 3. Process adds (append to end)
+    if (transaction.add?.length) {
+      for (const row of transaction.add) {
+        grid.sourceRows = [...grid.sourceRows, row];
+
+        const newRows = [...grid._rows];
+        newRows.push(row);
+        grid._rows = newRows;
+
+        if (grid._sortState) {
+          grid.__originalOrder = [...grid.__originalOrder, row];
+        }
+
+        result.added.push(row);
+      }
+    }
+
+    // 4. Single render pass for all mutations
+    const hasStructuralChange = result.added.length > 0 || result.removed.length > 0;
+    const hasUpdates = result.updated.length > 0;
+
+    if (hasStructuralChange) {
+      invalidateCellCache(grid);
+      grid._rebuildRowIdMap();
+      grid.__rowRenderEpoch++;
+      for (const r of grid._rowPool) r.__epoch = -1;
+      grid.refreshVirtualWindow(true);
+    } else if (hasUpdates) {
+      invalidateCellCache(grid);
+      grid._requestSchedulerPhase(RenderPhase.VIRTUALIZATION, 'applyTransaction');
+    }
+
+    if (hasStructuralChange || hasUpdates) {
+      grid._emitDataChange();
+    }
+
+    // 5. Animate added rows
+    if (animate && result.added.length > 0) {
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      for (const row of result.added) {
+        const idx = grid._rows.indexOf(row);
+        if (idx >= 0) await animateRow(grid, idx, 'insert');
+      }
+    }
+
+    // 6. Animate updated rows
+    if (animate && result.updated.length > 0) {
+      for (const row of result.updated) {
+        const idx = grid._rows.indexOf(row);
+        if (idx >= 0) await animateRow(grid, idx, 'change');
+      }
+    }
+
+    // 7. Clean up stale remove animations
+    if (animate && result.removed.length > 0) {
+      requestAnimationFrame(() => {
+        grid.querySelectorAll('[data-animating="remove"]').forEach((el) => {
+          el.removeAttribute('data-animating');
+        });
+      });
+    }
+
+    return result;
+  }
+
+  #pendingTransaction: RowTransaction<T> | null = null;
+  #pendingTransactionResolvers: Array<(result: TransactionResult<T>) => void> = [];
+  #transactionRafId: number | null = null;
+
+  applyTransactionAsync(transaction: RowTransaction<T>): Promise<TransactionResult<T>> {
+    // Merge into pending batch
+    if (!this.#pendingTransaction) {
+      this.#pendingTransaction = { add: [], update: [], remove: [] };
+    }
+    if (transaction.add) this.#pendingTransaction.add!.push(...transaction.add);
+    if (transaction.update) this.#pendingTransaction.update!.push(...transaction.update);
+    if (transaction.remove) this.#pendingTransaction.remove!.push(...transaction.remove);
+
+    return new Promise<TransactionResult<T>>((resolve) => {
+      this.#pendingTransactionResolvers.push(resolve);
+
+      if (this.#transactionRafId === null) {
+        this.#transactionRafId = requestAnimationFrame(() => {
+          this.#transactionRafId = null;
+          const batch = this.#pendingTransaction!;
+          const resolvers = this.#pendingTransactionResolvers;
+          this.#pendingTransaction = null;
+          this.#pendingTransactionResolvers = [];
+
+          // Apply batched transaction without per-row animation (too many)
+          this.applyTransaction(batch, false).then((result) => {
+            for (const resolver of resolvers) resolver(result);
+          });
+        });
+      }
+    });
   }
 }
 

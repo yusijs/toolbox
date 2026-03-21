@@ -393,6 +393,7 @@ The grid provides a built-in row animation API for highlighting changes, inserti
 | `animateRow(i, 'change')` | Flash highlight for data changes | `--tbw-row-change-duration` (500ms) |
 | `insertRow(i, row)` | Slide-in animation for new rows | `--tbw-row-insert-duration` (300ms) |
 | `removeRow(i)` | Fade-out animation for removed rows | `--tbw-row-remove-duration` (200ms) |
+| `applyTransaction(tx)` | Animates add/update/remove in one pass | All of the above |
 
 ```typescript
 // Highlight a row after updating

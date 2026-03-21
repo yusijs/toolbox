@@ -86,9 +86,11 @@ import type {
   ResizeController,
   RowAnimationType,
   RowElementInternal,
+  RowTransaction,
   ScrollToRowOptions,
   ToolbarContentDefinition,
   ToolPanelDefinition,
+  TransactionResult,
   UpdateSource,
   VirtualState,
 } from './types';
@@ -3242,6 +3244,75 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
    */
   async removeRow(index: number, animate = true): Promise<T | undefined> {
     return this.#rowManager.removeRow(index, animate);
+  }
+
+  /**
+   * Apply a batch of row mutations (add, update, remove) in a single render cycle.
+   *
+   * This is the most efficient way to apply multiple row changes at once — ideal
+   * for streaming data from WebSocket, SSE, or any real-time source.
+   *
+   * Operations are applied in order: removes → updates → adds. This ensures
+   * updates don't target rows about to be removed, and adds don't collide
+   * with existing rows.
+   *
+   * @group Data Management
+   * @param transaction - The mutations to apply
+   * @param animate - Whether to animate the changes (default: `true`)
+   * @returns Result with the actual row objects affected
+   *
+   * @example
+   * ```typescript
+   * // Apply a mixed transaction
+   * const result = await grid.applyTransaction({
+   *   add: [{ id: 'new-1', name: 'Alice' }],
+   *   update: [{ id: 'emp-5', changes: { status: 'Inactive' } }],
+   *   remove: [{ id: 'emp-3' }],
+   * });
+   *
+   * // Wire up a WebSocket stream
+   * ws.onmessage = (e) => {
+   *   const event = JSON.parse(e.data);
+   *   grid.applyTransaction({
+   *     [event.type]: event.type === 'update'
+   *       ? [{ id: event.rowId, changes: event.changes }]
+   *       : event.type === 'add'
+   *         ? [event.row]
+   *         : [{ id: event.rowId }],
+   *   });
+   * };
+   * ```
+   */
+  async applyTransaction(transaction: RowTransaction<T>, animate = true): Promise<TransactionResult<T>> {
+    return this.#rowManager.applyTransaction(transaction, animate);
+  }
+
+  /**
+   * Apply a transaction asynchronously, batching rapid calls into a single render.
+   *
+   * Ideal for high-frequency streaming where many small updates arrive faster
+   * than the browser can render. All transactions queued within the same
+   * animation frame are merged and applied together.
+   *
+   * Animations are disabled for batched transactions to avoid visual overload.
+   *
+   * @group Data Management
+   * @param transaction - The mutations to apply
+   * @returns Result with the actual row objects affected (after batching)
+   *
+   * @example
+   * ```typescript
+   * // High-frequency WebSocket — updates batched into single renders
+   * ws.onmessage = (e) => {
+   *   const event = JSON.parse(e.data);
+   *   grid.applyTransactionAsync({
+   *     update: [{ id: event.id, changes: event.changes }],
+   *   });
+   * };
+   * ```
+   */
+  applyTransactionAsync(transaction: RowTransaction<T>): Promise<TransactionResult<T>> {
+    return this.#rowManager.applyTransactionAsync(transaction);
   }
 
   /**

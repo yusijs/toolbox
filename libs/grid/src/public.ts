@@ -335,6 +335,7 @@ export type {
   // Grouping & Footer types
   RowGroupRenderConfig,
   // Data update management
+  RowTransaction,
   RowUpdate,
   // Focus & Navigation
   ScrollToRowOptions,
@@ -347,6 +348,7 @@ export type {
   ToolbarContentDefinition,
   ToolPanelConfig,
   ToolPanelDefinition,
+  TransactionResult,
   TypeDefault,
   UpdateSource,
 } from './lib/core/types';
