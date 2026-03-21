@@ -98,7 +98,6 @@ export function getColumnStickyPosition(column: any): StickyPosition | null {
   return getColumnPinned(column) ?? null;
 }
 
-
 /**
  * Calculate left offsets for sticky-left columns.
  * Returns a map of field -> offset in pixels.
@@ -207,6 +206,68 @@ export function applyStickyOffsets(host: HTMLElement, columns: any[]): void {
           (el as HTMLElement).style.right = right + 'px';
         });
         right += cell.offsetWidth;
+      }
+    }
+  }
+
+  // Apply sticky offsets to column group header cells
+  applyGroupHeaderStickyOffsets(host, columns, headerCells, direction);
+}
+
+/**
+ * Apply sticky offsets to column group header cells.
+ * A group header cell is pinned if ALL of its spanned columns are pinned in the same direction.
+ *
+ * @param host - The grid host element
+ * @param columns - Array of column configurations
+ * @param headerCells - Already-queried header cells (with sticky offsets applied)
+ * @param direction - Text direction
+ */
+function applyGroupHeaderStickyOffsets(
+  host: HTMLElement,
+  columns: any[],
+  headerCells: HTMLElement[],
+  direction: TextDirection,
+): void {
+  const groupCells = Array.from(host.querySelectorAll('.header-group-row .header-group-cell')) as HTMLElement[];
+  if (!groupCells.length) return;
+
+  for (const groupCell of groupCells) {
+    // Parse gridColumn to find which column range this group spans
+    // Format: "startCol / span N" (1-based)
+    const gridCol = groupCell.style.gridColumn;
+    if (!gridCol) continue;
+
+    const match = gridCol.match(/^(\d+)\s*\/\s*span\s+(\d+)$/);
+    if (!match) continue;
+
+    const startIdx = parseInt(match[1], 10) - 1; // Convert to 0-based
+    const span = parseInt(match[2], 10);
+    const endIdx = startIdx + span - 1;
+
+    // Get the columns this group spans
+    const spannedColumns = columns.slice(startIdx, endIdx + 1);
+    if (!spannedColumns.length) continue;
+
+    // Check if ALL spanned columns are left-pinned
+    if (spannedColumns.every((col: any) => isResolvedLeft(col, direction))) {
+      const firstField = spannedColumns[0].field;
+      const firstCell = headerCells.find((c) => c.getAttribute('data-field') === firstField);
+      if (firstCell) {
+        groupCell.classList.add('sticky-left');
+        groupCell.style.position = 'sticky';
+        groupCell.style.left = firstCell.style.left;
+      }
+    }
+
+    // Check if ALL spanned columns are right-pinned
+    if (spannedColumns.every((col: any) => isResolvedRight(col, direction))) {
+      const lastField = spannedColumns[spannedColumns.length - 1].field;
+      const lastCell = headerCells.find((c) => c.getAttribute('data-field') === lastField);
+      if (lastCell) {
+        groupCell.classList.add('sticky-right');
+        groupCell.style.position = 'sticky';
+        groupCell.style.right = lastCell.style.right;
       }
     }
   }

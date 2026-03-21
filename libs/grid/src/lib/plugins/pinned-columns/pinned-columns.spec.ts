@@ -1,5 +1,6 @@
 /**
  * Sticky Columns Plugin Unit Tests
+ * @vitest-environment happy-dom
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -205,6 +206,81 @@ describe('sticky-columns', () => {
       // Should not throw
       expect(() => applyStickyOffsets(emptyHost, cols)).not.toThrow();
     });
+
+    describe('group header cells', () => {
+      let groupHost: HTMLElement;
+
+      beforeEach(() => {
+        groupHost = document.createElement('div');
+        groupHost.innerHTML = `
+          <div class="header-group-row">
+            <div class="cell header-group-cell" data-group="info" style="grid-column: 1 / span 2">Info</div>
+            <div class="cell header-group-cell" data-group="work" style="grid-column: 3 / span 2">Work</div>
+          </div>
+          <div class="header-row">
+            <div class="cell" data-field="a">A</div>
+            <div class="cell" data-field="b">B</div>
+            <div class="cell" data-field="c">C</div>
+            <div class="cell" data-field="d">D</div>
+          </div>
+          <div class="data-grid-row">
+            <div class="cell" data-col="0" data-field="a">1</div>
+            <div class="cell" data-col="1" data-field="b">2</div>
+            <div class="cell" data-col="2" data-field="c">3</div>
+            <div class="cell" data-col="3" data-field="d">4</div>
+          </div>
+        `;
+        document.body.appendChild(groupHost);
+      });
+
+      afterEach(() => {
+        document.body.removeChild(groupHost);
+      });
+
+      it('applies sticky-left to group header when all spanned columns are left-pinned', () => {
+        const cols = [{ field: 'a', pinned: 'left' }, { field: 'b', pinned: 'left' }, { field: 'c' }, { field: 'd' }];
+        applyStickyOffsets(groupHost, cols);
+
+        const groupCell = groupHost.querySelector('.header-group-cell[data-group="info"]') as HTMLElement;
+        expect(groupCell.classList.contains('sticky-left')).toBe(true);
+        expect(groupCell.style.position).toBe('sticky');
+        expect(groupCell.style.left).toBe('0px');
+      });
+
+      it('does not pin group header when only some columns are pinned', () => {
+        const cols = [{ field: 'a', pinned: 'left' }, { field: 'b' }, { field: 'c' }, { field: 'd' }];
+        applyStickyOffsets(groupHost, cols);
+
+        const groupCell = groupHost.querySelector('.header-group-cell[data-group="info"]') as HTMLElement;
+        expect(groupCell.classList.contains('sticky-left')).toBe(false);
+      });
+
+      it('applies sticky-right to group header when all spanned columns are right-pinned', () => {
+        const cols = [{ field: 'a' }, { field: 'b' }, { field: 'c', pinned: 'right' }, { field: 'd', pinned: 'right' }];
+        applyStickyOffsets(groupHost, cols);
+
+        const groupCell = groupHost.querySelector('.header-group-cell[data-group="work"]') as HTMLElement;
+        expect(groupCell.classList.contains('sticky-right')).toBe(true);
+        expect(groupCell.style.position).toBe('sticky');
+        expect(groupCell.style.right).toBe('0px');
+      });
+
+      it('does not pin group header when no spanned columns are pinned', () => {
+        const cols = [{ field: 'a' }, { field: 'b' }, { field: 'c' }, { field: 'd' }];
+        applyStickyOffsets(groupHost, cols);
+
+        const groupCell = groupHost.querySelector('.header-group-cell[data-group="info"]') as HTMLElement;
+        expect(groupCell.classList.contains('sticky-left')).toBe(false);
+        expect(groupCell.classList.contains('sticky-right')).toBe(false);
+      });
+
+      it('handles missing group header row gracefully', () => {
+        // Use host without group header row
+        const cols = [{ field: 'a', pinned: 'left' }, { field: 'b' }, { field: 'c' }];
+        // Should not throw (uses the host from the parent beforeEach which has no group row)
+        expect(() => applyStickyOffsets(host, cols)).not.toThrow();
+      });
+    });
   });
 
   describe('clearStickyOffsets', () => {
@@ -226,6 +302,23 @@ describe('sticky-columns', () => {
         expect(cell.style.left).toBe('');
         expect(cell.style.right).toBe('');
       });
+
+      document.body.removeChild(host);
+    });
+
+    it('removes sticky classes from group header cells', () => {
+      const host = document.createElement('div');
+      host.innerHTML = `
+        <div class="header-group-cell sticky-left" style="position: sticky; left: 0px;">Group</div>
+        <div class="cell sticky-right" style="position: sticky; right: 0px;">Cell</div>
+      `;
+      document.body.appendChild(host);
+
+      clearStickyOffsets(host);
+
+      const groupCell = host.querySelector('.header-group-cell') as HTMLElement;
+      expect(groupCell.classList.contains('sticky-left')).toBe(false);
+      expect(groupCell.style.left).toBe('');
 
       document.body.removeChild(host);
     });

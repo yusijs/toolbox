@@ -123,6 +123,14 @@
       }
     }
 
+    .header-group-row > .header-group-cell {
+      &.sticky-left,
+      &.sticky-right {
+        background: var(--tbw-color-header-bg);
+        z-index: 35;
+      }
+    }
+
     /* ========== Sorting & Resize ========== */
 
     .sortable {
