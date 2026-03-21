@@ -131,7 +131,7 @@ import type {
  *
  * @see {@link EditingConfig} for configuration options
  * @see {@link EditorContext} for custom editor context
- * @see [Live Demos](?path=/docs/grid-plugins-editing--docs) for interactive examples
+ * @see {@link EditingConfig} for interactive examples in the docs site
  */
 export class EditingPlugin<T = unknown> extends BaseGridPlugin<EditingConfig> {
   /**

@@ -4,5 +4,6 @@
  *
  * @module Plugins/Pivot
  */
+export type { PivotDataRow } from './pivot-engine';
 export { PivotPlugin } from './PivotPlugin';
-export type { AggFunc, PivotConfig, PivotResult, PivotValueField } from './types';
+export type { AggFunc, PivotConfig, PivotResult, PivotRow, PivotValueField } from './types';

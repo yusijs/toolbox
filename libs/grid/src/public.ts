@@ -86,8 +86,6 @@ export function createGrid<TRow = unknown>(config?: Partial<GridConfig<TRow>>): 
  * ```
  *
  * @param selector - CSS selector to find the grid element
- * @param parentOrAwait - Parent node to search within, or `true` to wait for upgrade
- * @param awaitUpgrade - When `true`, waits for the custom element to be defined before resolving
  * @returns The typed grid element (or null), either synchronously or as a Promise
  */
 export function queryGrid<TRow = unknown>(selector: string): DataGridElement<TRow> | null;
@@ -350,7 +348,7 @@ export type {
   ToolPanelConfig,
   ToolPanelDefinition,
   TypeDefault,
-  UpdateSource
+  UpdateSource,
 } from './lib/core/types';
 
 // Re-export FitModeEnum for runtime usage
@@ -371,7 +369,7 @@ export type {
   PluginDependency,
   PluginManifest,
   PluginQuery,
-  QueryDefinition
+  QueryDefinition,
 } from './lib/core/plugin';
 
 // DOM constants - for querying grid elements and styling

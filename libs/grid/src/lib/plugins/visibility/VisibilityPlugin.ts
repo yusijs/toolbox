@@ -130,7 +130,7 @@ function canMoveColumn(column: ColumnConfig): boolean {
  * ```
  *
  * @see {@link VisibilityConfig} for configuration options
- * @see {@link ReorderPlugin} for drag-to-reorder integration
+ * @see ReorderPlugin for drag-to-reorder integration
  *
  * @internal Extends BaseGridPlugin
  */

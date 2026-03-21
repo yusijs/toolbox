@@ -13,9 +13,6 @@ import type { ColumnConfig as CoreColumnConfig } from '../../core/types';
 // ============================================================================
 
 declare module '../../core/types' {
-  /**
-   * Augment ColumnConfig with group assignment property.
-   */
   interface ColumnConfig<TRow = any> {
     /**
      * Column group assignment for the GroupingColumnsPlugin.
@@ -24,9 +21,6 @@ declare module '../../core/types' {
     group?: { id: string; label?: string } | string;
   }
 
-  /**
-   * Augment GridConfig with declarative column groups.
-   */
   interface GridConfig<TRow = any> {
     /**
      * Declarative column group definitions for the GroupingColumnsPlugin.
@@ -87,7 +81,7 @@ export interface GroupingColumnsConfig {
    * }
    * ```
    *
-   * @example Per-group rendering via switch on `params.id`:
+   * @example Per-group rendering via switch on params.id
    * ```ts
    * groupHeaderRenderer: (params) => {
    *   const icons: Record<string, string> = { personal: '👤', work: '💼' };

@@ -7,8 +7,11 @@
 export { PinnedRowsPlugin } from './PinnedRowsPlugin';
 export type {
   AggregationRowConfig,
+  AggregatorConfig,
   AggregatorDefinition,
+  AggregatorFormatter,
   PinnedRowsConfig,
   PinnedRowsContext,
   PinnedRowsPanel,
+  PinnedRowsPosition,
 } from './types';

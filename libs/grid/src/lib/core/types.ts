@@ -163,7 +163,7 @@ export interface PublicGrid<T = any> {
   /**
    * Get a plugin instance by its name.
    *
-   * When a plugin augments the {@link PluginNameMap} interface, the return
+   * When a plugin augments the `PluginNameMap` interface, the return
    * type is narrowed automatically:
    *
    * ```typescript
@@ -2656,7 +2656,7 @@ export type UpdateSource = 'user' | 'cascade' | 'api';
  * ```
  *
  * @see {@link UpdateSource} for understanding change origins
- * @see {@link CellCommitDetail} for the commit event (editing lifecycle)
+ * @see CellCommitDetail for the commit event (editing lifecycle)
  * @category Events
  */
 export interface CellChangeDetail<TRow = unknown> {
@@ -3803,7 +3803,7 @@ export type DataGridEventDetail<K extends keyof DataGridEventMap<unknown>, TRow 
  *
  * @see {@link DataGridElement.on} for the recommended subscription API
  * @see {@link DataGridEventMap} for all event types
- * @see {@link DataGridEventDetail} for extracting detail type only
+ * @see `DataGridEventDetail` for extracting detail type only
  * @category Events
  */
 export type DataGridCustomEvent<K extends keyof DataGridEventMap<unknown>, TRow = unknown> = CustomEvent<

@@ -80,7 +80,7 @@ import type { ColumnMoveDetail, ReorderConfig } from './types';
  *
  * @see {@link ReorderConfig} for all configuration options
  * @see {@link ColumnMoveDetail} for the event detail structure
- * @see {@link GroupingColumnsPlugin} for column group integration
+ * @see GroupingColumnsPlugin for column group integration
  *
  * @internal Extends BaseGridPlugin
  */

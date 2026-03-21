@@ -98,7 +98,7 @@ import type { ColumnGroup, ColumnGroupDefinition, GroupingColumnsConfig } from '
  *
  * @see {@link GroupingColumnsConfig} for all configuration options
  * @see {@link ColumnGroup} for the group structure
- * @see {@link ReorderPlugin} for drag-to-reorder within groups
+ * @see ReorderPlugin for drag-to-reorder within groups
  *
  * @internal Extends BaseGridPlugin
  */

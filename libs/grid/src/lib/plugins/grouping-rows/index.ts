@@ -5,5 +5,14 @@
  * @module Plugins/Grouping Rows
  */
 export { GroupingRowsPlugin } from './GroupingRowsPlugin';
-export type { DefaultExpandedValue, GroupingRowsConfig, GroupRowRenderParams, GroupToggleDetail } from './types';
-
+export type { GroupState } from './GroupingRowsPlugin';
+export type {
+  AggregatorMap,
+  DataRowModelItem,
+  DefaultExpandedValue,
+  GroupRowModelItem,
+  GroupRowRenderParams,
+  GroupToggleDetail,
+  GroupingRowsConfig,
+  RenderRow,
+} from './types';

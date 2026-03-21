@@ -109,7 +109,7 @@ import {
  * ```
  *
  * @see {@link ClipboardConfig} for all configuration options
- * @see {@link SelectionPlugin} for enhanced copy/paste with selection
+ * @see SelectionPlugin for enhanced copy/paste with selection
  *
  * @internal Extends BaseGridPlugin
  */

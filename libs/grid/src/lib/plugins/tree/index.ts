@@ -5,4 +5,4 @@
  * @module Plugins/Tree
  */
 export { TreePlugin } from './TreePlugin';
-export type { TreeConfig, TreeExpandDetail } from './types';
+export type { FlattenedTreeRow, TreeConfig, TreeExpandDetail, TreeRow } from './types';

@@ -11,9 +11,6 @@
 // ============================================================================
 
 declare module '../../core/types' {
-  /**
-   * Augment ColumnConfig with print visibility property.
-   */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface ColumnConfig<TRow = any> {
     /**

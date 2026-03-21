@@ -69,9 +69,9 @@ declare module '../../core/types' {
  * new SelectionPlugin({ mode: 'range' })
  * ```
  *
- * @see [Cell Mode Demo](?path=/story/grid-plugins-selection--default) - Click cells to select
- * @see [Row Mode Demo](?path=/story/grid-plugins-selection--row-mode) - Full row selection
- * @see [Range Mode Demo](?path=/story/grid-plugins-selection--range-mode) - Drag to select ranges
+ * @see Cell Mode Demo — Click cells to select
+ * @see Row Mode Demo — Full row selection
+ * @see Range Mode Demo — Drag to select ranges
  */
 export type SelectionMode = 'cell' | 'row' | 'range';
 

@@ -92,7 +92,7 @@ interface SelectionPluginState {
  *
  * @see {@link ExportConfig} for all configuration options
  * @see {@link ExportParams} for method parameters
- * @see {@link SelectionPlugin} for exporting selected rows
+ * @see SelectionPlugin for exporting selected rows
  *
  * @internal Extends BaseGridPlugin
  */

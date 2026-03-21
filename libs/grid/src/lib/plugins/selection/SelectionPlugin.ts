@@ -163,7 +163,7 @@ function buildSelectionEvent(
  * @see {@link SelectionMode} for detailed mode descriptions
  * @see {@link SelectionConfig} for configuration options
  * @see {@link SelectionResult} for the selection result structure
- * @see [Live Demos](?path=/docs/grid-plugins-selection--docs) for interactive examples
+ * @see {@link SelectionConfig} for interactive examples in the docs site
  */
 export class SelectionPlugin extends BaseGridPlugin<SelectionConfig> {
   /**

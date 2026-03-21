@@ -9,10 +9,12 @@ export { FilteringPlugin } from './FilteringPlugin';
 export type {
   FilterChangeDetail,
   FilterConfig,
+  FilterHandler,
   FilterModel,
   FilterOperator,
   FilterPanelParams,
   FilterPanelRenderer,
   FilterParams,
   FilterType,
+  FilterValuesHandler,
 } from './types';
