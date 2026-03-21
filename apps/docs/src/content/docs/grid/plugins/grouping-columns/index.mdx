@@ -551,7 +551,9 @@ plugin.refresh();
 ```
 ## Usage with Column Reordering
 
-When using `GroupingColumnsPlugin` together with the [Reorder Columns](../reorder-columns/) plugin, column reordering does not enforce group boundaries by default. Users can drag columns out of their groups, which will cause the groups to be recomputed based on the new column order.
+When using `GroupingColumnsPlugin` together with the [Reorder Columns](../reorder-columns/) plugin, column reordering does not enforce group boundaries by default. Users can drag columns out of their groups, and when they do, the group **fragments** — each contiguous run of columns belonging to the same group gets its own header cell. If the user drags the columns back together, the group header merges automatically.
+
+This means groups never "break" — they split into fragments that remain visually connected to their group identity. Utility columns (like selection checkboxes or row numbers) that land between two fragments of the same group are visually absorbed into the surrounding group header.
 
 ### Built-in: `lockGroupOrder`
 

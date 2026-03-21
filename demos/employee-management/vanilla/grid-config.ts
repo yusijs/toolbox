@@ -247,7 +247,7 @@ export function createGridConfig(options: GridConfigOptions): GridConfig<Employe
       clipboard: true,
       contextMenu: true,
       reorderColumns: true,
-      groupingColumns: { lockGroupOrder: true },
+      groupingColumns: true,
       pinnedColumns: true,
       columnVirtualization: true,
       visibility: true,

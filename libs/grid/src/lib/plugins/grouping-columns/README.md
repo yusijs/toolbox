@@ -41,6 +41,10 @@ grid.columns = [
 | `lockGroupOrder`      | `boolean`                           | `false` | Prevent reordering columns outside groups |
 | `groupHeaderRenderer` | `(params) => HTMLElement \| string` | -       | Custom group header renderer              |
 
+## Fragmented Groups
+
+When columns are reordered across group boundaries (with `lockGroupOrder: false`, the default), groups **fragment** instead of blocking the move. Each contiguous run of columns belonging to the same group gets its own header cell. If the fragments are later brought back together, the group header merges automatically.
+
 ## Custom Group Header
 
 ```typescript

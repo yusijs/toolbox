@@ -11,6 +11,7 @@ import {
   findEmbeddedImplicitGroups,
   getColumnGroupId,
   hasColumnGroups,
+  mergeAdjacentSameIdGroups,
   resolveColumnGroupDefs,
   slugifyHeader,
 } from './grouping-columns';
@@ -86,6 +87,90 @@ describe('computeColumnGroups', () => {
     expect(groups[0].firstIndex).toBe(0);
     expect(groups[1].firstIndex).toBe(2);
   });
+
+  it('creates fragments when same group id columns are non-contiguous', () => {
+    const cols = [
+      { field: 'a', header: 'A', group: 'G1' },
+      { field: 'b', header: 'B', group: 'G2' },
+      { field: 'c', header: 'C', group: 'G1' },
+    ];
+    const groups = computeColumnGroups(cols);
+
+    // G1_frag1 (a), G2 (b), G1_frag2 (c)
+    expect(groups.length).toBe(3);
+    expect(groups[0].id).toBe('G1');
+    expect(groups[0].columns.length).toBe(1);
+    expect(groups[0].columns[0].field).toBe('a');
+    expect(groups[1].id).toBe('G2');
+    expect(groups[2].id).toBe('G1');
+    expect(groups[2].columns.length).toBe(1);
+    expect(groups[2].columns[0].field).toBe('c');
+  });
+
+  it('creates multiple alternating fragments', () => {
+    const cols = [
+      { field: 'a', header: 'A', group: { id: 'emp', label: 'Employee' } },
+      { field: 'b', header: 'B', group: { id: 'org', label: 'Organization' } },
+      { field: 'c', header: 'C', group: { id: 'emp', label: 'Employee' } },
+      { field: 'd', header: 'D', group: { id: 'org', label: 'Organization' } },
+    ];
+    const groups = computeColumnGroups(cols);
+
+    expect(groups.length).toBe(4);
+    expect(groups[0].id).toBe('emp');
+    expect(groups[0].label).toBe('Employee');
+    expect(groups[1].id).toBe('org');
+    expect(groups[1].label).toBe('Organization');
+    expect(groups[2].id).toBe('emp');
+    expect(groups[2].label).toBe('Employee');
+    expect(groups[3].id).toBe('org');
+    expect(groups[3].label).toBe('Organization');
+  });
+
+  it('preserves label across fragments using first-seen label', () => {
+    const cols = [
+      { field: 'a', header: 'A', group: { id: 'G1', label: 'My Group' } },
+      { field: 'b', header: 'B', group: 'G2' },
+      { field: 'c', header: 'C', group: 'G1' }, // string shorthand, no label
+    ];
+    const groups = computeColumnGroups(cols);
+
+    expect(groups[0].label).toBe('My Group');
+    expect(groups[2].label).toBe('My Group'); // Should inherit label from first fragment
+  });
+
+  it('keeps contiguous same-group columns in one entry', () => {
+    const cols = [
+      { field: 'a', header: 'A', group: 'G1' },
+      { field: 'b', header: 'B', group: 'G1' },
+      { field: 'c', header: 'C', group: 'G2' },
+      { field: 'd', header: 'D', group: 'G2' },
+    ];
+    const groups = computeColumnGroups(cols);
+
+    expect(groups.length).toBe(2);
+    expect(groups[0].id).toBe('G1');
+    expect(groups[0].columns.length).toBe(2);
+    expect(groups[1].id).toBe('G2');
+    expect(groups[1].columns.length).toBe(2);
+  });
+
+  it('creates fragment with implicit group in between', () => {
+    const cols = [
+      { field: 'a', header: 'A', group: 'G1' },
+      { field: 'b', header: 'B' },
+      { field: 'c', header: 'C', group: 'G2' },
+      { field: 'd', header: 'D', group: 'G1' },
+    ];
+    const groups = computeColumnGroups(cols);
+
+    // G1_frag1 (a), implicit (b), G2 (c), G1_frag2 (d)
+    expect(groups.length).toBe(4);
+    expect(groups[0].id).toBe('G1');
+    expect(groups[1].id).toContain('__implicit__');
+    expect(groups[2].id).toBe('G2');
+    expect(groups[3].id).toBe('G1');
+  });
 });
 
 describe('buildGroupHeaderRow', () => {
@@ -153,19 +238,20 @@ describe('buildGroupHeaderRow', () => {
     const columns = [ticker, checkbox, company, sector, price];
     const groups = computeColumnGroups(columns);
 
-    // computeColumnGroups creates: G1 (ticker, company, sector), __implicit__1 (checkbox), G2 (price)
-    expect(groups.length).toBe(3);
+    // computeColumnGroups creates fragments: G1_frag1 (ticker), __implicit__1 (checkbox), G1_frag2 (company, sector), G2 (price)
+    expect(groups.length).toBe(4);
     expect(groups[0].id).toBe('G1');
     expect(groups[1].id).toBe('__implicit__1');
-    expect(groups[2].id).toBe('G2');
+    expect(groups[2].id).toBe('G1');
+    expect(groups[3].id).toBe('G2');
 
     const row = buildGroupHeaderRow(groups, columns);
     expect(row).not.toBe(null);
 
-    // Embedded implicit group should be skipped
+    // Embedded implicit group is absorbed; G1 fragments are merged → 2 cells
     expect(row!.children.length).toBe(2);
 
-    // G1 should span from ticker (0) to sector (3) = 4 columns
+    // Merged G1 should span from ticker (0) to sector (3) = 4 columns
     expect((row!.children[0] as HTMLElement).style.gridColumn).toBe('1 / span 4');
     expect(row!.children[0].textContent).toBe('Security');
 
@@ -200,7 +286,7 @@ describe('findEmbeddedImplicitGroups', () => {
       { field: 'c', header: 'C', group: 'G2' },
     ];
     const groups = computeColumnGroups(cols);
-    const embedded = findEmbeddedImplicitGroups(groups, cols);
+    const embedded = findEmbeddedImplicitGroups(groups);
     expect(embedded.size).toBe(0);
   });
 
@@ -212,13 +298,79 @@ describe('findEmbeddedImplicitGroups', () => {
     const columns = [ticker, checkbox, company];
     const groups = computeColumnGroups(columns);
 
-    const embedded = findEmbeddedImplicitGroups(groups, columns);
+    const embedded = findEmbeddedImplicitGroups(groups);
     expect(embedded.size).toBe(1);
     expect(embedded.has('__implicit__1')).toBe(true);
   });
 
   it('returns empty set when no groups exist', () => {
-    expect(findEmbeddedImplicitGroups([], []).size).toBe(0);
+    expect(findEmbeddedImplicitGroups([]).size).toBe(0);
+  });
+
+  it('does not embed implicit groups between different explicit groups', () => {
+    // emp_frag1, implicit(checkbox), org — checkbox is NOT between two same-ID groups
+    const cols = [
+      { field: 'a', header: 'A', group: 'emp' },
+      { field: 'b', header: 'B' }, // ungrouped
+      { field: 'c', header: 'C', group: 'org' },
+    ];
+    const groups = computeColumnGroups(cols);
+    const embedded = findEmbeddedImplicitGroups(groups);
+    expect(embedded.size).toBe(0);
+  });
+});
+
+describe('mergeAdjacentSameIdGroups', () => {
+  it('merges same-ID fragments separated by embedded implicit groups', () => {
+    const cols = [
+      { field: 'a', header: 'A', group: 'G1' },
+      { field: 'b', header: 'B' }, // utility column
+      { field: 'c', header: 'C', group: 'G1' },
+      { field: 'd', header: 'D', group: 'G2' },
+    ];
+    const groups = computeColumnGroups(cols);
+    const embedded = findEmbeddedImplicitGroups(groups);
+    const merged = mergeAdjacentSameIdGroups(groups, embedded);
+
+    expect(merged.length).toBe(2);
+    expect(merged[0].id).toBe('G1');
+    expect(merged[0].columns.length).toBe(2); // a and c merged
+    expect(merged[0].columns[0].field).toBe('a');
+    expect(merged[0].columns[1].field).toBe('c');
+    expect(merged[1].id).toBe('G2');
+  });
+
+  it('does not merge fragments separated by a different explicit group', () => {
+    const cols = [
+      { field: 'a', header: 'A', group: 'G1' },
+      { field: 'b', header: 'B', group: 'G2' },
+      { field: 'c', header: 'C', group: 'G1' },
+    ];
+    const groups = computeColumnGroups(cols);
+    const embedded = findEmbeddedImplicitGroups(groups);
+    const merged = mergeAdjacentSameIdGroups(groups, embedded);
+
+    // No merging — G2 separates the two G1 fragments
+    expect(merged.length).toBe(3);
+    expect(merged[0].id).toBe('G1');
+    expect(merged[1].id).toBe('G2');
+    expect(merged[2].id).toBe('G1');
+  });
+
+  it('returns original groups when no embedded implicits', () => {
+    const cols = [
+      { field: 'a', header: 'A', group: 'G1' },
+      { field: 'b', header: 'B', group: 'G1' },
+      { field: 'c', header: 'C', group: 'G2' },
+    ];
+    const groups = computeColumnGroups(cols);
+    const embedded = findEmbeddedImplicitGroups(groups);
+    const merged = mergeAdjacentSameIdGroups(groups, embedded);
+
+    expect(merged.length).toBe(2);
+    expect(merged[0].id).toBe('G1');
+    expect(merged[0].columns.length).toBe(2);
+    expect(merged[1].id).toBe('G2');
   });
 });
 

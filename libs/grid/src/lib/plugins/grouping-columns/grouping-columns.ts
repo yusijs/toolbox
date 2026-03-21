@@ -57,8 +57,9 @@ export function resolveColumnGroupDefs(defs: ColumnGroupDefinition[]): (ColumnGr
 export function computeColumnGroups<T>(columns: ColumnConfig<T>[]): ColumnGroup<T>[] {
   if (!columns.length) return [];
 
-  const explicitMap = new Map<string, ColumnGroupInternal<T>>();
   const groupsOrdered: ColumnGroupInternal<T>[] = [];
+  /** Track first-seen label for each explicit group id so fragments share the label. */
+  const labelMap = new Map<string, string | undefined>();
 
   // Helper to push unnamed implicit group for a run of ungrouped columns
   const pushImplicit = (startIdx: number, cols: ColumnConfig<T>[]) => {
@@ -94,18 +95,27 @@ export function computeColumnGroups<T>(columns: ColumnConfig<T>[]): ColumnGroup<
       run = [];
     }
     const id = typeof g === 'string' ? g : g.id;
-    let group = explicitMap.get(id);
-    if (!group) {
-      group = {
-        id,
-        label: typeof g === 'string' ? undefined : g.label,
-        columns: [],
-        firstIndex: idx,
-      };
-      explicitMap.set(id, group);
-      groupsOrdered.push(group);
+    const rawLabel = typeof g === 'string' ? undefined : g.label;
+
+    // Track labels: first column to define a label for this group id wins
+    if (rawLabel && !labelMap.has(id)) {
+      labelMap.set(id, rawLabel);
     }
-    group.columns.push(col);
+    const label = labelMap.get(id) ?? rawLabel;
+
+    // Extend the last group if it has the same id (contiguous run)
+    const last = groupsOrdered[groupsOrdered.length - 1];
+    if (last && !last.implicit && last.id === id) {
+      last.columns.push(col);
+    } else {
+      // New group or new fragment (same id but non-contiguous)
+      groupsOrdered.push({
+        id,
+        label,
+        columns: [col],
+        firstIndex: idx,
+      });
+    }
   });
 
   // Trailing implicit run
@@ -133,15 +143,30 @@ export function applyGroupedHeaderCellClasses(
 ): void {
   if (!groups.length || !headerRowEl) return;
 
-  const embedded = findEmbeddedImplicitGroups(groups, columns);
+  const embedded = findEmbeddedImplicitGroups(groups);
+  const mergedGroups = mergeAdjacentSameIdGroups(groups, embedded);
 
   const fieldToGroup = new Map<string, string>();
-  for (const g of groups) {
-    // Skip embedded implicit groups — their columns inherit the enclosing explicit group
-    if (String(g.id).startsWith('__implicit__') && embedded.has(String(g.id))) continue;
+  for (const g of mergedGroups) {
+    if (String(g.id).startsWith('__implicit__')) continue;
     for (const c of g.columns) {
       if (c.field) {
         fieldToGroup.set(c.field, g.id);
+      }
+    }
+  }
+
+  // Also map embedded implicit columns to their enclosing explicit group
+  for (let i = 0; i < groups.length; i++) {
+    const g = groups[i];
+    if (!String(g.id).startsWith('__implicit__') || !embedded.has(String(g.id))) continue;
+    // Find nearest explicit group before this implicit — that's the enclosing group
+    for (let b = i - 1; b >= 0; b--) {
+      if (!String(groups[b].id).startsWith('__implicit__')) {
+        for (const c of g.columns) {
+          if (c.field) fieldToGroup.set(c.field, groups[b].id);
+        }
+        break;
       }
     }
   }
@@ -158,9 +183,9 @@ export function applyGroupedHeaderCellClasses(
     }
   });
 
-  // Mark group end cells for styling (skip embedded implicit groups)
-  for (const g of groups) {
-    if (String(g.id).startsWith('__implicit__') && embedded.has(String(g.id))) continue;
+  // Mark group end cells for styling using merged groups (including implicit groups).
+  // CSS :last-child rules suppress the border on the very last cell, so we mark all groups.
+  for (const g of mergedGroups) {
     const last = g.columns[g.columns.length - 1];
     const cell = headerCells.find((c) => c.getAttribute('data-field') === last.field);
     if (cell) cell.classList.add('group-end');
@@ -180,34 +205,71 @@ function computeGroupGridRange(group: ColumnGroup, columns: ColumnConfig[]): [nu
 }
 
 /**
- * Find implicit groups whose column range falls entirely within an explicit
- * group's range (e.g. a utility column inserted between members of the same group).
+ * Find implicit groups that are sandwiched between two fragments of the same
+ * explicit group (e.g. a utility column inserted between members of the same group).
  *
  * @returns Set of implicit group IDs that are visually embedded.
  */
-export function findEmbeddedImplicitGroups(groups: ColumnGroup[], columns: ColumnConfig[]): Set<string> {
+export function findEmbeddedImplicitGroups(groups: ColumnGroup[]): Set<string> {
   const embedded = new Set<string>();
 
-  // Collect ranges for explicit groups
-  const explicitRanges: [number, number][] = [];
-  for (const g of groups) {
-    if (String(g.id).startsWith('__implicit__')) continue;
-    const range = computeGroupGridRange(g, columns);
-    if (range) explicitRanges.push(range);
-  }
+  for (let i = 0; i < groups.length; i++) {
+    if (!String(groups[i].id).startsWith('__implicit__')) continue;
 
-  // Check each implicit group
-  for (const g of groups) {
-    if (!String(g.id).startsWith('__implicit__')) continue;
-    const range = computeGroupGridRange(g, columns);
-    if (!range) continue;
-    const [iStart, iEnd] = range;
-    if (explicitRanges.some(([eStart, eEnd]) => iStart >= eStart && iEnd <= eEnd)) {
-      embedded.add(String(g.id));
+    // Find nearest explicit group before this implicit group
+    let beforeId: string | null = null;
+    for (let b = i - 1; b >= 0; b--) {
+      if (!String(groups[b].id).startsWith('__implicit__')) {
+        beforeId = groups[b].id;
+        break;
+      }
+    }
+
+    // Find nearest explicit group after this implicit group
+    let afterId: string | null = null;
+    for (let a = i + 1; a < groups.length; a++) {
+      if (!String(groups[a].id).startsWith('__implicit__')) {
+        afterId = groups[a].id;
+        break;
+      }
+    }
+
+    // Embedded if sandwiched between two fragments of the same group
+    if (beforeId && afterId && beforeId === afterId) {
+      embedded.add(String(groups[i].id));
     }
   }
 
   return embedded;
+}
+
+/**
+ * Merge adjacent same-ID group fragments after removing embedded implicit groups.
+ * This produces the final group list for header rendering, where utility columns
+ * (checkbox, expander) are absorbed into the surrounding group's span.
+ *
+ * @param groups - The computed column groups (potentially fragmented)
+ * @param embedded - Set of embedded implicit group IDs to skip
+ * @returns Merged group list where same-ID fragments separated by embedded implicits are combined
+ */
+export function mergeAdjacentSameIdGroups<T>(groups: ColumnGroup<T>[], embedded: Set<string>): ColumnGroup<T>[] {
+  const result: ColumnGroup<T>[] = [];
+  for (const g of groups) {
+    // Skip embedded implicit groups — they get absorbed into the surrounding fragment
+    if (String(g.id).startsWith('__implicit__') && embedded.has(String(g.id))) continue;
+
+    const prev = result[result.length - 1];
+    if (prev && !String(g.id).startsWith('__implicit__') && prev.id === g.id) {
+      // Merge with previous same-ID group
+      result[result.length - 1] = {
+        ...prev,
+        columns: [...prev.columns, ...g.columns],
+      };
+    } else {
+      result.push({ ...g, columns: [...g.columns] });
+    }
+  }
+  return result;
 }
 
 /**
@@ -228,14 +290,12 @@ export function buildGroupHeaderRow(
   groupRow.className = 'header-group-row';
   groupRow.setAttribute('role', 'row');
 
-  const embedded = findEmbeddedImplicitGroups(groups, columns);
+  const embedded = findEmbeddedImplicitGroups(groups);
+  const mergedGroups = mergeAdjacentSameIdGroups(groups, embedded);
 
-  for (const g of groups) {
+  for (const g of mergedGroups) {
     const gid = String(g.id);
     const isImplicit = gid.startsWith('__implicit__');
-
-    // Skip implicit groups that are visually embedded within an explicit group
-    if (isImplicit && embedded.has(gid)) continue;
 
     // Compute actual range from first to last member in the final columns array.
     // This correctly spans over any interleaved utility columns (e.g. checkbox).

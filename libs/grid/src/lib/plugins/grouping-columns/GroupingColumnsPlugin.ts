@@ -17,6 +17,7 @@ import {
   computeColumnGroups,
   findEmbeddedImplicitGroups,
   hasColumnGroups,
+  mergeAdjacentSameIdGroups,
   resolveColumnGroupDefs,
 } from './grouping-columns';
 import styles from './grouping-columns.css?inline';
@@ -183,10 +184,19 @@ export class GroupingColumnsPlugin extends BaseGridPlugin<GroupingColumnsConfig>
     const { field, columnOrder } = event.detail;
 
     if (this.config.lockGroupOrder) {
-      // Check ALL explicit groups — moving any column (grouped or not) could break contiguity
+      // Aggregate all columns per group ID (across fragments) for full contiguity check
+      const fullGroups = new Map<string, ColumnConfig[]>();
       for (const group of this.groups) {
         if (group.id.startsWith('__implicit__')) continue;
-        if (!this.#isGroupContiguous(group, columnOrder)) {
+        const existing = fullGroups.get(group.id);
+        if (existing) {
+          existing.push(...group.columns);
+        } else {
+          fullGroups.set(group.id, [...group.columns]);
+        }
+      }
+      for (const [, columns] of fullGroups) {
+        if (!this.#isGroupContiguous(columns, columnOrder)) {
           event.preventDefault();
           this.#flashHeaderCell(field);
           return;
@@ -204,55 +214,36 @@ export class GroupingColumnsPlugin extends BaseGridPlugin<GroupingColumnsConfig>
 
   /**
    * Recompute which fields are group-end based on a column order.
-   * The last field of each explicit group in the order gets the group-end class.
+   * Marks every boundary where adjacent columns belong to different groups,
+   * which naturally handles fragmented groups (same group ID split across
+   * non-contiguous positions).
    */
   #recomputeGroupEndFields(columnOrder: string[]): void {
     this.#groupEndFields.clear();
-    // Find the last field of each group (including implicit groups between explicit ones).
-    // Skip the very last group overall — no adjacent group follows it, so no separator needed.
-    const lastGroupEndField = this.#findLastGroupEndField(columnOrder);
+
+    // Build field → group ID map from all groups
+    const fieldToGroup = new Map<string, string>();
     for (const group of this.groups) {
-      const groupFields = new Set(group.columns.map((c) => c.field));
-      // Walk the column order in reverse to find the last member of this group
-      for (let i = columnOrder.length - 1; i >= 0; i--) {
-        if (groupFields.has(columnOrder[i])) {
-          const field = columnOrder[i];
-          // Don't mark the last group's trailing field — nothing follows it
-          if (field !== lastGroupEndField) {
-            this.#groupEndFields.add(field);
-          }
-          break;
-        }
+      for (const col of group.columns) {
+        fieldToGroup.set(col.field, group.id);
+      }
+    }
+
+    // Mark every position where the group changes (skip the very last column)
+    for (let i = 0; i < columnOrder.length - 1; i++) {
+      const currentGroup = fieldToGroup.get(columnOrder[i]);
+      const nextGroup = fieldToGroup.get(columnOrder[i + 1]);
+      if (currentGroup !== nextGroup) {
+        this.#groupEndFields.add(columnOrder[i]);
       }
     }
   }
 
   /**
-   * Find the trailing field of the last group in column order (to exclude from group-end marking).
+   * Check if all columns are contiguous in the proposed column order.
    */
-  #findLastGroupEndField(columnOrder: string[]): string | null {
-    if (this.groups.length === 0) return null;
-    // Determine which group contains the last field in column order
-    for (let i = columnOrder.length - 1; i >= 0; i--) {
-      const field = columnOrder[i];
-      for (const group of this.groups) {
-        if (group.columns.some((c) => c.field === field)) {
-          // This group is the last in display order — find its last field
-          const groupFields = new Set(group.columns.map((c) => c.field));
-          for (let j = columnOrder.length - 1; j >= 0; j--) {
-            if (groupFields.has(columnOrder[j])) return columnOrder[j];
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Check if all columns in a group are contiguous in the proposed column order.
-   */
-  #isGroupContiguous(group: ColumnGroup, columnOrder: string[]): boolean {
-    const indices = group.columns
+  #isGroupContiguous(columns: ColumnConfig[], columnOrder: string[]): boolean {
+    const indices = columns
       .map((c) => columnOrder.indexOf(c.field))
       .filter((i) => i !== -1)
       .sort((a, b) => a - b);
@@ -303,15 +294,25 @@ export class GroupingColumnsPlugin extends BaseGridPlugin<GroupingColumnsConfig>
           fields: [...g.children],
         }));
     } else if (this.isActive && this.groups.length > 0) {
-      // 2. If active groups exist from processColumns, use them
-      result = this.groups
-        .filter((g) => !g.id.startsWith('__implicit__'))
-        .map<ColumnGroupInfo>((g) => ({
-          id: g.id,
-          label: g.label ?? g.id,
-          fields: g.columns.map((c) => c.field),
-        }));
-
+      // 2. If active groups exist from processColumns, use them.
+      // Aggregate fragments (same group id at non-contiguous positions) into one entry.
+      const groupMap = new Map<string, ColumnGroupInfo>();
+      for (const g of this.groups) {
+        if (g.id.startsWith('__implicit__')) continue;
+        const existing = groupMap.get(g.id);
+        if (existing) {
+          for (const c of g.columns) {
+            if (!existing.fields.includes(c.field)) existing.fields.push(c.field);
+          }
+        } else {
+          groupMap.set(g.id, {
+            id: g.id,
+            label: g.label ?? g.id,
+            fields: g.columns.map((c) => c.field),
+          });
+        }
+      }
+      result = Array.from(groupMap.values());
       // Also check hidden columns for inline group properties not in active groups
       const allCols = this.columns as ColumnConfig[];
       for (const col of allCols) {
@@ -513,14 +514,13 @@ export class GroupingColumnsPlugin extends BaseGridPlugin<GroupingColumnsConfig>
 
     // Keep #groupEndFields in sync for afterCellRender (covers scheduler-driven renders)
     this.#groupEndFields.clear();
-    const embedded = findEmbeddedImplicitGroups(groups, finalColumns);
-    for (let gi = 0; gi < groups.length; gi++) {
-      const g = groups[gi];
-      // Skip embedded implicit groups (e.g. checkbox column within a pinned group)
-      if (String(g.id).startsWith('__implicit__') && embedded.has(String(g.id))) continue;
+    const embedded = findEmbeddedImplicitGroups(groups);
+    const mergedGroups = mergeAdjacentSameIdGroups(groups, embedded);
+    for (let gi = 0; gi < mergedGroups.length; gi++) {
+      const g = mergedGroups[gi];
       const lastCol = g.columns[g.columns.length - 1];
       // Don't mark the last group — no adjacent group follows it
-      if (lastCol?.field && gi < groups.length - 1) {
+      if (lastCol?.field && gi < mergedGroups.length - 1) {
         this.#groupEndFields.add(lastCol.field);
       }
     }
@@ -579,13 +579,12 @@ export class GroupingColumnsPlugin extends BaseGridPlugin<GroupingColumnsConfig>
   }
 
   /**
-   * Get columns in a specific group.
+   * Get columns in a specific group (aggregated across all fragments).
    * @param groupId - The group ID to find
    * @returns Array of columns in the group
    */
   getGroupColumns(groupId: string): ColumnConfig[] {
-    const group = this.groups.find((g) => g.id === groupId);
-    return group ? group.columns : [];
+    return this.groups.filter((g) => g.id === groupId).flatMap((g) => g.columns);
   }
 
   /**

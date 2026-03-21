@@ -1190,6 +1190,10 @@ new GroupingColumnsPlugin({
   showGroupBorders?: boolean,        // Show borders between groups (default: true)
   lockGroupOrder?: boolean,          // Prevent reorder across groups (default: false)
 })
+// Fragmented groups: When lockGroupOrder is false (default), columns can be
+// freely reordered across groups. Groups fragment visually — each contiguous
+// run of same-group columns gets its own header cell. Fragments merge back
+// automatically when columns are brought together again.
 // Column config augmentation:
 //   group?: { id: string; label?: string } | string
 // GridConfig augmentation:

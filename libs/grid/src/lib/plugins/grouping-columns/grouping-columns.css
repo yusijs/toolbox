@@ -14,6 +14,10 @@
     font-size: var(--tbw-font-size-sm, 0.9em);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
     border-right: 2px solid
       var(--tbw-grouping-columns-separator, var(--tbw-color-border-strong, var(--tbw-color-border)));
   }

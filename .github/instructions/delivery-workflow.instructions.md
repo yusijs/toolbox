@@ -6,15 +6,17 @@ applyTo: '{libs,apps,demos}/**'
 
 ## Delivery Checklist
 
+**This checklist applies to every change — no matter how small.** A one-line bug fix, a CSS tweak, and a multi-file feature all follow the same process. There are no exemptions based on request size, perceived simplicity, or urgency.
+
 Every feature, fix, or refactor must complete **all five steps** before it is considered done:
 
 1. **Implement the code** — Write the feature or fix following the project's architecture and conventions
-2. **Write/update tests** — Add unit tests (co-located) and integration tests as needed; ensure all existing tests still pass
+2. **Write/update tests** — If the change **can** be tested, it **must** be tested. Add unit tests (co-located) and integration tests as needed; ensure all existing tests still pass. The only valid reason to skip tests is when the change is purely non-functional (e.g., comment-only, formatting, or documentation-only changes)
 3. **Verify the build** — Run `bun nx build grid` (check bundle budget), `bun nx test grid`, and `bun nx lint grid`; fix any failures
-4. **Update documentation** — Use the `docs-update` skill for the full checklist (MDX pages, READMEs, llms.txt, llms-full.txt, copilot-instructions, TypeDoc regeneration)
+4. **Update documentation** — If the change affects behavior, API surface, CSS variables, defaults, or user-visible functionality, documentation **must** be updated. Use the `docs-update` skill for the full checklist (MDX pages, READMEs, llms.txt, llms-full.txt, copilot-instructions, TypeDoc regeneration). The only valid reason to skip docs is when the change has zero user-visible impact (e.g., internal refactor with no behavior change)
 5. **Retrospective** — Use the `retrospective` skill to capture lessons learned and improve instructions/skills
 
-Do **not** consider work complete until all five steps are finished. Skipping documentation or retrospective is not acceptable.
+Do **not** consider work complete until all five steps are finished. Skipping steps is not acceptable. When in doubt about whether tests or docs are needed, **default to including them**.
 
 ## Commit Hygiene
 
