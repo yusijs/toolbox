@@ -777,12 +777,11 @@ function onCellCommit(detail: CellCommitDetail) {
   </TabItem>
   <TabItem label="Angular">
 ```typescript
-import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component } from '@angular/core';
 import { Grid } from '@toolbox-web/grid-angular';
 
 @Component({
   imports: [Grid],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <tbw-grid
       [rows]="employees"

@@ -12,7 +12,7 @@ This demo demonstrates the exact same functionality as the vanilla demo, but imp
 - ✅ **Pure Functions** - Editors and renderers as plain functions, not services
 - ✅ **TypeScript Types** - Full type safety with shared types from `../shared`
 - ✅ **Vite + Analog** - Fast development with Vite and @analogjs/vite-plugin-angular
-- ✅ **Web Component Integration** - Uses `CUSTOM_ELEMENTS_SCHEMA` for `<tbw-grid>`
+- ✅ **Web Component Integration** - Angular directives register `<tbw-grid>` automatically, no `CUSTOM_ELEMENTS_SCHEMA` needed
 
 ### Grid Features Demonstrated
 

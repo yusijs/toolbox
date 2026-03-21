@@ -353,12 +353,11 @@ import { TbwGrid, TbwGridColumn } from '@toolbox-web/grid-vue';
   </TabItem>
   <TabItem label="Angular">
 ```typescript
-import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component } from '@angular/core';
 import { Grid, TbwRenderer } from '@toolbox-web/grid-angular';
 
 @Component({
   imports: [Grid, TbwRenderer],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <tbw-grid [rows]="rows" style="height: 400px; display: block">
       <tbw-grid-column field="status" header="Status">
@@ -534,14 +533,13 @@ const typeDefaults = {
   </TabItem>
   <TabItem label="Angular">
 ```typescript
-import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component } from '@angular/core';
 import { Grid, provideGridTypeDefaults } from '@toolbox-web/grid-angular';
 import { CheckboxCellComponent } from './checkbox-cell.component';
 import { StatusBadgeComponent } from './status-badge.component';
 
 @Component({
   imports: [Grid],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   providers: [
     provideGridTypeDefaults({
       currency: {
@@ -1140,7 +1138,7 @@ const config: GridConfig = {
   </TabItem>
   <TabItem label="Angular">
 ```typescript
-import { Component, input, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { Grid } from '@toolbox-web/grid-angular';
 import type { GridConfig } from '@toolbox-web/grid-angular';
 
@@ -1160,7 +1158,6 @@ export class SpinnerComponent {
 
 @Component({
   imports: [Grid],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `<tbw-grid [rows]="rows" [gridConfig]="config" />`,
 })
 export class MyGridComponent {

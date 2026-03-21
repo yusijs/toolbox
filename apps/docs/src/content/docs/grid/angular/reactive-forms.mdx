@@ -20,7 +20,7 @@ You can bind a grid to a `FormArray` using the `[formArray]` directive. This ena
 Use a `FormArray` of `FormGroup`s for full validation support. This exposes cell-level `FormControl`s in the editor context:
 
 ```typescript
-import { Component, CUSTOM_ELEMENTS_SCHEMA, inject, input, output } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
 import {
   FormArray, FormBuilder, FormControl, FormGroup,
   ReactiveFormsModule, Validators, AbstractControl
@@ -66,7 +66,6 @@ export class ValidatedInputComponent {
     Grid, GridFormArray, TbwRenderer, TbwEditor,
     ReactiveFormsModule, ValidatedInputComponent
   ],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <form [formGroup]="form">
       <tbw-grid [formArray]="form.controls.employees" [gridConfig]="config" style="height: 400px; display: block;">
@@ -290,7 +289,7 @@ For large datasets, `GridFormArray` can be slow because it creates **all FormGro
 ### Basic Usage
 
 ```typescript
-import { Component, inject, signal, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Grid, GridLazyForm, TbwEditor } from '@toolbox-web/grid-angular';
 import '@toolbox-web/grid-angular/features/editing';
@@ -304,7 +303,6 @@ interface Employee {
 
 @Component({
   imports: [Grid, GridLazyForm, TbwEditor, ReactiveFormsModule],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <tbw-grid
       [rows]="employees()"
@@ -500,7 +498,6 @@ When `syncValidation` is enabled (the default) and the `EditingPlugin` is in `mo
 ```typescript
 @Component({
   imports: [Grid, GridFormArray, TbwEditor, ReactiveFormsModule],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <form [formGroup]="form">
       <tbw-grid

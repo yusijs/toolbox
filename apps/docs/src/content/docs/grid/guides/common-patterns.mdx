@@ -3,7 +3,7 @@ title: Common Patterns
 description: Practical recipes for combining grid features. Covers data browsing, editable grids, master-detail, grouping, export, and more.
 ---
 
-import { LinkCard, CardGrid, Tabs, TabItem } from '@astrojs/starlight/components';
+import { CardGrid, LinkCard, TabItem, Tabs } from '@astrojs/starlight/components';
 
 Real-world grids rarely use a single feature in isolation. This guide shows **tested combinations** that solve everyday requirements.
 
@@ -106,12 +106,11 @@ function onSelectionChange() {
 import '@toolbox-web/grid-angular/features/selection';
 import '@toolbox-web/grid-angular/features/filtering';
 import '@toolbox-web/grid-angular/features/multi-sort';
-import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component } from '@angular/core';
 import { Grid } from '@toolbox-web/grid-angular';
 
 @Component({
   imports: [Grid],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <tbw-grid
       [rows]="employees"
@@ -278,12 +277,11 @@ function onDirtyChange() {
 import '@toolbox-web/grid-angular/features/editing';
 import '@toolbox-web/grid-angular/features/undo-redo';
 import '@toolbox-web/grid-angular/features/selection';
-import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component } from '@angular/core';
 import { Grid } from '@toolbox-web/grid-angular';
 
 @Component({
   imports: [Grid],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <tbw-grid
       [rows]="employees"
@@ -426,12 +424,11 @@ const formatSalary = (ctx) => `$${ctx.value.toLocaleString()}`;
 ```typescript
 import '@toolbox-web/grid-angular/features/grouping-rows';
 import '@toolbox-web/grid-angular/features/selection';
-import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component } from '@angular/core';
 import { Grid } from '@toolbox-web/grid-angular';
 
 @Component({
   imports: [Grid],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <tbw-grid
       [rows]="rows"
@@ -547,12 +544,11 @@ function handleExport() {
 import '@toolbox-web/grid-angular/features/export';
 import '@toolbox-web/grid-angular/features/selection';
 import '@toolbox-web/grid-angular/features/filtering';
-import { Component, CUSTOM_ELEMENTS_SCHEMA, ViewChild, ElementRef } from '@angular/core';
+import { Component, ViewChild, ElementRef } from '@angular/core';
 import { Grid } from '@toolbox-web/grid-angular';
 
 @Component({
   imports: [Grid],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <button (click)="handleExport()">Export CSV</button>
     <tbw-grid #grid [rows]="employees" [columns]="columns" selection="row" filtering export />
@@ -676,12 +672,11 @@ import { TbwGrid, TbwGridColumn, TbwGridDetailPanel } from '@toolbox-web/grid-vu
   <TabItem label="Angular">
 ```typescript
 import '@toolbox-web/grid-angular/features/master-detail';
-import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component } from '@angular/core';
 import { Grid, GridDetailView } from '@toolbox-web/grid-angular';
 
 @Component({
   imports: [Grid, GridDetailView],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <tbw-grid [rows]="orders" [columns]="columns">
       <tbw-grid-detail>
@@ -799,12 +794,11 @@ import '@toolbox-web/grid-angular/features/pinned-columns';
 import '@toolbox-web/grid-angular/features/column-virtualization';
 import '@toolbox-web/grid-angular/features/multi-sort';
 import '@toolbox-web/grid-angular/features/filtering';
-import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component } from '@angular/core';
 import { Grid } from '@toolbox-web/grid-angular';
 
 @Component({
   imports: [Grid],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <tbw-grid
       [rows]="rows"
