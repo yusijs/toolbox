@@ -262,11 +262,12 @@ export function warnDiagnostic(code: DiagnosticCode, message: string, gridId?: s
 }
 
 /**
- * Log an info message with a diagnostic code and docs link.
- * Use for optional/soft dependency notifications.
+ * Log a debug message with a diagnostic code and docs link.
+ * Use for optional/soft dependency notifications — visible only when
+ * the browser DevTools "Verbose" log level is enabled.
  */
-export function infoDiagnostic(code: DiagnosticCode, message: string, gridId?: string, pluginName?: string): void {
-  console.info(formatDiagnostic(code, message, gridId, pluginName));
+export function debugDiagnostic(code: DiagnosticCode, message: string, gridId?: string, pluginName?: string): void {
+  console.debug(formatDiagnostic(code, message, gridId, pluginName));
 }
 
 /**

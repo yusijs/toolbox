@@ -457,7 +457,7 @@ describe('validatePluginDependencies', () => {
 
   describe('soft dependencies (optional)', () => {
     it('does not throw when VisibilityPlugin is used without ReorderPlugin', () => {
-      const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {
+      const consoleSpy = vi.spyOn(console, 'debug').mockImplementation(() => {
         /* intentionally empty - suppress console output */
       });
 
@@ -468,8 +468,8 @@ describe('validatePluginDependencies', () => {
       consoleSpy.mockRestore();
     });
 
-    it('logs info message for missing optional dependency', () => {
-      const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {
+    it('logs debug message for missing optional dependency', () => {
+      const consoleSpy = vi.spyOn(console, 'debug').mockImplementation(() => {
         /* intentionally empty - suppress console output */
       });
 
@@ -481,7 +481,7 @@ describe('validatePluginDependencies', () => {
     });
 
     it('does not log when optional dependency is present', () => {
-      const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {
+      const consoleSpy = vi.spyOn(console, 'debug').mockImplementation(() => {
         /* intentionally empty - suppress console output */
       });
 
@@ -771,6 +771,77 @@ describe('validatePluginIncompatibilities', () => {
     expect(() => validatePluginIncompatibilities([pluginA, pluginB])).not.toThrow();
     expect(warnSpy).not.toHaveBeenCalled();
     warnSpy.mockRestore();
+  });
+
+  describe('real plugin manifest incompatibilities', () => {
+    it('GroupingRowsPlugin declares tree, pivot, and serverSide as incompatible', async () => {
+      const { GroupingRowsPlugin } = await import('../../plugins/grouping-rows/GroupingRowsPlugin');
+      const names = GroupingRowsPlugin.manifest?.incompatibleWith?.map((i) => i.name) ?? [];
+      expect(names).toContain('tree');
+      expect(names).toContain('pivot');
+      expect(names).toContain('serverSide');
+    });
+
+    it('TreePlugin declares groupingRows, pivot, and serverSide as incompatible', async () => {
+      const { TreePlugin } = await import('../../plugins/tree/TreePlugin');
+      const names = TreePlugin.manifest?.incompatibleWith?.map((i) => i.name) ?? [];
+      expect(names).toContain('groupingRows');
+      expect(names).toContain('pivot');
+      expect(names).toContain('serverSide');
+    });
+
+    it('PivotPlugin declares groupingRows, tree, and serverSide as incompatible', async () => {
+      const { PivotPlugin } = await import('../../plugins/pivot/PivotPlugin');
+      const names = PivotPlugin.manifest?.incompatibleWith?.map((i) => i.name) ?? [];
+      expect(names).toContain('groupingRows');
+      expect(names).toContain('tree');
+      expect(names).toContain('serverSide');
+    });
+
+    it('ServerSidePlugin declares groupingRows, tree, and pivot as incompatible', async () => {
+      const { ServerSidePlugin } = await import('../../plugins/server-side/ServerSidePlugin');
+      const names = ServerSidePlugin.manifest?.incompatibleWith?.map((i) => i.name) ?? [];
+      expect(names).toContain('groupingRows');
+      expect(names).toContain('tree');
+      expect(names).toContain('pivot');
+    });
+
+    it('warns for groupingRows + tree combination', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {
+        /* noop */
+      });
+
+      const grouping = createMockPluginWithIncompatibilities('groupingRows', [
+        { name: 'tree', reason: 'row model conflict' },
+      ]);
+      const tree = createMockPluginWithIncompatibilities('tree', [
+        { name: 'groupingRows', reason: 'row model conflict' },
+      ]);
+
+      validatePluginIncompatibilities([grouping, tree]);
+
+      expect(warnSpy).toHaveBeenCalledOnce();
+      expect(warnSpy.mock.calls[0]?.[0]).toContain('incompatib');
+      warnSpy.mockRestore();
+    });
+
+    it('warns for serverSide + pivot combination', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {
+        /* noop */
+      });
+
+      const serverSide = createMockPluginWithIncompatibilities('serverSide', [
+        { name: 'pivot', reason: 'lazy-load blocks cannot be aggregated' },
+      ]);
+      const pivot = createMockPluginWithIncompatibilities('pivot', [
+        { name: 'serverSide', reason: 'requires full dataset' },
+      ]);
+
+      validatePluginIncompatibilities([serverSide, pivot]);
+
+      expect(warnSpy).toHaveBeenCalledOnce();
+      warnSpy.mockRestore();
+    });
   });
 });
 

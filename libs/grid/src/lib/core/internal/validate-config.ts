@@ -20,7 +20,7 @@ import {
   MISSING_PLUGIN,
   MISSING_PLUGIN_CONFIG,
   OPTIONAL_DEPENDENCY,
-  infoDiagnostic,
+  debugDiagnostic,
   throwDiagnostic,
   warnDiagnostic,
 } from './diagnostics';
@@ -368,7 +368,7 @@ export function validatePluginDependencies(
         );
       } else {
         // Soft dependency - log info message but continue
-        infoDiagnostic(
+        debugDiagnostic(
           OPTIONAL_DEPENDENCY,
           `${capitalize(pluginName)}Plugin: Optional "${requiredPlugin}" plugin not found. ` +
             `Some features may be unavailable.`,
