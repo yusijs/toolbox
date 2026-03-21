@@ -489,7 +489,28 @@ export class MasterDetailPlugin extends BaseGridPlugin<MasterDetailConfig> {
 
   /** @internal */
   override afterRender(): void {
+    this.#fixExpanderHeaderSpan();
     this.#syncDetailRows();
+  }
+
+  /**
+   * The expander header cell is hidden (display:none), so the next sibling
+   * header cell must span two CSS grid tracks (the expander's + its own)
+   * to keep the header aligned with data rows.  The column position is
+   * computed dynamically so that pinned columns can appear before the expander.
+   */
+  #fixExpanderHeaderSpan(): void {
+    const expanderHeader = this.gridElement?.querySelector(
+      '.header-row .cell[data-field="__tbw_expander"]',
+    ) as HTMLElement | null;
+    if (!expanderHeader) return;
+
+    const colIdx = parseInt(expanderHeader.getAttribute('data-col') || '0', 10);
+    const nextCell = expanderHeader.nextElementSibling as HTMLElement | null;
+    if (nextCell) {
+      // CSS grid columns are 1-based; span from the expander's track to the next cell's track.
+      nextCell.style.gridColumn = `${colIdx + 1} / ${colIdx + 3}`;
+    }
   }
 
   /**

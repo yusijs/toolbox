@@ -611,6 +611,79 @@ describe('tbw-grid integration: setPinPosition with column groups', () => {
     expect(emailHeader).toBeTruthy();
     expect(emailHeader.classList.contains('sticky-left')).toBe(true);
   });
+
+  it('fragments group headers when a member is pinned to the edge', async () => {
+    const pinnedPlugin = grid.getPluginByName('pinnedColumns');
+    // Pin dept (Work group) to the left edge
+    // Column order becomes: [dept, id, name, email, salary]
+    // Work group fragments: dept alone at left + salary alone at right
+    pinnedPlugin.setPinPosition('dept', 'left');
+
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    await new Promise((r) => setTimeout(r, 50));
+
+    const groupHeaders = grid.querySelectorAll('.header-group-cell');
+    expect(groupHeaders.length).toBeGreaterThan(0);
+
+    // Find all group header cells labelled "Work"
+    const workHeaders = Array.from(groupHeaders).filter((h: any) => h.textContent?.trim() === 'Work');
+    // Should have two fragments (dept at left edge, salary at right)
+    expect(workHeaders.length).toBe(2);
+  });
+
+  it('unpinning restores column to its original group position', async () => {
+    const pinnedPlugin = grid.getPluginByName('pinnedColumns');
+
+    // Pin dept left (fragments Work group)
+    pinnedPlugin.setPinPosition('dept', 'left');
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    await new Promise((r) => setTimeout(r, 50));
+
+    // Verify dept is at the left edge
+    const headerCells = Array.from(grid.querySelectorAll('.header-row .cell')) as HTMLElement[];
+    expect(headerCells[0].getAttribute('data-field')).toBe('dept');
+
+    // Unpin dept
+    pinnedPlugin.setPinPosition('dept', undefined);
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    await new Promise((r) => setTimeout(r, 50));
+
+    // Verify dept is back next to salary (both in Work group)
+    const restoredCells = Array.from(grid.querySelectorAll('.header-row .cell')) as HTMLElement[];
+    const fields = restoredCells.map((c) => c.getAttribute('data-field'));
+    const deptIdx = fields.indexOf('dept');
+    const salaryIdx = fields.indexOf('salary');
+    // dept and salary should be adjacent (both in Work group)
+    expect(Math.abs(deptIdx - salaryIdx)).toBe(1);
+
+    // Work group header should be back to non-fragmented state
+    const groupHeaders = grid.querySelectorAll('.header-group-cell');
+    const workHeaders = Array.from(groupHeaders).filter((h: any) => h.textContent?.trim() === 'Work');
+    expect(workHeaders.length).toBe(1);
+  });
+
+  it('pins columns from different groups simultaneously', async () => {
+    const pinnedPlugin = grid.getPluginByName('pinnedColumns');
+
+    // Pin email (Personal) left and salary (Work) right
+    pinnedPlugin.setPinPosition('email', 'left');
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    await new Promise((r) => setTimeout(r, 50));
+
+    pinnedPlugin.setPinPosition('salary', 'right');
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    await new Promise((r) => setTimeout(r, 50));
+
+    // Both should be pinned
+    const emailHeader = grid.querySelector('.header-row .cell[data-field="email"]');
+    const salaryHeader = grid.querySelector('.header-row .cell[data-field="salary"]');
+    expect(emailHeader.classList.contains('sticky-left')).toBe(true);
+    expect(salaryHeader.classList.contains('sticky-right')).toBe(true);
+
+    // Group headers should still render
+    const groupHeaders = grid.querySelectorAll('.header-group-cell');
+    expect(groupHeaders.length).toBeGreaterThan(0);
+  });
 });
 
 describe('tbw-grid integration: setPinPosition with ColumnVirtualizationPlugin', () => {

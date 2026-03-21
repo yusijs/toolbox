@@ -120,6 +120,10 @@ Two plugins that are known to conflict are both loaded. Development-only warning
 
 **Fix:** Remove one of the conflicting plugins. The warning message names both plugins and explains the conflict.
 
+:::note[PinnedColumnsPlugin + GroupingColumnsPlugin]
+As of the latest release, `PinnedColumnsPlugin` and `GroupingColumnsPlugin` **are compatible**. Pinning a grouped column temporarily moves it to the grid edge, causing the column group to fragment. Unpinning restores the column to its original position within the group. No action is needed.
+:::
+
 <div id="tbw023" />
 
 ### TBW023 — Deprecated Hook

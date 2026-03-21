@@ -111,14 +111,6 @@ export class PinnedColumnsPlugin extends BaseGridPlugin<PinnedColumnsConfig> {
         isUsed: (v) => v === 'left' || v === 'right' || v === 'start' || v === 'end',
       },
     ],
-    incompatibleWith: [
-      {
-        name: 'groupingColumns',
-        reason:
-          'Pinning reorders columns to the grid edges, but moving a column out of its column group ' +
-          'is not supported. The group header layout cannot accommodate members at different positions.',
-      },
-    ],
     queries: [
       {
         type: QUERY_CAN_MOVE_COLUMN,
@@ -242,12 +234,6 @@ export class PinnedColumnsPlugin extends BaseGridPlugin<PinnedColumnsConfig> {
 
         // Don't offer pin/unpin for locked-pinning columns
         if (column.meta?.lockPinning) return undefined;
-
-        // Don't offer pin/unpin when column grouping is active (incompatible)
-        const groupingPlugin = this.grid?.getPluginByName('groupingColumns') as
-          | { isGroupingActive(): boolean }
-          | undefined;
-        if (groupingPlugin?.isGroupingActive()) return undefined;
 
         const pinned = getColumnPinned(column);
         const isPinned = pinned != null;
