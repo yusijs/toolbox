@@ -1,4 +1,10 @@
 @layer tbw-plugins {
+  /* Enable container query units (cqi) so .tbw-pinned-rows can size itself
+   * to the scroll area's visible width even when the footer is wider. */
+  .tbw-scroll-area {
+    container-type: inline-size;
+  }
+
   .tbw-footer {
     /* Use normal flow (not sticky) so footer takes space in flex layout
      * rather than overlapping content. Parent .tbw-scroll-area is flex column,
@@ -6,6 +12,9 @@
     flex-shrink: 0;
     z-index: var(--tbw-z-layer-pinned-rows, 20);
     background: var(--tbw-color-panel-bg);
+    /* Span the full scrollable width so sticky children have room to slide
+     * within the scroll container. */
+    min-width: fit-content;
   }
 
   .tbw-pinned-rows {
@@ -19,7 +28,13 @@
     color: var(--tbw-pinned-rows-color, var(--tbw-color-fg-muted));
     min-height: 32px;
     box-sizing: border-box;
-    min-width: fit-content;
+    /* Sticky: lock the info bar to the left edge during horizontal scroll.
+     * Width uses container query units (100cqi = scroll area's visible width)
+     * so the bar matches the viewport, not the full scrollable width. */
+    position: sticky;
+    left: 0;
+    min-width: 0;
+    width: 100cqi;
   }
   .tbw-pinned-rows-left,
   .tbw-pinned-rows-center,
@@ -58,19 +73,37 @@
     font-size: var(--tbw-aggregation-font-size, 0.8em);
     font-weight: var(--tbw-aggregation-font-weight, 600);
     position: relative;
+    /* Inherit background from .tbw-aggregation-rows so children using
+     * background: inherit get an opaque color for z-order layering. */
+    background: inherit;
   }
-  /* Overlay label in per-column mode: sits at the left edge independent of column layout */
+  /* Sticky label in per-column mode: sticks to the left edge during horizontal
+   * scroll. Placed in grid-row 1 / column 1 so it overlaps the first cell.
+   * Value cells (:not(:empty)) have higher z-index to cover the label. */
   .tbw-aggregation-row > .tbw-aggregation-label {
-    position: absolute;
+    position: sticky;
     left: 0;
-    top: 0;
-    bottom: 0;
+    grid-row: 1;
+    grid-column: 1;
     display: flex;
     align-items: center;
     padding: var(--tbw-cell-padding, 0.125rem 0.5rem);
     background: inherit;
     z-index: 1;
     pointer-events: none;
+  }
+  /* Pin the first cell to column 1 so it shares the grid area with the sticky
+   * label. Without this, the label's explicit grid-column: 1 causes
+   * auto-placed cells to shift one column to the right. */
+  .tbw-aggregation-row > .tbw-aggregation-cell:first-child {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  /* Value cells paint above the sticky label to create the "push-out" effect */
+  .tbw-aggregation-cell:not(:empty) {
+    position: relative;
+    z-index: 2;
+    background: inherit;
   }
   .tbw-aggregation-cell {
     padding: var(--tbw-cell-padding, 0.125rem 0.5rem);
