@@ -503,50 +503,166 @@ export class TreePlugin extends BaseGridPlugin<TreeConfig> {
 
   // #region Public API
 
+  /**
+   * Expand a specific tree node, revealing its children.
+   *
+   * If the node is already expanded, this is a no-op.
+   * Does **not** emit a `tree-expand` event (use {@link toggle} for event emission).
+   *
+   * @param key - The unique key of the node to expand (from {@link FlattenedTreeRow.key})
+   *
+   * @example
+   * ```ts
+   * const tree = grid.getPluginByName('tree');
+   * tree.expand('documents');          // Expand a root node
+   * tree.expand('documents||reports');  // Expand a nested node
+   * ```
+   */
   expand(key: string): void {
     this.expandedKeys.add(key);
     this.requestRender();
   }
 
+  /**
+   * Collapse a specific tree node, hiding its children.
+   *
+   * If the node is already collapsed, this is a no-op.
+   * Does **not** emit a `tree-expand` event (use {@link toggle} for event emission).
+   *
+   * @param key - The unique key of the node to collapse (from {@link FlattenedTreeRow.key})
+   *
+   * @example
+   * ```ts
+   * const tree = grid.getPluginByName('tree');
+   * tree.collapse('documents');
+   * ```
+   */
   collapse(key: string): void {
     this.expandedKeys.delete(key);
     this.requestRender();
   }
 
+  /**
+   * Toggle the expanded state of a tree node.
+   *
+   * If the node is expanded it will be collapsed, and vice versa.
+   * Emits a `tree-state-change` plugin event with the updated expanded keys.
+   *
+   * @param key - The unique key of the node to toggle (from {@link FlattenedTreeRow.key})
+   *
+   * @example
+   * ```ts
+   * const tree = grid.getPluginByName('tree');
+   * tree.toggle('documents');  // Expand if collapsed, collapse if expanded
+   * ```
+   */
   toggle(key: string): void {
     this.expandedKeys = toggleExpand(this.expandedKeys, key);
     this.emitPluginEvent('tree-state-change', { expandedKeys: [...this.expandedKeys] });
     this.requestRender();
   }
 
+  /**
+   * Expand all tree nodes recursively.
+   *
+   * Every node with children will be expanded, revealing the full tree hierarchy.
+   * Emits a `tree-state-change` plugin event.
+   *
+   * @example
+   * ```ts
+   * const tree = grid.getPluginByName('tree');
+   * tree.expandAll();
+   * ```
+   */
   expandAll(): void {
     this.expandedKeys = expandAll(this.rows as TreeRow[], this.config);
     this.emitPluginEvent('tree-state-change', { expandedKeys: [...this.expandedKeys] });
     this.requestRender();
   }
 
+  /**
+   * Collapse all tree nodes.
+   *
+   * Every node will be collapsed, showing only root-level rows.
+   * Emits a `tree-state-change` plugin event.
+   *
+   * @example
+   * ```ts
+   * const tree = grid.getPluginByName('tree');
+   * tree.collapseAll();
+   * ```
+   */
   collapseAll(): void {
     this.expandedKeys = collapseAll();
     this.emitPluginEvent('tree-state-change', { expandedKeys: [...this.expandedKeys] });
     this.requestRender();
   }
 
+  /**
+   * Check whether a specific tree node is currently expanded.
+   *
+   * @param key - The unique key of the node to check
+   * @returns `true` if the node is expanded, `false` otherwise
+   */
   isExpanded(key: string): boolean {
     return this.expandedKeys.has(key);
   }
 
+  /**
+   * Get the keys of all currently expanded nodes.
+   *
+   * Returns a snapshot copy — mutating the returned array does not affect the tree state.
+   *
+   * @returns Array of expanded node keys
+   *
+   * @example
+   * ```ts
+   * const tree = grid.getPluginByName('tree');
+   * const keys = tree.getExpandedKeys();
+   * localStorage.setItem('treeState', JSON.stringify(keys));
+   * ```
+   */
   getExpandedKeys(): string[] {
     return [...this.expandedKeys];
   }
 
+  /**
+   * Get the flattened row model used for rendering.
+   *
+   * Returns a snapshot copy of the internal flattened tree rows, including
+   * hierarchy metadata (depth, hasChildren, isExpanded, parentKey).
+   *
+   * @returns Array of {@link FlattenedTreeRow} objects
+   */
   getFlattenedRows(): FlattenedTreeRow[] {
     return [...this.flattenedRows];
   }
 
+  /**
+   * Look up an original row data object by its tree key.
+   *
+   * @param key - The unique key of the node
+   * @returns The original row data, or `undefined` if not found
+   */
   getRowByKey(key: string): TreeRow | undefined {
     return this.rowKeyMap.get(key)?.data;
   }
 
+  /**
+   * Expand all ancestor nodes of the target key, revealing it in the tree.
+   *
+   * Useful for "scroll to node" or search-and-reveal scenarios where a deeply
+   * nested node needs to be made visible.
+   *
+   * @param key - The unique key of the node to reveal
+   *
+   * @example
+   * ```ts
+   * const tree = grid.getPluginByName('tree');
+   * // Reveal a deeply nested node by expanding all its parents
+   * tree.expandToKey('root||child||grandchild');
+   * ```
+   */
   expandToKey(key: string): void {
     this.expandedKeys = expandToKey(this.rows as TreeRow[], key, this.config, this.expandedKeys);
     this.requestRender();

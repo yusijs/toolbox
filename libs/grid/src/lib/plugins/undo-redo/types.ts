@@ -5,7 +5,19 @@
  * cell edits and provides undo/redo functionality.
  */
 
-/** Configuration for the undo/redo plugin */
+/**
+ * Configuration for the undo/redo plugin.
+ *
+ * Controls how many edit actions are retained in the history stack.
+ *
+ * @example
+ * ```ts
+ * const grid = document.querySelector('tbw-grid');
+ * grid.plugins = [
+ *   new UndoRedoPlugin({ maxHistorySize: 50 }),
+ * ];
+ * ```
+ */
 export interface UndoRedoConfig {
   /** Maximum number of actions to keep in history. Default: 100 */
   maxHistorySize?: number;
@@ -66,9 +78,9 @@ export interface UndoRedoDetail {
 declare module '../../core/types' {
   interface DataGridEventMap {
     /** Fired after an undo operation (Ctrl+Z). Provides the undone action. @group Undo/Redo Events */
-    'undo': UndoRedoDetail;
+    undo: UndoRedoDetail;
     /** Fired after a redo operation (Ctrl+Y). Provides the redone action. @group Undo/Redo Events */
-    'redo': UndoRedoDetail;
+    redo: UndoRedoDetail;
   }
 
   interface PluginNameMap {

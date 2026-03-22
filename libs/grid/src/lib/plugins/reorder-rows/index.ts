@@ -5,4 +5,4 @@
  * @module Plugins/Reorder Rows
  */
 export { ROW_DRAG_HANDLE_FIELD, RowReorderPlugin } from './RowReorderPlugin';
-export type { PendingMove, RowMoveDetail, RowReorderConfig } from './types';
+export type { RowMoveDetail, RowReorderConfig } from './types';

@@ -7,7 +7,26 @@
 import type { ExpandCollapseAnimation } from '../../core/types';
 export type { ExpandCollapseAnimation } from '../../core/types';
 
-/** Configuration options for the master-detail plugin */
+/**
+ * Configuration options for the master-detail plugin.
+ *
+ * @example
+ * ```ts
+ * const grid = document.querySelector('tbw-grid');
+ * grid.plugins = [
+ *   new MasterDetailPlugin({
+ *     detailRenderer: (row) => {
+ *       const el = document.createElement('div');
+ *       el.textContent = `Details for ${row.name}`;
+ *       return el;
+ *     },
+ *     detailHeight: 'auto',
+ *     expandOnRowClick: true,
+ *     animation: 'slide',
+ *   }),
+ * ];
+ * ```
+ */
 export interface MasterDetailConfig {
   /** Renderer function that returns detail content for a row */
   detailRenderer?: (row: Record<string, unknown>, rowIndex: number) => HTMLElement | string;

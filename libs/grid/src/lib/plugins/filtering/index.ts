@@ -4,7 +4,7 @@
  *
  * @module Plugins/Filtering
  */
-export { BLANK_FILTER_VALUE, getUniqueValuesBatch } from './filter-model';
+export { BLANK_FILTER_VALUE } from './filter-model';
 export { FilteringPlugin } from './FilteringPlugin';
 export type {
   FilterChangeDetail,

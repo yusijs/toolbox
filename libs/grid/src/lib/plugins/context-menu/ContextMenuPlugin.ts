@@ -615,9 +615,25 @@ export class ContextMenuPlugin extends BaseGridPlugin<ContextMenuConfig> {
 
   /**
    * Programmatically show the context menu at the specified position.
-   * @param x - X coordinate
-   * @param y - Y coordinate
-   * @param params - Partial context menu parameters
+   *
+   * Use this to open the menu from custom UI elements or keyboard shortcuts
+   * without requiring a native `contextmenu` event.
+   *
+   * @param x - Viewport X coordinate (pixels)
+   * @param y - Viewport Y coordinate (pixels)
+   * @param params - Partial context menu parameters — unspecified fields receive sensible defaults
+   *
+   * @example
+   * ```ts
+   * const menu = grid.getPluginByName('context-menu');
+   * // Open menu at a button's position with row context
+   * const rect = button.getBoundingClientRect();
+   * menu.showMenu(rect.left, rect.bottom, {
+   *   row: selectedRow,
+   *   rowIndex: 3,
+   *   column: columns[0],
+   * });
+   * ```
    */
   showMenu(x: number, y: number, params: Partial<ContextMenuParams>): void {
     const fullParams: ContextMenuParams = {
@@ -636,7 +652,9 @@ export class ContextMenuPlugin extends BaseGridPlugin<ContextMenuConfig> {
   }
 
   /**
-   * Hide the context menu.
+   * Hide the context menu if it is currently open.
+   *
+   * Safe to call even when the menu is already closed.
    */
   hideMenu(): void {
     if (this.menuElement) {
@@ -648,7 +666,8 @@ export class ContextMenuPlugin extends BaseGridPlugin<ContextMenuConfig> {
 
   /**
    * Check if the context menu is currently open.
-   * @returns Whether the menu is open
+   *
+   * @returns `true` when the menu is visible
    */
   isMenuOpen(): boolean {
     return this.isOpen;

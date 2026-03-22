@@ -488,24 +488,40 @@ export class PivotPlugin extends BaseGridPlugin<PivotConfig> {
     this.requestRender();
   }
 
+  /**
+   * Expand a specific pivot group row, revealing its children.
+   *
+   * @param key - The pivot row key (hierarchical path, e.g. `'Engineering'` or `'Engineering||Frontend'`)
+   */
   expand(key: string): void {
     this.userHasToggledExpand = true;
     this.expandedKeys.add(key);
     this.requestRender();
   }
 
+  /**
+   * Collapse a specific pivot group row, hiding its children.
+   *
+   * @param key - The pivot row key to collapse
+   */
   collapse(key: string): void {
     this.userHasToggledExpand = true;
     this.expandedKeys.delete(key);
     this.requestRender();
   }
 
+  /**
+   * Expand all pivot group rows, revealing the full hierarchy.
+   */
   expandAll(): void {
     this.userHasToggledExpand = true;
     this.expandAllKeys();
     this.requestRender();
   }
 
+  /**
+   * Collapse all pivot group rows, showing only top-level groups.
+   */
   collapseAll(): void {
     this.userHasToggledExpand = true;
     this.expandedKeys.clear();
@@ -523,6 +539,12 @@ export class PivotPlugin extends BaseGridPlugin<PivotConfig> {
     }
   }
 
+  /**
+   * Check whether a specific pivot group row is currently expanded.
+   *
+   * @param key - The pivot row key to check
+   * @returns `true` if the group is expanded
+   */
   isExpanded(key: string): boolean {
     return this.expandedKeys.has(key);
   }
@@ -531,6 +553,18 @@ export class PivotPlugin extends BaseGridPlugin<PivotConfig> {
 
   // #region Public API
 
+  /**
+   * Enable pivot mode.
+   *
+   * Captures the original column set (if not already captured) and activates
+   * the pivot transformation. The grid will re-render with pivot columns and rows.
+   *
+   * @example
+   * ```ts
+   * const pivot = grid.getPluginByName('pivot');
+   * pivot.enablePivot();
+   * ```
+   */
   enablePivot(): void {
     if (this.originalColumns.length === 0) {
       this.captureOriginalColumns();
@@ -539,35 +573,102 @@ export class PivotPlugin extends BaseGridPlugin<PivotConfig> {
     this.requestRender();
   }
 
+  /**
+   * Disable pivot mode and restore the original grid columns.
+   *
+   * The grid reverts to its normal tabular layout with the original column definitions.
+   */
   disablePivot(): void {
     this.isActive = false;
     this.pivotResult = null;
     this.requestRender();
   }
 
+  /**
+   * Check whether pivot mode is currently active.
+   *
+   * @returns `true` if the grid is in pivot mode
+   */
   isPivotActive(): boolean {
     return this.isActive;
   }
 
+  /**
+   * Get the current pivot computation result.
+   *
+   * Returns the full {@link PivotResult} with rows, column keys, totals,
+   * and grand total. Returns `null` if pivot is inactive or not yet computed.
+   *
+   * @returns The computed pivot result, or `null`
+   */
   getPivotResult(): PivotResult | null {
     return this.pivotResult;
   }
 
+  /**
+   * Set the fields used for row grouping (vertical axis).
+   *
+   * Triggers a re-render with the new pivot structure.
+   *
+   * @param fields - Array of field names to group rows by
+   *
+   * @example
+   * ```ts
+   * const pivot = grid.getPluginByName('pivot');
+   * pivot.setRowGroupFields(['region', 'department']);
+   * ```
+   */
   setRowGroupFields(fields: string[]): void {
     this.config.rowGroupFields = fields;
     this.requestRender();
   }
 
+  /**
+   * Set the fields whose unique values become column headers (horizontal axis).
+   *
+   * Triggers a re-render with the new pivot column structure.
+   *
+   * @param fields - Array of field names for column grouping
+   *
+   * @example
+   * ```ts
+   * const pivot = grid.getPluginByName('pivot');
+   * pivot.setColumnGroupFields(['quarter']);
+   * ```
+   */
   setColumnGroupFields(fields: string[]): void {
     this.config.columnGroupFields = fields;
     this.requestRender();
   }
 
+  /**
+   * Set the value fields and their aggregation functions.
+   *
+   * Each value field defines which data field to aggregate and how.
+   * Triggers a re-render with the new aggregation.
+   *
+   * @param fields - Array of {@link PivotValueField} definitions
+   *
+   * @example
+   * ```ts
+   * const pivot = grid.getPluginByName('pivot');
+   * pivot.setValueFields([
+   *   { field: 'revenue', aggFunc: 'sum', header: 'Total Revenue' },
+   *   { field: 'orders', aggFunc: 'count', header: '# Orders' },
+   * ]);
+   * ```
+   */
   setValueFields(fields: PivotValueField[]): void {
     this.config.valueFields = fields;
     this.requestRender();
   }
 
+  /**
+   * Force re-computation of the pivot result.
+   *
+   * Clears the cached pivot result and triggers a full re-render.
+   * Call this after changing the underlying row data.
+   */
   refresh(): void {
     this.pivotResult = null;
     this.requestRender();

@@ -10,7 +10,22 @@ export type { ExpandCollapseAnimation } from '../../core/types';
 /** Generic tree row with dynamic property access */
 export type TreeRow = Record<string, unknown>;
 
-/** Configuration options for the tree plugin */
+/**
+ * Configuration options for the tree plugin.
+ *
+ * @example
+ * ```ts
+ * const grid = document.querySelector('tbw-grid');
+ * grid.plugins = [
+ *   new TreePlugin({
+ *     childrenField: 'subItems',
+ *     defaultExpanded: true,
+ *     indentWidth: 24,
+ *     animation: 'slide',
+ *   }),
+ * ];
+ * ```
+ */
 export interface TreeConfig {
   /** Field name containing child rows (default: 'children') */
   childrenField?: string;
