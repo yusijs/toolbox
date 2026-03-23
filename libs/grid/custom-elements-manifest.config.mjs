@@ -1,5 +1,30 @@
 import { litPlugin } from '@custom-elements-manifest/analyzer/src/features/framework-plugins/lit/lit.js';
 
+/**
+ * Plugin to inject the tag name for DataGridElement.
+ * The analyzer can't resolve `customElements.define(DataGridElement.tagName, ...)`
+ * because the tag name is a static property reference, not a string literal.
+ */
+function injectTagNamePlugin() {
+  return {
+    name: 'inject-tag-name',
+    moduleLinkPhase({ moduleDoc }) {
+      moduleDoc.declarations?.forEach((declaration) => {
+        if (declaration.name === 'DataGridElement' && declaration.customElement) {
+          declaration.tagName = 'tbw-grid';
+        }
+      });
+
+      // Fix the custom-element-definition export to include the name
+      moduleDoc.exports?.forEach((exp) => {
+        if (exp.kind === 'custom-element-definition' && exp.declaration?.name === 'DataGridElement') {
+          exp.name = 'tbw-grid';
+        }
+      });
+    },
+  };
+}
+
 // Plugin to filter out private/internal members and set readme
 function filterPrivatePlugin() {
   return {
@@ -77,12 +102,13 @@ function sanitizeCircularRefsPlugin() {
 
 export default {
   globs: ['src/lib/core/grid.ts'],
-  exclude: ['**/*.spec.ts', '**/*.stories.ts', '**/internal/**'],
+  exclude: ['**/*.spec.ts', '**/*.stories.ts', '**/internal/**', '**/test/**'],
   outdir: '../../dist/libs/grid',
   litelement: false,
   plugins: [
     // Use lit plugin for better JSDoc parsing
     ...litPlugin(),
+    injectTagNamePlugin(),
     filterPrivatePlugin(),
     sanitizeCircularRefsPlugin(),
   ],

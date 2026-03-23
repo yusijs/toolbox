@@ -363,6 +363,9 @@ jobs:
       - name: Build grid library
         run: bun nx build grid
 
+      - name: Generate custom elements manifest
+        run: bun run cem
+
       - name: Publish @toolbox-web/grid to npm
         run: |
           cd dist/libs/grid
