@@ -4,6 +4,27 @@ applyTo: '{libs,apps,demos}/**'
 
 # Delivery Workflow
 
+## Issue Evaluation (Step 0)
+
+**Before implementing any GitHub issue or feature request**, critically evaluate whether the proposed API or change belongs in the library. Do not uncritically implement what an issue asks for — issues describe a _want_, not necessarily the right solution.
+
+**Ask these three questions:**
+
+1. **Does it require internal state** that consumers don't already have access to via existing public API?
+2. **Does it encapsulate non-trivial logic** that is genuinely error-prone to reimplement?
+3. **Does it serve the majority of consumers**, not just a niche use case?
+
+If the answer to all three is **no**, the method/feature likely belongs in consumer-level utility code, not in the library. Push back on the issue with a comment explaining why.
+
+**Common red flags for rejection:**
+
+- **Trivially derivable** — can be written in 1–3 lines using existing API methods
+- **Hardcoded locale strings** — library APIs must not embed English UI text (`'All'`, `'None'`, `'+N more'`); this is an i18n anti-pattern
+- **Hot-path cost for niche features** — adding work to `processRows()` or render paths for features most consumers won't use
+- **Redundant getters** — a method that returns `someOtherMethod() !== 'defaultValue'` doesn't warrant its own API entry
+
+**When evaluating, comment your findings** on the GitHub issue before starting implementation. If only part of an issue has library value, implement just that part and explain the exclusions.
+
 ## Delivery Checklist
 
 **This checklist applies to every change — no matter how small.** A one-line bug fix, a CSS tweak, and a multi-file feature all follow the same process. There are no exemptions based on request size, perceived simplicity, or urgency.

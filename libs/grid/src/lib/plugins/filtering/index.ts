@@ -8,7 +8,6 @@ export { BLANK_FILTER_VALUE } from './filter-model';
 export { FilteringPlugin } from './FilteringPlugin';
 export type {
   BlankMode,
-  DateDataRange,
   FilterChangeDetail,
   FilterConfig,
   FilterHandler,
@@ -17,8 +16,6 @@ export type {
   FilterPanelParams,
   FilterPanelRenderer,
   FilterParams,
-  FilterStaleDetail,
   FilterType,
   FilterValuesHandler,
-  NumericDataRange,
 } from './types';

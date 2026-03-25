@@ -128,8 +128,6 @@ declare module '../../core/types' {
   interface DataGridEventMap {
     /** Fired when filter criteria change. Respects `silent: true` batching — only the final non-silent call emits. @group Filtering Events */
     'filter-change': FilterChangeDetail;
-    /** Fired when set filters become stale after data changes (their values no longer match any rows). @group Filtering Events */
-    'filter-stale': FilterStaleDetail;
   }
 
   interface PluginNameMap {
@@ -914,12 +912,6 @@ export interface FilterChangeDetail {
   selected?: Record<string, unknown[]>;
 }
 
-/** Event detail emitted when set filters become stale after data changes */
-export interface FilterStaleDetail {
-  /** The stale filter models whose values no longer match any rows */
-  staleFilters: FilterModel[];
-}
-
 /**
  * Blank filter mode for a column.
  * - `'all'` — no blank filter applied, all rows shown
@@ -927,15 +919,3 @@ export interface FilterStaleDetail {
  * - `'nonBlanksOnly'` — only non-blank rows shown (`notBlank` operator)
  */
 export type BlankMode = 'all' | 'blanksOnly' | 'nonBlanksOnly';
-
-/** Result of getNumericDataRange — the min/max bounds of numeric values in a column */
-export interface NumericDataRange {
-  min: number;
-  max: number;
-}
-
-/** Result of getDateDataRange — the earliest/latest dates in a column */
-export interface DateDataRange {
-  from: Date;
-  to: Date;
-}

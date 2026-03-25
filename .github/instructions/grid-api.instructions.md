@@ -4,6 +4,23 @@ applyTo: 'libs/grid/**'
 
 # Grid API Guidelines
 
+## API Inclusion Criteria
+
+Before adding any new public method, type, or event to a plugin, evaluate it against these criteria. All three must be met:
+
+| Criterion                 | Question                                                             | Fail example                                                              |
+| ------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| **Internal state access** | Does the consumer need data they can't get from existing public API? | `isAllSelected()` — derivable from `getUniqueValues()` + `getFilters()`   |
+| **Non-trivial logic**     | Is the logic complex enough that reimplementing it is error-prone?   | `getNumericDataRange()` — it's `Math.min/max` over `getUniqueValues()`    |
+| **Broad consumer value**  | Will a significant majority of consumers use this?                   | `getFilterSummaryLabel()` — hardcodes English UI text, unusable with i18n |
+
+**Guidelines:**
+
+- A method that wraps 1–3 lines of existing API calls does not belong in the library
+- Getters are justified as companions to complex setters (e.g., `getBlankMode()` pairs with `toggleBlankFilter()`)
+- Events that run on hot paths (e.g., every `processRows` call) must justify their performance cost — prefer on-demand methods over auto-emitting events
+- Library code must never contain hardcoded locale-specific strings; if a method needs UI text, it doesn't belong in the library
+
 ## API Stability & Breaking Changes
 
 **`@toolbox-web/grid` is now a released library.** Avoid breaking changes to the public API.
