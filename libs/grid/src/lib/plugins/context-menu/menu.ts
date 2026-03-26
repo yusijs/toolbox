@@ -4,6 +4,7 @@
  * Pure functions for building and positioning context menus.
  */
 
+import { sanitizeHTML } from '../../core/internal/sanitize';
 import type { IconValue } from '../../core/types';
 import { DEFAULT_GRID_ICONS } from '../../core/types';
 import type { ContextMenuItem, ContextMenuParams } from './types';
@@ -110,7 +111,7 @@ export function createMenuElement(
     if (item.icon) {
       const icon = document.createElement('span');
       icon.className = 'tbw-context-menu-icon';
-      icon.innerHTML = item.icon;
+      icon.innerHTML = sanitizeHTML(item.icon);
       menuItem.appendChild(icon);
     } else if (hasAnyIcon) {
       // Add empty placeholder to align labels when other items have icons
@@ -148,7 +149,7 @@ export function createMenuElement(
       arrow.className = 'tbw-context-menu-arrow';
       // Use provided submenu arrow icon (string or HTMLElement)
       if (typeof submenuArrow === 'string') {
-        arrow.innerHTML = submenuArrow;
+        arrow.innerHTML = sanitizeHTML(submenuArrow);
       } else if (submenuArrow instanceof HTMLElement) {
         arrow.appendChild(submenuArrow.cloneNode(true));
       }

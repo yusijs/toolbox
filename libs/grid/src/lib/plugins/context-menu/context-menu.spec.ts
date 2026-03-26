@@ -332,6 +332,28 @@ describe('contextMenu', () => {
       expect(icons).toHaveLength(0);
     });
 
+    it('should sanitize icon HTML to prevent XSS', () => {
+      const items: ContextMenuItem[] = [{ id: 'xss', name: 'XSS', icon: '<img src=x onerror="alert(1)">' }];
+
+      const menu = createMenuElement(items, params, onAction);
+      const icon = menu.querySelector('.tbw-context-menu-icon');
+
+      expect(icon).not.toBeNull();
+      // onerror attribute should be stripped by sanitizeHTML
+      expect(icon?.innerHTML).not.toContain('onerror');
+    });
+
+    it('should sanitize script tags in icon', () => {
+      const items: ContextMenuItem[] = [{ id: 'xss', name: 'XSS', icon: '<script>alert(1)</script>📋' }];
+
+      const menu = createMenuElement(items, params, onAction);
+      const icon = menu.querySelector('.tbw-context-menu-icon');
+
+      expect(icon).not.toBeNull();
+      expect(icon?.innerHTML).not.toContain('<script');
+      expect(icon?.innerHTML).toContain('📋');
+    });
+
     it('should render shortcut string as a single kbd element', () => {
       const items: ContextMenuItem[] = [{ id: 'test', name: 'Test', shortcut: 'Enter' }];
 

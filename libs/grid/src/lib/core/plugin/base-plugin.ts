@@ -9,6 +9,7 @@
 declare const __GRID_VERSION__: string;
 
 import { type DiagnosticCode, formatDiagnostic, gridPrefix } from '../internal/diagnostics';
+import { sanitizeHTML } from '../internal/sanitize';
 import type {
   ColumnConfig,
   ColumnState,
@@ -872,7 +873,7 @@ export abstract class BaseGridPlugin<TConfig = unknown> implements GridPlugin {
    */
   protected setIcon(element: HTMLElement, icon: IconValue): void {
     if (typeof icon === 'string') {
-      element.innerHTML = icon;
+      element.innerHTML = sanitizeHTML(icon);
     } else if (icon instanceof HTMLElement) {
       element.innerHTML = '';
       element.appendChild(icon.cloneNode(true));
