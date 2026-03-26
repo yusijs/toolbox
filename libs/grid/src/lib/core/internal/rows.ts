@@ -680,6 +680,10 @@ function fastPatchRow(grid: GridHost, rowEl: HTMLElement, rowData: any, rowIndex
     const value = rowData[col.field];
     let displayStr: string;
 
+    // Release editor views if cell has element children (indicating prior editor/renderer DOM).
+    // Plain text cells (textContent-only) have no element children, so this is a fast O(1) skip.
+    if (cell.firstElementChild) grid.__frameworkAdapter?.releaseCell?.(cell);
+
     // Resolve format using priority chain: column → typeDefaults → adapter
     const formatFn = resolveFormat(grid, col);
     if (formatFn) {

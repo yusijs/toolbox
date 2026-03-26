@@ -826,6 +826,41 @@ describe('releaseCell lifecycle', () => {
     // releaseCell should have been called for cells being recycled
     expect(releaseSpy).toHaveBeenCalled();
   });
+
+  it('calls adapter.releaseCell in fastPatchRow standard path for format-only cells with editor children', () => {
+    const releaseSpy = vi.fn();
+    const g = makeGrid();
+    // Add a format function to a column so the standard path handles it
+    g._columns = [
+      { field: 'id' },
+      { field: 'name', format: (v: string) => v?.toUpperCase() },
+    ];
+    g.__frameworkAdapter = {
+      canHandle: () => false,
+      createRenderer: () => () => null,
+      createEditor: () => () => document.createElement('input'),
+      releaseCell: releaseSpy,
+    };
+    g.__hasSpecialColumns = undefined; // Reset cache
+
+    // Initial render
+    renderVisibleRows(g, 0, 1, 1);
+
+    // Inject fake editor content into the format cell (simulating post-edit teardown)
+    const row = g._bodyEl.querySelector('.data-grid-row') as HTMLElement;
+    const nameCell = row.querySelector('.cell[data-col="1"]') as HTMLElement;
+    nameCell.innerHTML = '<div class="tbw-editor-host"><input /></div>';
+
+    releaseSpy.mockClear();
+
+    // Re-render triggers fastPatchRow standard path → format branch
+    renderVisibleRows(g, 0, 1, 1);
+
+    // releaseCell should have been called for the format cell with leftover editor DOM
+    expect(releaseSpy).toHaveBeenCalled();
+    const calledCells = releaseSpy.mock.calls.map((c: any[]) => c[0] as HTMLElement);
+    expect(calledCells.some((el: HTMLElement) => el.getAttribute('data-field') === 'name')).toBe(true);
+  });
 });
 // #endregion
 
@@ -834,6 +869,8 @@ describe('renderVisibleRows — epoch-based row reuse', () => {
   it('uses fastPatchRow (no releaseCell) when epoch unchanged and same row refs', () => {
     const releaseSpy = vi.fn();
     const g = makeGrid();
+    // Use only plain text columns (no boolean/date) so cells have no element children
+    g._columns = [{ field: 'id' }, { field: 'name' }];
     g.__frameworkAdapter = {
       canHandle: () => false,
       createRenderer: () => () => null,
@@ -854,6 +891,8 @@ describe('renderVisibleRows — epoch-based row reuse', () => {
   it('uses fastPatchRow when epoch unchanged but data refs changed', () => {
     const releaseSpy = vi.fn();
     const g = makeGrid();
+    // Use only plain text columns (no boolean/date) so cells have no element children
+    g._columns = [{ field: 'id' }, { field: 'name' }];
     g.__frameworkAdapter = {
       canHandle: () => false,
       createRenderer: () => () => null,
@@ -867,14 +906,14 @@ describe('renderVisibleRows — epoch-based row reuse', () => {
 
     // Replace rows with new objects (different refs, same epoch)
     g._rows = [
-      { id: 10, name: 'New1', active: true, date: '2025-01-01' },
-      { id: 20, name: 'New2', active: false, date: '2025-01-02' },
+      { id: 10, name: 'New1' },
+      { id: 20, name: 'New2' },
     ];
 
     // Same epoch — should use fastPatchRow, NOT renderInlineRow
     renderVisibleRows(g, 0, 2, 1);
 
-    // fastPatchRow ultra-fast path doesn't call releaseCell
+    // fastPatchRow doesn't call releaseCell for plain text cells
     // (only called when cell has firstElementChild, which plain text cells don't)
     expect(releaseSpy).not.toHaveBeenCalled();
 
