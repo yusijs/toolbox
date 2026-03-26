@@ -44,8 +44,9 @@ export interface FilteringMethods {
    * Set a filter on a specific field.
    * @param field - The field name to filter
    * @param filter - Filter configuration, or null to remove
+   * @param options - `{ silent: true }` applies the filter without emitting `filter-change`
    */
-  setFilter: (field: string, filter: Omit<FilterModel, 'field'> | null) => void;
+  setFilter: (field: string, filter: Omit<FilterModel, 'field'> | null, options?: { silent?: boolean }) => void;
 
   /**
    * Get the current filter for a field.
@@ -59,18 +60,21 @@ export interface FilteringMethods {
 
   /**
    * Set all filters at once (replaces existing).
+   * @param options - `{ silent: true }` applies filters without emitting `filter-change`
    */
-  setFilterModel: (filters: FilterModel[]) => void;
+  setFilterModel: (filters: FilterModel[], options?: { silent?: boolean }) => void;
 
   /**
    * Clear all active filters.
+   * @param options - `{ silent: true }` clears filters without emitting `filter-change`
    */
-  clearAllFilters: () => void;
+  clearAllFilters: (options?: { silent?: boolean }) => void;
 
   /**
    * Clear filter for a specific field.
+   * @param options - `{ silent: true }` clears filter without emitting `filter-change`
    */
-  clearFieldFilter: (field: string) => void;
+  clearFieldFilter: (field: string, options?: { silent?: boolean }) => void;
 
   /**
    * Check if a field has an active filter.
@@ -185,7 +189,7 @@ export function injectGridFiltering(): FilteringMethods {
   return {
     isReady: isReady.asReadonly(),
 
-    setFilter: (field: string, filter: Omit<FilterModel, 'field'> | null) => {
+    setFilter: (field: string, filter: Omit<FilterModel, 'field'> | null, options?: { silent?: boolean }) => {
       const plugin = getPlugin();
       if (!plugin) {
         console.warn(
@@ -195,14 +199,14 @@ export function injectGridFiltering(): FilteringMethods {
         );
         return;
       }
-      plugin.setFilter(field, filter);
+      plugin.setFilter(field, filter, options);
     },
 
     getFilter: (field: string) => getPlugin()?.getFilter(field),
 
     getFilters: () => getPlugin()?.getFilters() ?? [],
 
-    setFilterModel: (filters: FilterModel[]) => {
+    setFilterModel: (filters: FilterModel[], options?: { silent?: boolean }) => {
       const plugin = getPlugin();
       if (!plugin) {
         console.warn(
@@ -212,10 +216,10 @@ export function injectGridFiltering(): FilteringMethods {
         );
         return;
       }
-      plugin.setFilterModel(filters);
+      plugin.setFilterModel(filters, options);
     },
 
-    clearAllFilters: () => {
+    clearAllFilters: (options?: { silent?: boolean }) => {
       const plugin = getPlugin();
       if (!plugin) {
         console.warn(
@@ -225,10 +229,10 @@ export function injectGridFiltering(): FilteringMethods {
         );
         return;
       }
-      plugin.clearAllFilters();
+      plugin.clearAllFilters(options);
     },
 
-    clearFieldFilter: (field: string) => {
+    clearFieldFilter: (field: string, options?: { silent?: boolean }) => {
       const plugin = getPlugin();
       if (!plugin) {
         console.warn(
@@ -238,7 +242,7 @@ export function injectGridFiltering(): FilteringMethods {
         );
         return;
       }
-      plugin.clearFieldFilter(field);
+      plugin.clearFieldFilter(field, options);
     },
 
     isFieldFiltered: (field: string) => getPlugin()?.isFieldFiltered(field) ?? false,
