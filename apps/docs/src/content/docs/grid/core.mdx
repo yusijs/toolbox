@@ -378,7 +378,29 @@ export class EmployeeGridComponent {
   </TabItem>
 </Tabs>
 
-The renderer receives a `CellRenderContext` with `value`, `row`, `column`, and `field`. See the [CellRenderContext API](/grid/api/core/interfaces/cell-render-context) for details.
+The renderer receives a [`CellRenderContext`](/grid/api/core/interfaces/cell-render-context) with these properties:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `value` | `TValue` | The cell's current value |
+| `row` | `TRow` | The full row data object |
+| `field` | `string` | The column's field name |
+| `column` | `ColumnConfig` | The column configuration |
+
+:::note[Why no `rowIndex`?]
+Renderer and editor contexts intentionally provide the **row object** instead of a row index. A `rowIndex` reflects the row's position in the grid's *current* sorted/filtered/grouped view — it silently becomes stale whenever the user sorts, filters, or reorders. The `row` object is a stable identity that remains valid regardless of view state.
+
+If you need the visual index at a specific moment (e.g. for conditional styling of even/odd rows), derive it inside the renderer:
+
+```typescript
+renderer: (ctx) => {
+  const rowIndex = grid.rows.indexOf(ctx.row);
+  // Use rowIndex for one-time positional logic
+}
+```
+
+For event-driven use cases, click and activation events (`cell-click`, `row-click`, `cell-activate`) already include `rowIndex` in their detail payload.
+:::
 
 <ShowSource file="demos/CustomRenderersDemo.astro">
   <CustomRenderersDemo />

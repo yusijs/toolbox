@@ -723,6 +723,10 @@ interface CellRenderContext<TRow, TValue> {
   row: TRow;               // Full row data
   field: string;           // Field name
   column: ColumnConfig;    // Column configuration
+  // NOTE: No rowIndex — by design. Row indices reflect the current
+  // sorted/filtered/grouped view and silently go stale after any data
+  // operation. Use the stable `row` object instead. If you need the
+  // visual index at render time: grid.rows.indexOf(ctx.row)
 }
 ```
 
@@ -742,6 +746,9 @@ interface ColumnEditorContext<TRow, TValue> {
     // Register to receive pushed values when the cell is updated externally
     // (e.g., via updateRow from another cell's commit). Built-in editors
     // are auto-wired; custom editors should use this for cascade reactivity.
+  // NOTE: No rowIndex — same rationale as CellRenderContext. Use `row`
+  // for stable identity; derive index via grid.rows.indexOf(ctx.row)
+  // only when needed at the moment of use.
 }
 ```
 
