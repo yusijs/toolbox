@@ -2038,8 +2038,14 @@ export interface PluginNameMap {}
  * }
  * ```
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
-export interface FeatureConfig<TRow = unknown> {}
+export interface FeatureConfig<TRow = unknown> {
+  /**
+   * @internal Sentinel property that makes the interface non-empty so TypeScript's
+   * excess-property checking rejects unknown feature keys in object literals.
+   * Not assignable at runtime (type is `never`).
+   */
+  __brand?: never;
+}
 // #endregion
 
 // #region Grid Config
