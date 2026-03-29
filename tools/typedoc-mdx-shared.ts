@@ -211,58 +211,74 @@ export function formatType(t?: TypeDocType): string {
 }
 
 /**
- * Format a type with markdown links for types in a registry.
- * Returns markdown with links for known types, inline code for unknown.
- *
- * @param type - TypeDoc type to format
- * @param typeRegistry - Map of type names to documentation URLs
+ * Escape text for use inside an HTML `<code>` element within MDX table cells.
+ * Encodes characters that would otherwise be interpreted as HTML or break table syntax.
  */
-export function formatTypeWithLinks(type: TypeDocType | undefined, typeRegistry: Map<string, string>): string {
-  if (!type) return '`unknown`';
+const escapeTypeHtml = (text: string): string =>
+  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\|/g, '&#124;');
+
+/**
+ * Inner recursive formatter that builds raw HTML fragments for a type expression.
+ * Returns content suitable for embedding inside a `<code>` element — linked types
+ * use `<a>` tags, special characters use HTML entities.
+ */
+function formatTypeHtml(type: TypeDocType | undefined, typeRegistry: Map<string, string>): string {
+  if (!type) return 'unknown';
 
   const linkify = (name: string): string => {
     const url = typeRegistry.get(name);
-    return url ? `[\`${name}\`](${url})` : `\`${name}\``;
+    return url ? `<a href="${url}">${name}</a>` : name;
   };
 
   switch (type.type) {
     case 'intrinsic':
     case 'literal':
-      return `\`${String(type.value ?? type.name ?? 'unknown')}\``;
+      return String(type.value ?? type.name ?? 'unknown');
     case 'reference': {
       const name = type.name ?? 'unknown';
       if (type.typeArguments?.length) {
-        const args = type.typeArguments.map((t) => formatTypeWithLinks(t, typeRegistry)).join(', ');
-        const url = typeRegistry.get(name);
-        // Use HTML entities for angle brackets to prevent MDX from interpreting them as JSX
-        return url ? `[\`${name}\`](${url})&lt;${args}&gt;` : `\`${name}\`&lt;${args}&gt;`;
+        const args = type.typeArguments.map((t) => formatTypeHtml(t, typeRegistry)).join(', ');
+        return `${linkify(name)}&lt;${args}&gt;`;
       }
       return linkify(name);
     }
     case 'array':
-      return `${formatTypeWithLinks(type.elementType, typeRegistry)}[]`;
+      return `${formatTypeHtml(type.elementType, typeRegistry)}[]`;
     case 'union':
-      return type.types?.map((t) => formatTypeWithLinks(t, typeRegistry)).join(' \\| ') ?? '`unknown`';
+      return type.types?.map((t) => formatTypeHtml(t, typeRegistry)).join(' &#124; ') ?? 'unknown';
     case 'intersection':
-      return type.types?.map((t) => formatTypeWithLinks(t, typeRegistry)).join(' & ') ?? '`unknown`';
+      return type.types?.map((t) => formatTypeHtml(t, typeRegistry)).join(' &amp; ') ?? 'unknown';
     case 'reflection': {
       const sig = type.declaration?.signatures?.[0];
       if (sig) {
         const params =
-          sig.parameters?.map((p) => `${p.name}: ${formatTypeWithLinks(p.type, typeRegistry)}`).join(', ') ?? '';
-        const ret = formatTypeWithLinks(sig.type, typeRegistry);
-        return `(${params}) => ${ret}`;
+          sig.parameters?.map((p) => `${p.name}: ${formatTypeHtml(p.type, typeRegistry)}`).join(', ') ?? '';
+        const ret = formatTypeHtml(sig.type, typeRegistry);
+        return `(${params}) =&gt; ${ret}`;
       }
-      return '`object`';
+      return 'object';
     }
     default:
-      return type.name ? linkify(type.name) : '`unknown`';
+      return type.name ? linkify(type.name) : 'unknown';
   }
 }
 
-/** Format a type for MDX — uses links when a registry is available, otherwise inline code */
+/**
+ * Format a type with HTML code element and links for types in a registry.
+ * Returns an HTML `<code>` element with embedded `<a>` tags for known types.
+ * The entire type expression is wrapped in a single code element so that operators
+ * like `<`, `>`, and `|` render in monospace alongside type names.
+ *
+ * @param type - TypeDoc type to format
+ * @param typeRegistry - Map of type names to documentation URLs
+ */
+export function formatTypeWithLinks(type: TypeDocType | undefined, typeRegistry: Map<string, string>): string {
+  return `<code>${formatTypeHtml(type, typeRegistry)}</code>`;
+}
+
+/** Format a type for MDX — uses links when a registry is available, otherwise HTML code element */
 const fmtType = (type: TypeDocType | undefined, reg?: Map<string, string>): string =>
-  reg ? formatTypeWithLinks(type, reg) : `\`${escapeCode(formatType(type))}\``;
+  reg ? formatTypeWithLinks(type, reg) : `<code>${escapeTypeHtml(formatType(type))}</code>`;
 
 // #endregion
 
@@ -700,10 +716,59 @@ export interface AdapterConfig {
   regenerateCommand: string;
   /** Node categories, checked in order. Uncategorized GENERATORS-compatible nodes go to "utilities". */
   categories: AdapterCategory[];
+  /** Optional path to the core grid TypeDoc JSON for cross-linking types not re-exported by the adapter */
+  coreJsonPath?: string;
 }
 
 /** Base URL prefix for the core grid docs (for cross-linking re-exported types) */
 const GRID_CORE_BASE = '/grid/api/core';
+
+/**
+ * Build a type registry from the core grid TypeDoc JSON.
+ * Used by adapter docs to cross-link types that the adapter references
+ * but does not re-export (e.g., plugin config types like ClipboardConfig).
+ */
+function buildCoreGridRegistry(coreJsonPath: string): Map<string, string> {
+  if (!existsSync(coreJsonPath)) return new Map();
+
+  const json: TypeDocNode = JSON.parse(readFileSync(coreJsonPath, 'utf-8'));
+  const registry = new Map<string, string>();
+
+  const coreModule = json.children?.find((c) => c.name === 'Core' || c.name === 'core');
+  const pluginModules = json.children?.filter((c) => c.name.startsWith('Plugins/')) ?? [];
+
+  // Register Core types
+  if (coreModule) {
+    for (const node of coreModule.children ?? []) {
+      const kindFolder = KIND_FOLDER_MAP[node.kind];
+      if (!kindFolder) continue;
+
+      const category = getCategory(node);
+      let section = 'core';
+      if (category?.includes('Plugin Development')) section = 'plugin-development';
+      else if (category?.includes('Framework Adapters')) section = 'framework-adapters';
+
+      registry.set(node.name, `/grid/api/${section}/${kindFolder.toLowerCase()}/${node.name.toLowerCase()}/`);
+    }
+  }
+
+  // Register Plugin types
+  for (const plugin of pluginModules) {
+    if (plugin.kind !== KIND.Module) continue;
+    const folderName = plugin.name
+      .replace(/^Plugins\//, '')
+      .toLowerCase()
+      .replace(/\s+/g, '-');
+
+    for (const node of plugin.children ?? []) {
+      const kindFolder = KIND_FOLDER_MAP[node.kind];
+      if (!kindFolder) continue;
+      registry.set(node.name, `/grid/plugins/${folderName}/${kindFolder.toLowerCase()}/${node.name.toLowerCase()}/`);
+    }
+  }
+
+  return registry;
+}
 
 /**
  * Generate adapter documentation from TypeDoc JSON.
@@ -712,7 +777,7 @@ const GRID_CORE_BASE = '/grid/api/core';
  * This is the single entry point for adapter scripts (Angular, React, Vue).
  */
 export function generateAdapterDocs(config: AdapterConfig): void {
-  const { name, urlBase, jsonPath, outputDir, regenerateCommand, categories } = config;
+  const { name, urlBase, jsonPath, outputDir, regenerateCommand, categories, coreJsonPath } = config;
 
   console.log(`Generating MDX from TypeDoc JSON for ${name}...\n`);
 
@@ -723,18 +788,41 @@ export function generateAdapterDocs(config: AdapterConfig): void {
   }
 
   const json: TypeDocNode = JSON.parse(readFileSync(jsonPath, 'utf-8'));
-  const nodes = (json.children ?? []).filter((n) => !isInternal(n.comment));
+
+  // When multiple entry points are used, TypeDoc wraps each in a Module (kind=2).
+  // Flatten modules into a single list of exported symbols, deduplicating by name+kind.
+  const rawChildren = json.children ?? [];
+  const isModuleWrapper = rawChildren.length > 0 && rawChildren.every((n) => n.kind === KIND.Module);
+  const seen = new Set<string>();
+  const flatNodes: TypeDocNode[] = [];
+  const toFlatten = isModuleWrapper ? rawChildren.flatMap((m) => m.children ?? []) : rawChildren;
+  for (const n of toFlatten) {
+    const key = `${n.name}:${n.kind}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      flatNodes.push(n);
+    }
+  }
+  const nodes = flatNodes.filter((n) => !isInternal(n.comment));
+
+  // Pre-populate with core grid types for cross-linking (adapter types take precedence)
+  const coreRegistry = coreJsonPath ? buildCoreGridRegistry(coreJsonPath) : new Map<string, string>();
 
   // Build type registry for cross-linking
-  const typeRegistry = buildTypeRegistryFromNodes(nodes, (node, kindFolder) => {
-    for (const cat of categories) {
-      if (cat.match(node)) return `${urlBase}/${cat.folder}/${node.name.toLowerCase()}/`;
-    }
-    // Fallback: utilities for known generators, core grid for re-exported types
-    if (GENERATORS[node.kind]) return `${urlBase}/utilities/${node.name.toLowerCase()}/`;
-    if (KIND_FOLDER_MAP[node.kind]) return `${GRID_CORE_BASE}/${kindFolder.toLowerCase()}/${node.name.toLowerCase()}/`;
-    return undefined;
-  });
+  const typeRegistry = buildTypeRegistryFromNodes(
+    nodes,
+    (node, kindFolder) => {
+      for (const cat of categories) {
+        if (cat.match(node)) return `${urlBase}/${cat.folder}/${node.name.toLowerCase()}/`;
+      }
+      // Fallback: utilities for known generators, core grid for re-exported types
+      if (GENERATORS[node.kind]) return `${urlBase}/utilities/${node.name.toLowerCase()}/`;
+      if (KIND_FOLDER_MAP[node.kind])
+        return `${GRID_CORE_BASE}/${kindFolder.toLowerCase()}/${node.name.toLowerCase()}/`;
+      return undefined;
+    },
+    new Map(coreRegistry),
+  );
 
   const genOpts: GeneratorOptions = { regenerateCommand, typeRegistry };
 

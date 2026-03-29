@@ -49,12 +49,15 @@ Key TypeScript interfaces for configuration and events:
 
 - [@toolbox-web/grid-angular](https://www.npmjs.com/package/@toolbox-web/grid-angular): Angular adapter with structural directives (`*tbwRenderer`, `*tbwEditor`)
   - **Feature Props**: Declarative inputs with side-effect imports for tree-shakeable plugin loading (e.g., `[selection]="'range'"`, `[editing]="true"`, `[filtering]="true"`)
+  - [Feature Functions](https://toolboxjs.com/grid/angular/feature-functions/): Typed inject functions for programmatic plugin access — `injectGridSelection()`, `injectGridFiltering()`, `injectGridExport()`, `injectGridPrint()`, `injectGridUndoRedo()`
   - [Reactive Forms Integration](https://toolboxjs.com/grid/angular/reactive-forms/): Bind FormArray to grid with cell-level validation
   - [Base Classes](https://toolboxjs.com/grid/angular/base-classes/): `BaseGridEditor`, `BaseGridEditorCVA` (dual grid/form), `BaseOverlayEditor` (floating panels), `BaseFilterPanel` (custom filter UIs)
 - [@toolbox-web/grid-react](https://www.npmjs.com/package/@toolbox-web/grid-react): React adapter with `DataGrid` component, hooks, and JSX renderers
   - **Feature Props**: Declarative props with side-effect imports for tree-shakeable plugin loading (e.g., `selection="range"`, `editing`, `filtering`)
+  - [Feature Hooks](https://toolboxjs.com/grid/react/feature-hooks/): Typed React hooks for programmatic plugin access — `useGridSelection()`, `useGridFiltering()`, `useGridExport()`, `useGridPrint()`, `useGridUndoRedo()`
 - [@toolbox-web/grid-vue](https://www.npmjs.com/package/@toolbox-web/grid-vue): Vue adapter with `TbwGrid` component, composables (`useGrid`, `useGridEvent`), and `#cell`/`#editor` slot renderers
   - **Feature Props**: Declarative props with side-effect imports for tree-shakeable plugin loading (e.g., `selection="range"`, `editing`, `filtering`)
+  - [Feature Composables](https://toolboxjs.com/grid/vue/feature-composables/): Typed Vue composables for programmatic plugin access — `useGridSelection()`, `useGridFiltering()`, `useGridExport()`, `useGridPrint()`, `useGridUndoRedo()`
 
 ## Plugins
 

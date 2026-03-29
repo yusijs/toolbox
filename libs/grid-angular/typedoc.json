@@ -1,8 +1,15 @@
 {
   "$schema": "https://typedoc.org/schema.json",
-  "entryPoints": ["src/index.ts"],
+  "entryPoints": [
+    "src/index.ts",
+    "features/selection/src/index.ts",
+    "features/filtering/src/index.ts",
+    "features/export/src/index.ts",
+    "features/print/src/index.ts",
+    "features/undo-redo/src/index.ts"
+  ],
   "entryPointStrategy": "expand",
-  "tsconfig": "tsconfig.lib.json",
+  "tsconfig": "tsconfig.typedoc.json",
   "json": "docs/api-generated/api.json",
   "readme": "none",
   "excludePrivate": true,
@@ -12,7 +19,7 @@
   "excludeExternals": true,
   "externalPattern": ["**/node_modules/**"],
   "sort": ["source-order"],
-  "categoryOrder": ["Directives", "Types", "Utilities", "*"],
+  "categoryOrder": ["Directives", "Features", "Types", "Utilities", "*"],
   "blockTags": [
     "@category",
     "@deprecated",

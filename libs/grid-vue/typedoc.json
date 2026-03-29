@@ -1,6 +1,13 @@
 {
   "$schema": "https://typedoc.org/schema.json",
-  "entryPoints": ["src/typedoc-entry.ts"],
+  "entryPoints": [
+    "src/typedoc-entry.ts",
+    "src/features/selection.ts",
+    "src/features/filtering.ts",
+    "src/features/export.ts",
+    "src/features/print.ts",
+    "src/features/undo-redo.ts"
+  ],
   "entryPointStrategy": "expand",
   "tsconfig": "tsconfig.typedoc.json",
   "json": "docs/api-generated/api.json",

@@ -13,11 +13,19 @@ generateAdapterDocs({
   jsonPath: join(import.meta.dirname, '../docs/api-generated/api.json'),
   outputDir: join(import.meta.dirname, '../../../apps/docs/src/content/docs/grid/angular/api'),
   regenerateCommand: 'bun nx typedoc grid-angular',
+  coreJsonPath: join(import.meta.dirname, '../../grid/docs/api-generated/api.json'),
   categories: [
     {
       name: 'Directives',
       folder: 'directives',
       match: (n: TypeDocNode) => n.kind === KIND.Class && getCategory(n) === 'Directive',
+    },
+    {
+      name: 'Features',
+      folder: 'features',
+      match: (n: TypeDocNode) =>
+        (n.name.startsWith('injectGrid') && n.name !== 'injectGrid' && n.kind === KIND.Function) ||
+        (n.name.endsWith('Methods') && n.kind === KIND.Interface),
     },
     {
       name: 'Adapters',

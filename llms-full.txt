@@ -1594,6 +1594,15 @@ const config: GridConfig<Employee> = {
 
 ### Feature-Scoped Hooks
 
+Each plugin has a corresponding hook for typed programmatic access. Available hooks:
+- `useGridSelection()` — `selectAll`, `clearSelection`, `getSelection`, `getSelectedRows`, `isCellSelected`, `setRanges`
+- `useGridFiltering()` — `setFilter`, `clearAllFilters`, `getFilters`, `getFilteredRowCount`, `getUniqueValues`, `getStaleFilters`
+- `useGridExport()` — `exportToCsv`, `exportToExcel`, `exportToJson`, `isExporting`
+- `useGridPrint()` — `print`, `isPrinting`
+- `useGridUndoRedo()` — `undo`, `redo`, `canUndo`, `canRedo`, `beginTransaction`, `endTransaction`
+
+All hooks use **React context** from `DataGrid`.
+
 ```tsx
 import '@toolbox-web/grid-react/features/export';
 import { useGridExport } from '@toolbox-web/grid-react/features/export';
@@ -1602,7 +1611,7 @@ function MyGrid() {
   const { exportToCsv, isExporting } = useGridExport();
   return (
     <div>
-      <button onClick={() => exportToCsv('data.csv')} disabled={isExporting}>Export</button>
+      <button onClick={() => exportToCsv('data.csv')} disabled={isExporting()}>Export</button>
       <DataGrid rows={data} columns={columns} export />
     </div>
   );
@@ -1713,6 +1722,15 @@ export class MyComponent {
 **Lazy form** for large datasets: Use `[lazyForm]="createRowFormFn"` instead of `[formArray]` — creates FormGroups on-demand when editing.
 
 ### Feature-Scoped Injectables
+
+Each plugin has a corresponding inject function for typed programmatic access. Available functions:
+- `injectGridSelection()` — `selectAll`, `clearSelection`, `getSelection`, `selectedRowIndices` (Signal), `selectedRows` (Signal)
+- `injectGridFiltering()` — `setFilter`, `clearAllFilters`, `getFilters`, `getFilteredRowCount`, `getUniqueValues`, `getStaleFilters`
+- `injectGridExport()` — `exportToCsv`, `exportToExcel`, `exportToJson`, `isExporting`
+- `injectGridPrint()` — `print`, `isPrinting`
+- `injectGridUndoRedo()` — `undo`, `redo`, `canUndo` (Signal), `canRedo` (Signal), `beginTransaction`, `endTransaction`
+
+All use **lazy grid discovery** (safe with `*ngIf`, `@defer`, tabs).
 
 ```typescript
 import '@toolbox-web/grid-angular/features/export';
@@ -1882,6 +1900,26 @@ const { gridElement, forceLayout, getConfig, ready, getPlugin } = useGrid();
 ```
 
 Events are handled via standard `@event` bindings on `<TbwGrid>` (see above).
+
+### Feature-Scoped Composables
+
+Each plugin has a corresponding composable for typed programmatic access. Available composables:
+- `useGridSelection()` — `selectAll`, `clearSelection`, `getSelection`, `getSelectedRows`, `isCellSelected`, `setRanges`
+- `useGridFiltering()` — `setFilter`, `clearAllFilters`, `getFilters`, `getFilteredRowCount`, `getUniqueValues`, `getStaleFilters`
+- `useGridExport()` — `exportToCsv`, `exportToExcel`, `exportToJson`, `isExporting`
+- `useGridPrint()` — `print`, `isPrinting`
+- `useGridUndoRedo()` — `undo`, `redo`, `canUndo`, `canRedo`, `beginTransaction`, `endTransaction`
+
+All composables use Vue's **provide/inject** from `TbwGrid`.
+
+```vue
+<script setup>
+import '@toolbox-web/grid-vue/features/export';
+import { useGridExport } from '@toolbox-web/grid-vue/features/export';
+
+const { exportToCsv, isExporting } = useGridExport();
+</script>
+```
 
 ### Key Vue Pitfalls
 
