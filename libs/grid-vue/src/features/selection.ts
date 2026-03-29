@@ -104,13 +104,20 @@ export interface SelectionMethods<TRow = unknown> {
  * }
  * </script>
  * ```
+ * @param selector - Optional CSS selector to target a specific grid element via
+ *   DOM query instead of using Vue's provide/inject. Use when the component
+ *   contains multiple grids, e.g. `'tbw-grid.primary'` or `'#my-grid'`.
  */
-export function useGridSelection<TRow = unknown>(): SelectionMethods<TRow> {
-  const gridElement = inject(GRID_ELEMENT_KEY, ref(null));
+export function useGridSelection<TRow = unknown>(selector?: string): SelectionMethods<TRow> {
+  const gridElement = selector ? ref(null) : inject(GRID_ELEMENT_KEY, ref(null));
+
+  const getGrid = (): DataGridElement<TRow> | null => {
+    if (selector) return document.querySelector(selector) as DataGridElement<TRow> | null;
+    return gridElement.value as DataGridElement<TRow> | null;
+  };
 
   const getPlugin = (): SelectionPlugin | undefined => {
-    const grid = gridElement.value as DataGridElement<TRow> | null;
-    return grid?.getPluginByName('selection');
+    return getGrid()?.getPluginByName('selection');
   };
 
   return {
@@ -124,7 +131,7 @@ export function useGridSelection<TRow = unknown>(): SelectionMethods<TRow> {
         );
         return;
       }
-      const grid = gridElement.value as DataGridElement<TRow> | null;
+      const grid = getGrid();
       // Cast to any to access protected config
       const mode = (plugin as any).config?.mode;
 

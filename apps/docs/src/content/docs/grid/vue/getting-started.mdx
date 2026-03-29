@@ -419,6 +419,17 @@ const { exportToCsv, exportToExcel, isExporting } = useGridExport();
 
 See the **API Reference > Composables** section for detailed method signatures, return types, and examples.
 
+All composables accept an optional `selector` parameter to target a specific grid via DOM query instead of Vue's provide/inject. Use when a component contains multiple grids:
+
+```html
+<script setup>
+import { useGridSelection } from '@toolbox-web/grid-vue/features/selection';
+
+// Target a specific grid by CSS selector
+const selection = useGridSelection('tbw-grid.primary');
+</script>
+```
+
 | Composable | Import | Key Methods |
 |------------|--------|-------------|
 | `useGridSelection()` | `features/selection` | `selectAll`, `clearSelection`, `getSelection`, `getSelectedRows` |

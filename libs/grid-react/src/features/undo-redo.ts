@@ -124,14 +124,19 @@ export interface UndoRedoMethods {
  *   );
  * }
  * ```
+ * @param selector - Optional CSS selector to target a specific grid element via
+ *   DOM query instead of using React context. Use when the component contains
+ *   multiple grids, e.g. `'tbw-grid.primary'` or `'#my-grid'`.
  */
-export function useGridUndoRedo(): UndoRedoMethods {
+export function useGridUndoRedo(selector?: string): UndoRedoMethods {
   const gridRef = useContext(GridElementContext);
 
   const getPlugin = useCallback((): UndoRedoPlugin | undefined => {
-    const grid = gridRef?.current as DataGridElement | null;
+    const grid = (selector
+      ? document.querySelector(selector)
+      : gridRef?.current) as DataGridElement | null;
     return grid?.getPluginByName('undoRedo');
-  }, [gridRef]);
+  }, [gridRef, selector]);
 
   const undo = useCallback(() => {
     const plugin = getPlugin();

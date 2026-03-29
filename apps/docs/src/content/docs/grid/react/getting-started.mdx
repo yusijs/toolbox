@@ -414,6 +414,28 @@ function EmployeeGrid() {
 }
 ```
 
+### Multiple Grids
+
+When a component contains multiple grids, pass a CSS selector to target a specific one:
+
+```tsx
+import { useGrid } from '@toolbox-web/grid-react';
+import { useGridSelection } from '@toolbox-web/grid-react/features/selection';
+
+function MultiGridPage() {
+  // Target grids by selector instead of ref/context
+  const primaryGrid = useGrid('#primary-grid');
+  const selection = useGridSelection('#primary-grid');
+
+  return (
+    <div>
+      <DataGrid id="primary-grid" rows={employees} selection="row" />
+      <DataGrid id="secondary-grid" rows={departments} />
+    </div>
+  );
+}
+```
+
 ## Type-Level Defaults
 
 Register application-wide renderers for data types using `GridTypeProvider`:

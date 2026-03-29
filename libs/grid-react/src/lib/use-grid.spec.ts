@@ -443,4 +443,85 @@ describe('use-grid', () => {
   });
 
   // #endregion
+
+  // #region Selector-Based Grid Discovery
+
+  describe('selector-based grid discovery', () => {
+    it('should resolve element via DOM query when selector is provided', () => {
+      // Set up a mock tbw-grid element in the DOM
+      const mockGrid = document.createElement('tbw-grid') as any;
+      mockGrid.classList.add('primary');
+      mockGrid.getPluginByName = () => undefined;
+      document.body.appendChild(mockGrid);
+
+      const result: { current: UseGridReturn | null } = { current: null };
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+
+      function TestComponent() {
+        const hookReturn = useGrid('tbw-grid.primary');
+        result.current = hookReturn;
+        return null;
+      }
+
+      const root = createRoot(container);
+      flushSync(() => root.render(createElement(TestComponent)));
+
+      expect(result.current!.element).toBe(mockGrid);
+
+      flushSync(() => root.unmount());
+      container.remove();
+      mockGrid.remove();
+    });
+
+    it('should return null element when selector matches nothing', () => {
+      const result: { current: UseGridReturn | null } = { current: null };
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+
+      function TestComponent() {
+        const hookReturn = useGrid('#non-existent');
+        result.current = hookReturn;
+        return null;
+      }
+
+      const root = createRoot(container);
+      flushSync(() => root.render(createElement(TestComponent)));
+
+      expect(result.current!.element).toBeNull();
+
+      flushSync(() => root.unmount());
+      container.remove();
+    });
+
+    it('forceLayout should call element directly when using selector', async () => {
+      const forceLayoutFn = vi.fn().mockResolvedValue(undefined);
+      const mockGrid = document.createElement('tbw-grid') as any;
+      mockGrid.id = 'test-grid';
+      mockGrid.forceLayout = forceLayoutFn;
+      document.body.appendChild(mockGrid);
+
+      const result: { current: UseGridReturn | null } = { current: null };
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+
+      function TestComponent() {
+        const hookReturn = useGrid('#test-grid');
+        result.current = hookReturn;
+        return null;
+      }
+
+      const root = createRoot(container);
+      flushSync(() => root.render(createElement(TestComponent)));
+
+      await result.current!.forceLayout();
+      expect(forceLayoutFn).toHaveBeenCalled();
+
+      flushSync(() => root.unmount());
+      container.remove();
+      mockGrid.remove();
+    });
+  });
+
+  // #endregion
 });

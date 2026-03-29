@@ -94,14 +94,19 @@ export interface ExportMethods {
  *   );
  * }
  * ```
+ * @param selector - Optional CSS selector to target a specific grid element via
+ *   DOM query instead of using React context. Use when the component contains
+ *   multiple grids, e.g. `'tbw-grid.primary'` or `'#my-grid'`.
  */
-export function useGridExport(): ExportMethods {
+export function useGridExport(selector?: string): ExportMethods {
   const gridRef = useContext(GridElementContext);
 
   const getPlugin = useCallback((): ExportPlugin | undefined => {
-    const grid = gridRef?.current as DataGridElement | null;
+    const grid = (selector
+      ? document.querySelector(selector)
+      : gridRef?.current) as DataGridElement | null;
     return grid?.getPluginByName('export');
-  }, [gridRef]);
+  }, [gridRef, selector]);
 
   const exportToCsv = useCallback(
     (filename?: string, params?: Partial<ExportParams>) => {

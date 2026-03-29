@@ -176,8 +176,12 @@ export interface SelectionMethods<TRow = unknown> {
  *   }
  * }
  * ```
+ *
+ * @param selector - Optional CSS selector to target a specific grid element.
+ *   Defaults to `'tbw-grid'` (first grid in the component). Use when the
+ *   component contains multiple grids, e.g. `'tbw-grid.primary'` or `'#my-grid'`.
  */
-export function injectGridSelection<TRow = unknown>(): SelectionMethods<TRow> {
+export function injectGridSelection<TRow = unknown>(selector = 'tbw-grid'): SelectionMethods<TRow> {
   const elementRef = inject(ElementRef);
   const destroyRef = inject(DestroyRef);
   const isReady = signal(false);
@@ -227,7 +231,7 @@ export function injectGridSelection<TRow = unknown>(): SelectionMethods<TRow> {
   const getGrid = (): DataGridElement<TRow> | null => {
     if (cachedGrid) return cachedGrid;
 
-    const grid = elementRef.nativeElement.querySelector('tbw-grid') as DataGridElement<TRow> | null;
+    const grid = elementRef.nativeElement.querySelector(selector) as DataGridElement<TRow> | null;
     if (grid) {
       cachedGrid = grid;
       attachListener(grid);

@@ -144,27 +144,57 @@ export interface UseGridReturn<TRow = unknown> extends SelectionMethods<TRow>, E
  *   );
  * }
  * ```
+ *
+ * @param selector - Optional CSS selector to target a specific grid element via
+ *   DOM query instead of using `ref`. Use when the component contains multiple
+ *   grids, e.g. `'tbw-grid.primary'` or `'#my-grid'`.
  */
-export function useGrid<TRow = unknown>(): UseGridReturn<TRow> {
+export function useGrid<TRow = unknown>(selector?: string): UseGridReturn<TRow> {
   const ref = useRef<DataGridRef<TRow>>(null);
   const [isReady, setIsReady] = useState(false);
   const [config, setConfig] = useState<GridConfig<TRow> | null>(null);
+  const selectorElementRef = useRef<DataGridElement<TRow> | null>(null);
+
+  /**
+   * Resolve the raw grid element. When a selector is provided, uses a cached
+   * DOM query; otherwise falls back to the imperative ref handle.
+   */
+  const getGridElement = useCallback((): DataGridElement<TRow> | null => {
+    if (selector) {
+      selectorElementRef.current ??= document.querySelector(selector) as DataGridElement<TRow> | null;
+      return selectorElementRef.current;
+    }
+    return (ref.current?.element as DataGridElement<TRow>) ?? null;
+  }, [selector]);
 
   // Wait for grid ready
   useEffect(() => {
-    const gridRef = ref.current;
-    if (!gridRef) return;
-
     let mounted = true;
 
     const checkReady = async () => {
       try {
-        await gridRef.ready?.();
-        if (mounted) {
-          setIsReady(true);
-          const effectiveConfig = await gridRef.getConfig?.();
-          if (mounted && effectiveConfig) {
-            setConfig(effectiveConfig as GridConfig<TRow>);
+        if (selector) {
+          const el = document.querySelector(selector) as DataGridElement<TRow>;
+          if (!el) return;
+          selectorElementRef.current = el;
+          await el.ready?.();
+          if (mounted) {
+            setIsReady(true);
+            const effectiveConfig = await el.getConfig?.();
+            if (mounted && effectiveConfig) {
+              setConfig(effectiveConfig as GridConfig<TRow>);
+            }
+          }
+        } else {
+          const gridRef = ref.current;
+          if (!gridRef) return;
+          await gridRef.ready?.();
+          if (mounted) {
+            setIsReady(true);
+            const effectiveConfig = await gridRef.getConfig?.();
+            if (mounted && effectiveConfig) {
+              setConfig(effectiveConfig as GridConfig<TRow>);
+            }
           }
         }
       } catch {
@@ -177,34 +207,61 @@ export function useGrid<TRow = unknown>(): UseGridReturn<TRow> {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [selector]);
 
   const getConfig = useCallback(async () => {
+    const el = getGridElement();
+    if (el) {
+      const effectiveConfig = await el.getConfig?.();
+      return (effectiveConfig as GridConfig<TRow>) ?? null;
+    }
     const gridRef = ref.current;
     if (!gridRef) return null;
     const effectiveConfig = await gridRef.getConfig?.();
     return (effectiveConfig as GridConfig<TRow>) ?? null;
-  }, []);
+  }, [getGridElement]);
 
   const forceLayout = useCallback(async () => {
+    const el = getGridElement();
+    if (el) {
+      await el.forceLayout?.();
+      return;
+    }
     const gridRef = ref.current;
     if (!gridRef) return;
     await gridRef.forceLayout?.();
-  }, []);
+  }, [getGridElement]);
 
   const toggleGroup = useCallback(async (key: string) => {
+    const el = getGridElement();
+    if (el) {
+      // toggleGroup is added by GroupingRowsPlugin, not on base DataGridElement type
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (el as any).toggleGroup?.(key);
+      return;
+    }
     const gridRef = ref.current;
     if (!gridRef) return;
     await gridRef.toggleGroup?.(key);
-  }, []);
+  }, [getGridElement]);
 
   const registerStyles = useCallback((id: string, css: string) => {
+    const el = getGridElement();
+    if (el) {
+      el.registerStyles?.(id, css);
+      return;
+    }
     ref.current?.registerStyles?.(id, css);
-  }, []);
+  }, [getGridElement]);
 
   const unregisterStyles = useCallback((id: string) => {
+    const el = getGridElement();
+    if (el) {
+      el.unregisterStyles?.(id);
+      return;
+    }
     ref.current?.unregisterStyles?.(id);
-  }, []);
+  }, [getGridElement]);
 
   const getVisibleColumns = useCallback(() => {
     if (!config?.columns) return [];
@@ -216,7 +273,7 @@ export function useGrid<TRow = unknown>(): UseGridReturn<TRow> {
   // ═══════════════════════════════════════════════════════════════════
 
   const selectAll = useCallback(() => {
-    const element = ref.current?.element as any;
+    const element = getGridElement() as any;
     const plugin = element?.getPluginByName?.('selection');
     if (!plugin) {
       console.warn('[useGrid] selectAll requires SelectionPlugin');
@@ -229,58 +286,58 @@ export function useGrid<TRow = unknown>(): UseGridReturn<TRow> {
       plugin.selected = allIndices;
       plugin.requestAfterRender?.();
     }
-  }, []);
+  }, [getGridElement]);
 
   const clearSelection = useCallback(() => {
-    const element = ref.current?.element as any;
+    const element = getGridElement() as any;
     const plugin = element?.getPluginByName?.('selection');
     if (!plugin) return;
     plugin.clearSelection?.();
-  }, []);
+  }, [getGridElement]);
 
   const getSelectedIndices = useCallback((): Set<number> => {
-    const element = ref.current?.element as any;
+    const element = getGridElement() as any;
     const plugin = element?.getPluginByName?.('selection');
     if (!plugin) return new Set();
     return new Set(plugin.selected ?? []);
-  }, []);
+  }, [getGridElement]);
 
   const getSelectedRows = useCallback((): TRow[] => {
-    const element = ref.current?.element as any;
+    const element = getGridElement() as any;
     const plugin = element?.getPluginByName?.('selection');
     if (!plugin) return [];
     const rows = element?.rows ?? [];
     const selected = plugin.selected ?? new Set();
     return rows.filter((_: TRow, i: number) => selected.has(i));
-  }, []);
+  }, [getGridElement]);
 
   // ═══════════════════════════════════════════════════════════════════
   // EXPORT CONVENIENCE METHODS
   // ═══════════════════════════════════════════════════════════════════
 
   const exportToCsv = useCallback((filename?: string) => {
-    const element = ref.current?.element as any;
+    const element = getGridElement() as any;
     const plugin = element?.getPluginByName?.('export');
     if (!plugin) {
       console.warn('[useGrid] exportToCsv requires ExportPlugin (use export prop)');
       return;
     }
     plugin.exportCsv?.({ filename: filename ?? 'export.csv' });
-  }, []);
+  }, [getGridElement]);
 
   const exportToJson = useCallback((filename?: string) => {
-    const element = ref.current?.element as any;
+    const element = getGridElement() as any;
     const plugin = element?.getPluginByName?.('export');
     if (!plugin) {
       console.warn('[useGrid] exportToJson requires ExportPlugin (use export prop)');
       return;
     }
     plugin.exportJson?.({ filename: filename ?? 'export.json' });
-  }, []);
+  }, [getGridElement]);
 
   return {
     ref,
-    element: ref.current?.element ?? null,
+    element: getGridElement(),
     isReady,
     config,
     getConfig,

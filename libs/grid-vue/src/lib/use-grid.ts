@@ -42,26 +42,42 @@ export interface UseGridReturn {
  * }
  * </script>
  * ```
+ * @param selector - Optional CSS selector to target a specific grid element via
+ *   DOM query instead of using Vue's provide/inject. Use when the component
+ *   contains multiple grids, e.g. `'tbw-grid.primary'` or `'#my-grid'`.
  */
-export function useGrid(): UseGridReturn {
-  const gridElement = inject(GRID_ELEMENT_KEY, ref(null));
+export function useGrid(selector?: string): UseGridReturn {
+  const gridElement = selector ? ref(null) as Ref<DataGridElement | null> : inject(GRID_ELEMENT_KEY, ref(null));
+
+  /**
+   * Resolve the grid element. When a selector is provided, uses a DOM query;
+   * otherwise falls back to the injected ref.
+   */
+  const getGrid = (): DataGridElement | null => {
+    if (selector) {
+      const el = document.querySelector(selector) as DataGridElement | null;
+      if (el && !gridElement.value) gridElement.value = el;
+      return el;
+    }
+    return gridElement.value;
+  };
 
   return {
     gridElement,
     forceLayout: async () => {
-      await gridElement.value?.forceLayout();
+      await getGrid()?.forceLayout();
     },
     getConfig: () => {
-      return gridElement.value?.getConfig();
+      return getGrid()?.getConfig();
     },
     ready: async () => {
-      await gridElement.value?.ready();
+      await getGrid()?.ready();
     },
     getPlugin: <T>(pluginClass: new (...args: unknown[]) => T) => {
-      return gridElement.value?.getPlugin(pluginClass);
+      return getGrid()?.getPlugin(pluginClass);
     },
     getPluginByName: ((name: string) => {
-      return gridElement.value?.getPluginByName(name);
+      return getGrid()?.getPluginByName(name);
     }) as DataGridElement['getPluginByName'],
   };
 }

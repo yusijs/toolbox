@@ -103,14 +103,19 @@ export interface SelectionMethods<TRow = unknown> {
  *   return <button onClick={handleExport}>Export Selected</button>;
  * }
  * ```
+ * @param selector - Optional CSS selector to target a specific grid element via
+ *   DOM query instead of using React context. Use when the component contains
+ *   multiple grids, e.g. `'tbw-grid.primary'` or `'#my-grid'`.
  */
-export function useGridSelection<TRow = unknown>(): SelectionMethods<TRow> {
+export function useGridSelection<TRow = unknown>(selector?: string): SelectionMethods<TRow> {
   const gridRef = useContext(GridElementContext);
 
   const getPlugin = useCallback((): SelectionPlugin | undefined => {
-    const grid = gridRef?.current as DataGridElement<TRow> | null;
+    const grid = (selector
+      ? document.querySelector(selector)
+      : gridRef?.current) as DataGridElement<TRow> | null;
     return grid?.getPluginByName('selection');
-  }, [gridRef]);
+  }, [gridRef, selector]);
 
   const selectAll = useCallback(() => {
     const plugin = getPlugin();
@@ -122,7 +127,9 @@ export function useGridSelection<TRow = unknown>(): SelectionMethods<TRow> {
       );
       return;
     }
-    const grid = gridRef?.current as DataGridElement<TRow> | null;
+    const grid = (selector
+      ? document.querySelector(selector)
+      : gridRef?.current) as DataGridElement<TRow> | null;
     // Cast to any to access protected config
     const mode = (plugin as any).config?.mode;
 
@@ -139,7 +146,7 @@ export function useGridSelection<TRow = unknown>(): SelectionMethods<TRow> {
         plugin.setRanges([{ from: { row: 0, col: 0 }, to: { row: rowCount - 1, col: colCount - 1 } }]);
       }
     }
-  }, [getPlugin, gridRef]);
+  }, [getPlugin, gridRef, selector]);
 
   const clearSelection = useCallback(() => {
     getPlugin()?.clearSelection();

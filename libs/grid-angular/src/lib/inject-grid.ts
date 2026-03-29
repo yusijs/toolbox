@@ -151,9 +151,12 @@ export interface InjectGridReturn<TRow = unknown> extends SelectionMethods<TRow>
  * }
  * ```
  *
+ * @param selector - Optional CSS selector to target a specific grid element.
+ *   Defaults to `'tbw-grid'` (first grid in the component). Use when the
+ *   component contains multiple grids, e.g. `'tbw-grid.primary'` or `'#my-grid'`.
  * @returns Object with grid access methods and state signals
  */
-export function injectGrid<TRow = unknown>(): InjectGridReturn<TRow> {
+export function injectGrid<TRow = unknown>(selector = 'tbw-grid'): InjectGridReturn<TRow> {
   const elementRef = inject(ElementRef);
 
   // Reactive signals
@@ -163,7 +166,7 @@ export function injectGrid<TRow = unknown>(): InjectGridReturn<TRow> {
 
   // Initialize after render
   afterNextRender(() => {
-    const gridElement = elementRef.nativeElement.querySelector('tbw-grid') as DataGridElement<TRow>;
+    const gridElement = elementRef.nativeElement.querySelector(selector) as DataGridElement<TRow>;
     if (!gridElement) {
       console.warn('[injectGrid] No tbw-grid element found in component');
       return;

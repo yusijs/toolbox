@@ -78,14 +78,19 @@ export interface PrintMethods {
  *   );
  * }
  * ```
+ * @param selector - Optional CSS selector to target a specific grid element via
+ *   DOM query instead of using React context. Use when the component contains
+ *   multiple grids, e.g. `'tbw-grid.primary'` or `'#my-grid'`.
  */
-export function useGridPrint(): PrintMethods {
+export function useGridPrint(selector?: string): PrintMethods {
   const gridRef = useContext(GridElementContext);
 
   const getPlugin = useCallback((): PrintPlugin | undefined => {
-    const grid = gridRef?.current as DataGridElement | null;
+    const grid = (selector
+      ? document.querySelector(selector)
+      : gridRef?.current) as DataGridElement | null;
     return grid?.getPluginByName('print');
-  }, [gridRef]);
+  }, [gridRef, selector]);
 
   const print = useCallback(
     async (params?: PrintParams) => {

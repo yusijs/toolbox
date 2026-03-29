@@ -165,14 +165,19 @@ export interface FilteringMethods {
  *   );
  * }
  * ```
+ * @param selector - Optional CSS selector to target a specific grid element via
+ *   DOM query instead of using React context. Use when the component contains
+ *   multiple grids, e.g. `'tbw-grid.primary'` or `'#my-grid'`.
  */
-export function useGridFiltering(): FilteringMethods {
+export function useGridFiltering(selector?: string): FilteringMethods {
   const gridRef = useContext(GridElementContext);
 
   const getPlugin = useCallback((): FilteringPlugin | undefined => {
-    const grid = gridRef?.current as DataGridElement | null;
+    const grid = (selector
+      ? document.querySelector(selector)
+      : gridRef?.current) as DataGridElement | null;
     return grid?.getPluginByName('filtering');
-  }, [gridRef]);
+  }, [gridRef, selector]);
 
   const setFilter = useCallback(
     (field: string, filter: Omit<FilterModel, 'field'> | null, options?: { silent?: boolean }) => {

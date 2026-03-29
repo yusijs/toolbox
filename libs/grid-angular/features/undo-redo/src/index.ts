@@ -151,8 +151,12 @@ export interface UndoRedoMethods {
  *   undoRedo = injectGridUndoRedo();
  * }
  * ```
+ *
+ * @param selector - Optional CSS selector to target a specific grid element.
+ *   Defaults to `'tbw-grid'` (first grid in the component). Use when the
+ *   component contains multiple grids, e.g. `'tbw-grid.primary'` or `'#my-grid'`.
  */
-export function injectGridUndoRedo(): UndoRedoMethods {
+export function injectGridUndoRedo(selector = 'tbw-grid'): UndoRedoMethods {
   const elementRef = inject(ElementRef);
   const destroyRef = inject(DestroyRef);
   const isReady = signal(false);
@@ -194,7 +198,7 @@ export function injectGridUndoRedo(): UndoRedoMethods {
   const getGrid = (): DataGridElement | null => {
     if (cachedGrid) return cachedGrid;
 
-    const grid = elementRef.nativeElement.querySelector('tbw-grid') as DataGridElement | null;
+    const grid = elementRef.nativeElement.querySelector(selector) as DataGridElement | null;
     if (grid) {
       cachedGrid = grid;
       attachListeners(grid);

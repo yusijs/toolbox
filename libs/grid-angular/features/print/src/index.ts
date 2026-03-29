@@ -89,8 +89,12 @@ export interface PrintMethods {
  *   }
  * }
  * ```
+ *
+ * @param selector - Optional CSS selector to target a specific grid element.
+ *   Defaults to `'tbw-grid'` (first grid in the component). Use when the
+ *   component contains multiple grids, e.g. `'tbw-grid.primary'` or `'#my-grid'`.
  */
-export function injectGridPrint(): PrintMethods {
+export function injectGridPrint(selector = 'tbw-grid'): PrintMethods {
   const elementRef = inject(ElementRef);
   const destroyRef = inject(DestroyRef);
   const isReady = signal(false);
@@ -101,7 +105,7 @@ export function injectGridPrint(): PrintMethods {
   const getGrid = (): DataGridElement | null => {
     if (cachedGrid) return cachedGrid;
 
-    const grid = elementRef.nativeElement.querySelector('tbw-grid') as DataGridElement | null;
+    const grid = elementRef.nativeElement.querySelector(selector) as DataGridElement | null;
     if (grid) {
       cachedGrid = grid;
       if (!readyPromiseStarted) {

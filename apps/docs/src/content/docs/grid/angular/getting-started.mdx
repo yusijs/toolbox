@@ -390,6 +390,14 @@ export class ExportGridComponent {
 
 See the **API Reference > Inject Functions** section for detailed method signatures, return types, and examples.
 
+All inject functions accept an optional `selector` parameter (defaults to `'tbw-grid'`) to target a specific grid when a component contains multiple grids:
+
+```typescript
+// Target a specific grid by CSS selector
+gridSelection = injectGridSelection('tbw-grid.primary');
+gridExport = injectGridExport('#secondary-grid');
+```
+
 | Function | Import | Key Methods |
 |----------|--------|-------------|
 | `injectGridSelection()` | `features/selection` | `selectAll`, `clearSelection`, `getSelection`, `selectedRowIndices` (Signal) |

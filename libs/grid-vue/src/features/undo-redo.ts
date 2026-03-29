@@ -124,12 +124,17 @@ export interface UndoRedoMethods {
  *   </div>
  * </template>
  * ```
+ * @param selector - Optional CSS selector to target a specific grid element via
+ *   DOM query instead of using Vue's provide/inject. Use when the component
+ *   contains multiple grids, e.g. `'tbw-grid.primary'` or `'#my-grid'`.
  */
-export function useGridUndoRedo(): UndoRedoMethods {
-  const gridElement = inject(GRID_ELEMENT_KEY, ref(null));
+export function useGridUndoRedo(selector?: string): UndoRedoMethods {
+  const gridElement = selector ? ref(null) : inject(GRID_ELEMENT_KEY, ref(null));
 
   const getPlugin = (): UndoRedoPlugin | undefined => {
-    const grid = gridElement.value as DataGridElement | null;
+    const grid = (selector
+      ? document.querySelector(selector)
+      : gridElement.value) as DataGridElement | null;
     return grid?.getPluginByName('undoRedo');
   };
 

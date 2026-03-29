@@ -98,12 +98,17 @@ export interface ExportMethods {
  * }
  * </script>
  * ```
+ * @param selector - Optional CSS selector to target a specific grid element via
+ *   DOM query instead of using Vue's provide/inject. Use when the component
+ *   contains multiple grids, e.g. `'tbw-grid.primary'` or `'#my-grid'`.
  */
-export function useGridExport(): ExportMethods {
-  const gridElement = inject(GRID_ELEMENT_KEY, ref(null));
+export function useGridExport(selector?: string): ExportMethods {
+  const gridElement = selector ? ref(null) : inject(GRID_ELEMENT_KEY, ref(null));
 
   const getPlugin = (): ExportPlugin | undefined => {
-    const grid = gridElement.value as DataGridElement | null;
+    const grid = (selector
+      ? document.querySelector(selector)
+      : gridElement.value) as DataGridElement | null;
     return grid?.getPluginByName('export');
   };
 
