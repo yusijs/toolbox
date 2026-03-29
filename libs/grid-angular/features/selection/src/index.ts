@@ -238,7 +238,13 @@ export function injectGridSelection<TRow = unknown>(selector = 'tbw-grid'): Sele
       // Start ready() check only once
       if (!readyPromiseStarted) {
         readyPromiseStarted = true;
-        grid.ready?.().then(() => isReady.set(true));
+        grid.ready?.().then(() => {
+          if (grid.getPluginByName('selection')) {
+            isReady.set(true);
+          } else {
+            setTimeout(() => isReady.set(true), 0);
+          }
+        });
       }
     }
     return grid;
@@ -269,7 +275,13 @@ export function injectGridSelection<TRow = unknown>(selector = 'tbw-grid'): Sele
   afterNextRender(() => {
     const grid = getGrid();
     if (grid) {
-      grid.ready?.().then(syncSignals);
+      grid.ready?.().then(() => {
+        if (grid.getPluginByName('selection')) {
+          syncSignals();
+        } else {
+          setTimeout(syncSignals, 0);
+        }
+      });
       return;
     }
 
@@ -279,7 +291,13 @@ export function injectGridSelection<TRow = unknown>(selector = 'tbw-grid'): Sele
       const discovered = getGrid();
       if (discovered) {
         observer.disconnect();
-        discovered.ready?.().then(syncSignals);
+        discovered.ready?.().then(() => {
+          if (discovered.getPluginByName('selection')) {
+            syncSignals();
+          } else {
+            setTimeout(syncSignals, 0);
+          }
+        });
       }
     });
     observer.observe(host, { childList: true, subtree: true });

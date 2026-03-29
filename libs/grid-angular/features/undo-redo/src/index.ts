@@ -204,7 +204,13 @@ export function injectGridUndoRedo(selector = 'tbw-grid'): UndoRedoMethods {
       attachListeners(grid);
       if (!readyPromiseStarted) {
         readyPromiseStarted = true;
-        grid.ready?.().then(() => isReady.set(true));
+        grid.ready?.().then(() => {
+          if (grid.getPluginByName('undoRedo')) {
+            isReady.set(true);
+          } else {
+            setTimeout(() => isReady.set(true), 0);
+          }
+        });
       }
     }
     return grid;
@@ -220,7 +226,13 @@ export function injectGridUndoRedo(selector = 'tbw-grid'): UndoRedoMethods {
   afterNextRender(() => {
     const grid = getGrid();
     if (grid) {
-      grid.ready?.().then(syncSignals);
+      grid.ready?.().then(() => {
+        if (grid.getPluginByName('undoRedo')) {
+          syncSignals();
+        } else {
+          setTimeout(syncSignals, 0);
+        }
+      });
       return;
     }
 
@@ -229,7 +241,13 @@ export function injectGridUndoRedo(selector = 'tbw-grid'): UndoRedoMethods {
       const discovered = getGrid();
       if (discovered) {
         observer.disconnect();
-        discovered.ready?.().then(syncSignals);
+        discovered.ready?.().then(() => {
+          if (discovered.getPluginByName('undoRedo')) {
+            syncSignals();
+          } else {
+            setTimeout(syncSignals, 0);
+          }
+        });
       }
     });
     observer.observe(host, { childList: true, subtree: true });

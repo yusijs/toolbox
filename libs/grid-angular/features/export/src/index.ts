@@ -138,7 +138,13 @@ export function injectGridExport(selector = 'tbw-grid'): ExportMethods {
       // Start ready() check only once
       if (!readyPromiseStarted) {
         readyPromiseStarted = true;
-        grid.ready?.().then(() => isReady.set(true));
+        grid.ready?.().then(() => {
+          if (grid.getPluginByName('export')) {
+            isReady.set(true);
+          } else {
+            setTimeout(() => isReady.set(true), 0);
+          }
+        });
       }
     }
     return grid;

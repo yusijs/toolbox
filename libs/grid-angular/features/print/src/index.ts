@@ -110,7 +110,13 @@ export function injectGridPrint(selector = 'tbw-grid'): PrintMethods {
       cachedGrid = grid;
       if (!readyPromiseStarted) {
         readyPromiseStarted = true;
-        grid.ready?.().then(() => isReady.set(true));
+        grid.ready?.().then(() => {
+          if (grid.getPluginByName('print')) {
+            isReady.set(true);
+          } else {
+            setTimeout(() => isReady.set(true), 0);
+          }
+        });
       }
     }
     return grid;

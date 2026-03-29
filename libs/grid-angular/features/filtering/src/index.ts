@@ -165,7 +165,17 @@ export function injectGridFiltering(selector = 'tbw-grid'): FilteringMethods {
       cachedGrid = grid;
       if (!readyPromiseStarted) {
         readyPromiseStarted = true;
-        grid.ready?.().then(() => isReady.set(true));
+        grid.ready?.().then(() => {
+          // If the plugin is already attached, signal readiness immediately.
+          // Otherwise, Angular's Grid directive may not have applied gridConfig
+          // yet (it uses effect + queueMicrotask). Defer to let pending
+          // microtasks flush before signaling readiness.
+          if (grid.getPluginByName('filtering')) {
+            isReady.set(true);
+          } else {
+            setTimeout(() => isReady.set(true), 0);
+          }
+        });
       }
     }
     return grid;
