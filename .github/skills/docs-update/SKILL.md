@@ -79,8 +79,7 @@ import { MyPlugin } from '@toolbox-web/grid/plugins/my-plugin';
 
 ## Configuration
 
-| Option | Type | Default | Description |
-| ------ | ---- | ------- | ----------- |
+Auto-generated from the plugin's config interface by \`genPluginConfigTable()\`.
 
 ## Events
 
@@ -91,6 +90,12 @@ import { MyPlugin } from '@toolbox-web/grid/plugins/my-plugin';
 
 Public methods and properties.
 ```
+
+> **Plugin JSDoc conventions for auto-generated API docs:**
+> - `## Configuration Options` tables are **auto-generated** from the constructor's config interface — do not hand-write them in JSDoc
+> - `## Programmatic API` tables are redundant with auto-generated Methods — do not hand-write them in JSDoc
+> - Use `{@link TypeName}` in hand-written sections (Column Configuration, CSS Custom Properties, Events) to cross-link types
+> - Run `bun nx typedoc grid` after changing JSDoc to regenerate MDX
 
 ### Plugin README (`README.md`)
 

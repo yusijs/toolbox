@@ -48,31 +48,12 @@ const DEFAULT_CONFIG: Required<PrintConfig> = {
  * import { PrintPlugin } from '@toolbox-web/grid/plugins/print';
  * ```
  *
- * ## Configuration Options
- *
- * | Option | Type | Default | Description |
- * |--------|------|---------|-------------|
- * | `button` | `boolean` | `false` | Show print button in toolbar |
- * | `orientation` | `'portrait' \| 'landscape'` | `'landscape'` | Page orientation |
- * | `warnThreshold` | `number` | `500` | Show confirmation dialog when rows exceed this (0 = no warning) |
- * | `maxRows` | `number` | `0` | Hard limit on printed rows (0 = unlimited) |
- * | `includeTitle` | `boolean` | `true` | Include grid title in print |
- * | `includeTimestamp` | `boolean` | `true` | Include timestamp in footer |
- * | `title` | `string` | `''` | Custom print title |
- *
- * ## Programmatic API
- *
- * | Method | Signature | Description |
- * |--------|-----------|-------------|
- * | `print` | `(params?) => Promise<void>` | Trigger print dialog |
- * | `isPrinting` | `() => boolean` | Check if print is in progress |
- *
  * ## Events
  *
  * | Event | Detail | Description |
  * |-------|--------|-------------|
- * | `print-start` | `PrintStartDetail` | Fired when print begins |
- * | `print-complete` | `PrintCompleteDetail` | Fired when print completes |
+ * | `print-start` | {@link PrintStartDetail} | Fired when print begins |
+ * | `print-complete` | {@link PrintCompleteDetail} | Fired when print completes |
  *
  * @example Basic Print
  * ```ts

@@ -35,13 +35,6 @@ import type { ColumnGroup, ColumnGroupDefinition, GroupingColumnsConfig } from '
  * import { GroupingColumnsPlugin } from '@toolbox-web/grid/plugins/grouping-columns';
  * ```
  *
- * ## Configuration Options
- *
- * | Option | Type | Default | Description |
- * |--------|------|---------|-------------|
- * | `showGroupBorders` | `boolean` | `true` | Show borders between groups |
- * | `groupHeaderRenderer` | `function` | - | Custom renderer for group header content |
- *
  * ## Grid Config: `columnGroups`
  *
  * | Property | Type | Description |
@@ -56,15 +49,6 @@ import type { ColumnGroup, ColumnGroupDefinition, GroupingColumnsConfig } from '
  * |------|-------------|
  * | `string` | Simple group ID (used as both id and label) |
  * | `{ id: string; label?: string }` | Group object with explicit id and optional label |
- *
- * ## Programmatic API
- *
- * | Method | Signature | Description |
- * |--------|-----------|-------------|
- * | `isGroupingActive` | `() => boolean` | Check if grouping is active |
- * | `getGroups` | `() => ColumnGroup[]` | Get all computed groups |
- * | `getGroupColumns` | `(groupId) => ColumnConfig[]` | Get columns in a specific group |
- * | `refresh` | `() => void` | Force refresh of column groups |
  *
  * @example Declarative columnGroups (Recommended)
  * ```ts

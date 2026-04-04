@@ -25,14 +25,6 @@ import type { MultiSortConfig, SortModel } from './types';
  * import { MultiSortPlugin } from '@toolbox-web/grid/plugins/multi-sort';
  * ```
  *
- * ## Configuration Options
- *
- * | Option | Type | Default | Description |
- * |--------|------|---------|-------------|
- * | `maxSortColumns` | `number` | `3` | Maximum columns to sort by |
- * | `showSortIndex` | `boolean` | `true` | Show sort priority badges |
- * | `initialSort` | `SortModel[]` | - | Pre-configured sort order on load |
- *
  * ## Keyboard Shortcuts
  *
  * | Shortcut | Action |
@@ -46,16 +38,6 @@ import type { MultiSortConfig, SortModel } from './types';
  * | Event | Detail | Description |
  * |-------|--------|-------------|
  * | `sort-change` | `{ sortModel: SortModel[] }` | Fired when sort changes |
- *
- * ## Programmatic API
- *
- * | Method | Signature | Description |
- * |--------|-----------|-------------|
- * | `setSort` | `(sortModel: SortModel[]) => void` | Set sort programmatically |
- * | `getSortModel` | `() => SortModel[]` | Get current sort model |
- * | `clearSort` | `() => void` | Clear all sorting |
- * | `addSort` | `(field, direction) => void` | Add a column to sort |
- * | `removeSort` | `(field) => void` | Remove a column from sort |
  *
  * @example Basic Multi-Column Sorting
  * ```ts

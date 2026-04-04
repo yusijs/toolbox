@@ -129,6 +129,29 @@ export const escapeCode = (text: string): string => text.replace(/\\/g, '\\\\').
 export const getText = (comment?: TypeDocComment): string => comment?.summary?.map((s) => s.text).join('') ?? '';
 
 /**
+ * Get summary text from a comment, resolving `{@link TypeName}` references to markdown links.
+ *
+ * @param comment - TypeDoc comment to extract text from
+ * @param resolveLink - Function that maps a type name to its documentation URL (or null if unknown)
+ */
+export function getTextWithLinks(
+  comment: TypeDocComment | undefined,
+  resolveLink: (name: string) => string | null,
+): string {
+  if (!comment?.summary) return '';
+  return comment.summary
+    .map((s) => {
+      if (s.kind === 'inline-tag' && s.tag === '@link') {
+        const name = (s.text ?? '').trim();
+        const url = resolveLink(name);
+        return url ? `[\`${name}\`](${url})` : `\`${name}\``;
+      }
+      return s.text ?? '';
+    })
+    .join('');
+}
+
+/**
  * Get the first paragraph of a summary, collapsing newlines to spaces.
  * A "paragraph" is text up to a blank line (double newline). Falls back
  * to the entire summary if there's no blank-line break.

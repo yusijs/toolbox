@@ -54,29 +54,6 @@ export interface GroupState {
  * import { GroupingRowsPlugin } from '@toolbox-web/grid/plugins/grouping-rows';
  * ```
  *
- * ## Configuration Options
- *
- * | Option | Type | Default | Description |
- * |--------|------|---------|-------------|
- * | `groupOn` | `(row) => string[]` | - | Callback returning group path array |
- * | `defaultExpanded` | `boolean \\| number \\| string \\| string[]` | `false` | Initial expanded state |
- * | `showRowCount` | `boolean` | `true` | Show row count in group header |
- * | `indentWidth` | `number` | `20` | Indentation per level (pixels) |
- * | `fullWidth` | `boolean` | `true` | Group row spans full width |
- * | `animation` | `false \\| 'slide' \\| 'fade'` | `'slide'` | Expand/collapse animation |
- * | `accordion` | `boolean` | `false` | Only one group open at a time |
- *
- * ## Programmatic API
- *
- * | Method | Signature | Description |
- * |--------|-----------|-------------|
- * | `expandGroup` | `(path: string[]) => void` | Expand a specific group |
- * | `collapseGroup` | `(path: string[]) => void` | Collapse a specific group |
- * | `expandAll` | `() => void` | Expand all groups |
- * | `collapseAll` | `() => void` | Collapse all groups |
- * | `isGroupExpanded` | `(path: string[]) => boolean` | Check if group is expanded |
- * | `getGroupState` | `() => GroupState` | Get current grouping state |
- *
  * ## CSS Custom Properties
  *
  * | Property | Default | Description |

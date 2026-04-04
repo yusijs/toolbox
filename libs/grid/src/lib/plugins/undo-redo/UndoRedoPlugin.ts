@@ -39,31 +39,12 @@ import type { EditAction, UndoRedoAction, UndoRedoConfig, UndoRedoDetail } from 
  * import { UndoRedoPlugin } from '@toolbox-web/grid/plugins/undo-redo';
  * ```
  *
- * ## Configuration Options
- *
- * | Option | Type | Default | Description |
- * |--------|------|---------|-------------|
- * | `maxHistorySize` | `number` | `100` | Maximum actions in history stack |
- *
  * ## Keyboard Shortcuts
  *
  * | Shortcut | Action |
  * |----------|--------|
  * | `Ctrl+Z` / `Cmd+Z` | Undo last edit |
  * | `Ctrl+Y` / `Cmd+Shift+Z` | Redo last undone edit |
- *
- * ## Programmatic API
- *
- * | Method | Signature | Description |
- * |--------|-----------|-------------|
- * | `undo` | `() => UndoRedoAction \| null` | Undo the last edit (or compound) |
- * | `redo` | `() => UndoRedoAction \| null` | Redo the last undone edit (or compound) |
- * | `canUndo` | `() => boolean` | Check if undo is available |
- * | `canRedo` | `() => boolean` | Check if redo is available |
- * | `clearHistory` | `() => void` | Clear the entire history stack |
- * | `recordEdit` | `(rowIndex, field, old, new) => void` | Manually record a cell edit |
- * | `beginTransaction` | `() => void` | Start grouping edits into a compound |
- * | `endTransaction` | `() => void` | Finalize and push the compound action |
  *
  * @example Basic Usage with EditingPlugin
  * ```ts

@@ -38,18 +38,6 @@ import type { BlankMode, FilterChangeDetail, FilterConfig, FilterModel, FilterPa
  * import { FilteringPlugin } from '@toolbox-web/grid/plugins/filtering';
  * ```
  *
- * ## Configuration Options
- *
- * | Option | Type | Default | Description |
- * |--------|------|---------|-------------|
- * | `debounceMs` | `number` | `300` | Debounce delay for filter input |
- * | `caseSensitive` | `boolean` | `false` | Case-sensitive string matching |
- * | `trimInput` | `boolean` | `true` | Trim whitespace from filter input |
- * | `useWorker` | `boolean` | `true` | Use Web Worker for datasets >1000 rows |
- * | `filterPanelRenderer` | `FilterPanelRenderer` | - | Custom filter panel renderer |
- * | `valuesHandler` | `FilterValuesHandler` | - | Async handler to fetch unique filter values |
- * | `filterHandler` | `FilterHandler<TRow>` | - | Async handler to apply filters remotely |
- *
  * ## Column Configuration
  *
  * | Property | Type | Description |
@@ -57,15 +45,6 @@ import type { BlankMode, FilterChangeDetail, FilterConfig, FilterModel, FilterPa
  * | `filterable` | `boolean` | Enable filtering for this column |
  * | `filterType` | `'text' \| 'select' \| 'number' \| 'date'` | Filter UI type |
  * | `filterOptions` | `unknown[]` | Predefined options for select filters |
- *
- * ## Programmatic API
- *
- * | Method | Signature | Description |
- * |--------|-----------|-------------|
- * | `setFilter` | `(field, value) => void` | Set filter value for a column |
- * | `getFilters` | `() => FilterModel[]` | Get all current filters |
- * | `clearFilters` | `() => void` | Clear all filters |
- * | `clearFilter` | `(field) => void` | Clear filter for a specific column |
  *
  * ## CSS Custom Properties
  *

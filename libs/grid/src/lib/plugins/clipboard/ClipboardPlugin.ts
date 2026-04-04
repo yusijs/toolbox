@@ -38,17 +38,6 @@ import {
  * import { ClipboardPlugin } from '@toolbox-web/grid/plugins/clipboard';
  * ```
  *
- * ## Configuration Options
- *
- * | Option | Type | Default | Description |
- * |--------|------|---------|-------------|
- * | `includeHeaders` | `boolean` | `false` | Include column headers in copied data |
- * | `delimiter` | `string` | `'\t'` | Column delimiter (tab for Excel compatibility) |
- * | `newline` | `string` | `'\n'` | Row delimiter |
- * | `quoteStrings` | `boolean` | `false` | Wrap string values in quotes |
- * | `processCell` | `(value, field, row) => string` | - | Custom cell value processor (overrides copy-what-you-see) |
- * | `pasteHandler` | `PasteHandler \| null` | `defaultPasteHandler` | Custom paste handler |
- *
  * ## Keyboard Shortcuts
  *
  * | Shortcut | Action |
@@ -65,16 +54,6 @@ import {
  * | Range selection | Paste is clipped to fit within the selected range |
  * | Row selection | Paste is clipped to the selected rows |
  * | No selection | Paste starts at row 0, column 0 |
- *
- * ## Programmatic API
- *
- * | Method | Signature | Description |
- * |--------|-----------|-------------|
- * | `copy` | `(options?: CopyOptions) => Promise<string>` | Copy to clipboard with optional column/row control |
- * | `copyRows` | `(indices, options?) => Promise<string>` | Copy specific rows to clipboard |
- * | `paste` | `() => Promise<string[][] \| null>` | Read and parse clipboard content |
- * | `getSelectionAsText` | `(options?: CopyOptions) => string` | Get clipboard text without writing to clipboard |
- * | `getLastCopied` | `() => { text, timestamp } \| null` | Get info about last copy operation |
  *
  * @example Basic Usage with Excel Compatibility
  * ```ts

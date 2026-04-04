@@ -27,18 +27,6 @@ export const ROW_DRAG_HANDLE_FIELD = '__tbw_row_drag';
  * import { RowReorderPlugin } from '@toolbox-web/grid/plugins/reorder-rows';
  * ```
  *
- * ## Configuration Options
- *
- * | Option | Type | Default | Description |
- * |--------|------|---------|-------------|
- * | `enableKeyboard` | `boolean` | `true` | Enable Ctrl+Up/Down shortcuts |
- * | `showDragHandle` | `boolean` | `true` | Show drag handle column |
- * | `dragHandlePosition` | `'left' \| 'right'` | `'left'` | Drag handle column position |
- * | `dragHandleWidth` | `number` | `40` | Drag handle column width |
- * | `canMove` | `function` | - | Validation callback |
- * | `debounceMs` | `number` | `300` | Debounce time for keyboard moves |
- * | `animation` | `false \| 'flip'` | `'flip'` | Animation for row moves |
- *
  * ## Keyboard Shortcuts
  *
  * | Key | Action |
@@ -50,7 +38,7 @@ export const ROW_DRAG_HANDLE_FIELD = '__tbw_row_drag';
  *
  * | Event | Detail | Cancelable | Description |
  * |-------|--------|------------|-------------|
- * | `row-move` | `RowMoveDetail` | Yes | Fired when a row move is attempted |
+ * | `row-move` | {@link RowMoveDetail} | Yes | Fired when a row move is attempted |
  *
  * @example Basic Row Reordering
  * ```ts

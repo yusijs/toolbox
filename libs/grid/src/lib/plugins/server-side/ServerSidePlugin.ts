@@ -24,14 +24,6 @@ const SCROLL_DEBOUNCE_MS = 100;
  * import { ServerSidePlugin } from '@toolbox-web/grid/plugins/server-side';
  * ```
  *
- * ## Configuration Options
- *
- * | Option | Type | Default | Description |
- * |--------|------|---------|-------------|
- * | `pageSize` | `number` | `100` | Rows per block |
- * | `cacheBlockSize` | `number` | `pageSize` | Cache block size |
- * | `maxConcurrentRequests` | `number` | `2` | Max parallel data requests |
- *
  * ## DataSource Interface
  *
  * ```ts
@@ -39,14 +31,6 @@ const SCROLL_DEBOUNCE_MS = 100;
  *   getRows(params: GetRowsParams): Promise<GetRowsResult>;
  * }
  * ```
- *
- * ## Programmatic API
- *
- * | Method | Signature | Description |
- * |--------|-----------|-------------|
- * | `setDataSource` | `(ds: ServerSideDataSource) => void` | Set the data source |
- * | `refresh` | `() => void` | Refresh current data |
- * | `clearCache` | `() => void` | Clear all cached blocks |
  *
  * @example Basic Server-Side Loading
  * ```ts

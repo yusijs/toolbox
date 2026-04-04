@@ -25,17 +25,6 @@ import type { AggregationRowConfig, PinnedRowsConfig, PinnedRowsContext, PinnedR
  * import { PinnedRowsPlugin } from '@toolbox-web/grid/plugins/pinned-rows';
  * ```
  *
- * ## Configuration Options
- *
- * | Option | Type | Default | Description |
- * |--------|------|---------|-------------|
- * | `position` | `'top' \| 'bottom'` | `'bottom'` | Status bar position |
- * | `showRowCount` | `boolean` | `true` | Show total row count |
- * | `showSelectedCount` | `boolean` | `true` | Show selected row count |
- * | `showFilteredCount` | `boolean` | `true` | Show filtered row count |
- * | `fullWidth` | `boolean` | `false` | Default fullWidth for aggregation rows |
- * | `aggregationRows` | `AggregationRowConfig[]` | - | Aggregation row configs |
- *
  * ## Built-in Aggregation Functions
  *
  * | Function | Description |

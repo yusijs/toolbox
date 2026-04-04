@@ -32,28 +32,6 @@ import type { DetailExpandDetail, ExpandCollapseAnimation, MasterDetailConfig } 
  * import { MasterDetailPlugin } from '@toolbox-web/grid/plugins/master-detail';
  * ```
  *
- * ## Configuration Options
- *
- * | Option | Type | Default | Description |
- * |--------|------|---------|-------------|
- * | `detailRenderer` | `(row) => HTMLElement \| string` | required | Render function for detail content |
- * | `expandOnRowClick` | `boolean` | `false` | Expand when clicking the row |
- * | `detailHeight` | `number \| 'auto'` | `'auto'` | Fixed height or auto-size |
- * | `collapseOnClickOutside` | `boolean` | `false` | Collapse when clicking outside |
- * | `showExpandColumn` | `boolean` | `true` | Show expand/collapse column |
- * | `animation` | `false \| 'slide' \| 'fade'` | `'slide'` | Animation style |
- *
- * ## Programmatic API
- *
- * | Method | Signature | Description |
- * |--------|-----------|-------------|
- * | `expandRow` | `(rowIndex) => void` | Expand a specific row |
- * | `collapseRow` | `(rowIndex) => void` | Collapse a specific row |
- * | `toggleRow` | `(rowIndex) => void` | Toggle row expansion |
- * | `expandAll` | `() => void` | Expand all rows |
- * | `collapseAll` | `() => void` | Collapse all rows |
- * | `isRowExpanded` | `(rowIndex) => boolean` | Check if row is expanded |
- *
  * ## CSS Custom Properties
  *
  * | Property | Default | Description |

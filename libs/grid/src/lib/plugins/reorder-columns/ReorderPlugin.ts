@@ -29,13 +29,6 @@ import type { ColumnMoveDetail, ReorderConfig } from './types';
  * import { ReorderPlugin } from '@toolbox-web/grid/plugins/reorder-columns';
  * ```
  *
- * ## Configuration Options
- *
- * | Option | Type | Default | Description |
- * |--------|------|---------|-------------|
- * | `animation` | `false \| 'flip' \| 'fade'` | `'flip'` | Animation type for column moves |
- * | `animationDuration` | `number` | `200` | Animation duration in ms |
- *
  * ## Keyboard Shortcuts
  *
  * | Key | Action |

@@ -31,28 +31,6 @@ import type { ExpandCollapseAnimation, FlattenedTreeRow, TreeConfig, TreeExpandD
  * import { TreePlugin } from '@toolbox-web/grid/plugins/tree';
  * ```
  *
- * ## Configuration Options
- *
- * | Option | Type | Default | Description |
- * |--------|------|---------|-------------|
- * | `childrenField` | `string` | `'children'` | Field containing child array |
- * | `autoDetect` | `boolean` | `true` | Auto-detect tree structure from data |
- * | `defaultExpanded` | `boolean` | `false` | Expand all nodes initially |
- * | `indentWidth` | `number` | `20` | Indentation per level (pixels) |
- * | `showExpandIcons` | `boolean` | `true` | Show expand/collapse toggle icons |
- * | `animation` | `false \| 'slide' \| 'fade'` | `'slide'` | Animation style for expand/collapse |
- *
- * ## Programmatic API
- *
- * | Method | Signature | Description |
- * |--------|-----------|-------------|
- * | `expand` | `(nodeId) => void` | Expand a specific node |
- * | `collapse` | `(nodeId) => void` | Collapse a specific node |
- * | `toggle` | `(nodeId) => void` | Toggle a node's expanded state |
- * | `expandAll` | `() => void` | Expand all nodes |
- * | `collapseAll` | `() => void` | Collapse all nodes |
- * | `getExpandedNodes` | `() => Set<string>` | Get currently expanded node keys |
- *
  * ## CSS Custom Properties
  *
  * | Property | Default | Description |

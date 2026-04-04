@@ -26,6 +26,7 @@ import {
   getFirstParagraph,
   getTag,
   getText,
+  getTextWithLinks,
   isDeprecated,
   isInternal,
   isNodeInternal,
@@ -247,10 +248,14 @@ function genClass(node: TypeDocNode, title: string, filter?: (m: TypeDocNode) =>
  */
 function genPluginClass(node: TypeDocNode, title: string): string {
   let out = mdxHeader(title);
-  let desc = getText(node.comment);
+  let desc = getTextWithLinks(node.comment, resolveTypeLink);
   // Remove "Extends BaseGridPlugin" text that comes from @internal marker
   desc = desc.replace(/\s*Extends BaseGridPlugin\s*/g, '').trim();
   if (desc) out += `${escape(desc)}\n\n`;
+
+  // Auto-generate Configuration Options table from the constructor's config interface.
+  // The config type is the first type argument of the extended BaseGridPlugin<TConfig>.
+  out += genPluginConfigTable(node);
 
   // Add @example blocks after the description tables
   out += formatAllExamples(node.comment);
@@ -266,6 +271,41 @@ function genPluginClass(node: TypeDocNode, title: string): string {
   // Filter out inherited members AND @internal members
   const members = (node.children ?? []).filter((m) => !m.inheritedFrom && !m.flags?.isInherited && !isNodeInternal(m));
   return genClassBody(node.name, out, members, { showOverride: true }, node.comment);
+}
+
+/**
+ * Auto-generate a "Configuration Options" table from the plugin's config interface.
+ * Extracts the config type from `BaseGridPlugin<ConfigType>`, looks up the interface
+ * in the node registry, and renders its properties with linked types.
+ */
+function genPluginConfigTable(classNode: TypeDocNode): string {
+  // Extract config type name from extended type: BaseGridPlugin<FilterConfig>
+  const configTypeName = classNode.extendedTypes?.[0]?.typeArguments?.[0]?.name;
+  if (!configTypeName) return '';
+
+  const configNode = nodeRegistry.get(configTypeName);
+  if (!configNode?.children) return '';
+
+  const props = configNode.children.filter(
+    (m) => m.kind === KIND.Property && !isInternal(m.comment) && !isNodeInternal(m),
+  );
+  if (!props.length) return '';
+
+  const configUrl = typeRegistry.get(configTypeName);
+  const heading = configUrl
+    ? `## [Configuration Options](${configUrl})\n\n`
+    : `## Configuration Options\n\n`;
+
+  let out = heading;
+  out += `| Option | Type | Description |\n`;
+  out += `| ------ | ---- | ----------- |\n`;
+  for (const p of props) {
+    const type = formatTypeWithLinks(p.type);
+    const desc = getFirstParagraph(p.comment);
+    const opt = p.flags?.isOptional ? '?' : '';
+    out += `| \`${p.name}${opt}\` | ${type} | ${escape(desc)} |\n`;
+  }
+  return out + '\n';
 }
 
 /** Options for class body generation */
@@ -864,6 +904,12 @@ function isFrameworkAdapters(node: TypeDocNode): boolean {
 const typeRegistry = new Map<string, string>();
 
 /**
+ * Registry mapping type names to their TypeDoc nodes.
+ * Used to look up interface properties when auto-generating config tables.
+ */
+const nodeRegistry = new Map<string, TypeDocNode>();
+
+/**
  * Build the type registry by scanning all modules in the TypeDoc output.
  * Must be called before processing any MDX that uses @see/@link references.
  */
@@ -885,6 +931,7 @@ function buildTypeRegistry(json: TypeDocNode): void {
       // Build the Starlight URL path
       const urlPath = `/grid/api/${section}/${kindFolder.toLowerCase()}/${node.name.toLowerCase()}/`;
       typeRegistry.set(node.name, urlPath);
+      nodeRegistry.set(node.name, node);
     }
   }
 
@@ -902,6 +949,7 @@ function buildTypeRegistry(json: TypeDocNode): void {
       // Build the Starlight URL path for plugin types
       const urlPath = `/grid/plugins/${folderName}/${kindFolder.toLowerCase()}/${node.name.toLowerCase()}/`;
       typeRegistry.set(node.name, urlPath);
+      nodeRegistry.set(node.name, node);
     }
   }
 }

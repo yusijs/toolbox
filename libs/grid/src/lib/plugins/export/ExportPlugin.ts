@@ -32,15 +32,6 @@ interface SelectionPluginState {
  * import { ExportPlugin } from '@toolbox-web/grid/plugins/export';
  * ```
  *
- * ## Configuration Options
- *
- * | Option | Type | Default | Description |
- * |--------|------|---------|-------------|
- * | `fileName` | `string` | `'export'` | Base filename (without extension) |
- * | `includeHeaders` | `boolean` | `true` | Include column headers in export |
- * | `onlyVisible` | `boolean` | `true` | Export only visible columns |
- * | `onlySelected` | `boolean` | `false` | Export only selected rows (requires SelectionPlugin) |
- *
  * ## Supported Formats
  *
  * | Format | Method | Description |
@@ -48,15 +39,6 @@ interface SelectionPluginState {
  * | CSV | `exportToCSV()` | Comma-separated values |
  * | Excel | `exportToExcel()` | Excel XML format (.xlsx) |
  * | JSON | `exportToJSON()` | JSON array of objects |
- *
- * ## Programmatic API
- *
- * | Method | Signature | Description |
- * |--------|-----------|-------------|
- * | `exportToCSV` | `(params?) => void` | Export as CSV file |
- * | `exportToExcel` | `(params?) => void` | Export as Excel file |
- * | `exportToJSON` | `(params?) => void` | Export as JSON file |
- * | `isExporting` | `() => boolean` | Check if export is in progress |
  *
  * @example Basic Export with Button
  * ```ts

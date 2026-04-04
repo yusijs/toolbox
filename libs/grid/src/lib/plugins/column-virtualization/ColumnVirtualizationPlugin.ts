@@ -29,27 +29,11 @@ import type { ColumnVirtualizationConfig } from './types';
  * import { ColumnVirtualizationPlugin } from '@toolbox-web/grid/plugins/column-virtualization';
  * ```
  *
- * ## Configuration Options
- *
- * | Option | Type | Default | Description |
- * |--------|------|---------|-------------|
- * | `autoEnable` | `boolean` | `true` | Auto-enable when column count exceeds threshold |
- * | `threshold` | `number` | `30` | Column count threshold for auto-enable |
- * | `overscan` | `number` | `3` | Extra columns to render beyond visible |
- *
  * ## Requirements
  *
  * - Grid must use `fitMode: 'fixed'`
  * - Columns must have explicit widths
  * - Grid must have fixed height
- *
- * ## Programmatic API
- *
- * | Method | Signature | Description |
- * |--------|-----------|-------------|
- * | `isEnabled` | `() => boolean` | Check if virtualization is active |
- * | `setEnabled` | `(enabled: boolean) => void` | Enable/disable virtualization |
- * | `getVisibleRange` | `() => { start, end }` | Get visible column range |
  *
  * @example Wide Grid with Column Virtualization
  * ```ts

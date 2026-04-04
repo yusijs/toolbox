@@ -65,28 +65,12 @@ function canMoveColumn(column: ColumnConfig): boolean {
  * import { VisibilityPlugin } from '@toolbox-web/grid/plugins/visibility';
  * ```
  *
- * ## Configuration Options
- *
- * | Option | Type | Default | Description |
- * |--------|------|---------|-------------|
- * | `allowHideAll` | `boolean` | `false` | Allow hiding all columns (no minimum) |
- *
  * ## Column Configuration
  *
  * | Property | Type | Default | Description |
  * |----------|------|---------|-------------|
  * | `visible` | `boolean` | `true` | Initial visibility state |
  * | `meta.lockVisibility` | `boolean` | `false` | Prevent user from toggling |
- *
- * ## Programmatic API
- *
- * | Method | Signature | Description |
- * |--------|-----------|-------------|
- * | `hideColumn` | `(field: string) => void` | Hide a column |
- * | `showColumn` | `(field: string) => void` | Show a column |
- * | `toggleColumn` | `(field: string) => void` | Toggle visibility |
- * | `showAllColumns` | `() => void` | Show all columns |
- * | `getHiddenColumns` | `() => string[]` | Get list of hidden column fields |
  *
  * ## CSS Custom Properties
  *

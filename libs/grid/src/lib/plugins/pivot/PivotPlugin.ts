@@ -30,33 +30,9 @@ import styles from './pivot.css?inline';
  * import { PivotPlugin } from '@toolbox-web/grid/plugins/pivot';
  * ```
  *
- * ## Configuration Options
- *
- * | Option | Type | Default | Description |
- * |--------|------|---------|-------------|
- * | `active` | `boolean` | `true` | Whether pivot is active on load |
- * | `rowGroupFields` | `string[]` | `[]` | Fields for row grouping |
- * | `columnGroupFields` | `string[]` | `[]` | Fields for column grouping |
- * | `valueFields` | `ValueField[]` | `[]` | Aggregation value fields |
- * | `showTotals` | `boolean` | `true` | Show row subtotals |
- * | `showGrandTotal` | `boolean` | `true` | Show grand total row |
- * | `showToolPanel` | `boolean` | `true` | Show interactive pivot panel |
- * | `defaultExpanded` | `boolean` | `true` | Groups expanded by default |
- * | `indentWidth` | `number` | `20` | Indent per depth level (px) |
- * | `animation` | `false \| 'slide' \| 'fade'` | `'slide'` | Expand/collapse animation |
- *
  * ## Aggregation Functions
  *
  * `sum`, `avg`, `count`, `min`, `max`, `first`, `last`
- *
- * ## Programmatic API
- *
- * | Method | Signature | Description |
- * |--------|-----------|-------------|
- * | `expandGroup` | `(path: string[]) => void` | Expand a specific group |
- * | `collapseGroup` | `(path: string[]) => void` | Collapse a specific group |
- * | `expandAll` | `() => void` | Expand all groups |
- * | `collapseAll` | `() => void` | Collapse all groups |
  *
  * ## CSS Custom Properties
  *
