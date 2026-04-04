@@ -82,6 +82,11 @@
     /* ========== Sort Indicators ========== */
     --tbw-sort-indicator-color: light-dark(#49454f, #cac4d0);
     --tbw-sort-indicator-active-color: var(--tbw-color-accent);
+    /* Hide inactive sort/filter icons until header hover */
+    --tbw-sort-indicator-display: none;
+    --tbw-sort-indicator-visibility: hidden;
+    --tbw-filter-btn-display: none;
+    --tbw-filter-btn-visibility: hidden;
 
     /* ========== Borders ========== */
     --tbw-border-header: 1px solid var(--tbw-color-border);
