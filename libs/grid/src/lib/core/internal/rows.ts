@@ -1,3 +1,4 @@
+import { GridClasses } from '../constants';
 import type { ColumnInternal, ColumnViewRenderer, GridHost, InternalGrid, RowElementInternal } from '../types';
 import {
   CELL_CLASS_ERROR,
@@ -109,8 +110,8 @@ function clearEditingState(rowEl: RowElementInternal): void {
   rowEl.__editingCellCount = 0;
   rowEl.removeAttribute('data-has-editing');
   // Clear editing class from all cells
-  const cells = rowEl.querySelectorAll('.cell.editing');
-  cells.forEach((cell) => cell.classList.remove('editing'));
+  const cells = rowEl.querySelectorAll(`.cell.${GridClasses.EDITING}`);
+  cells.forEach((cell) => cell.classList.remove(GridClasses.EDITING));
 }
 // #endregion
 
@@ -467,7 +468,7 @@ function fastPatchRow(grid: GridHost, rowEl: HTMLElement, rowData: any, rowIndex
       const cell = children[i] as HTMLElement;
 
       // Skip cells in edit mode - they have editors that must be preserved
-      if (cell.classList.contains('editing')) continue;
+      if (cell.classList.contains(GridClasses.EDITING)) continue;
 
       // Release editor views if cell has element children (indicating prior editor/renderer DOM).
       // Plain text cells (textContent-only) have no element children, so this is a fast O(1) skip.
@@ -528,7 +529,7 @@ function fastPatchRow(grid: GridHost, rowEl: HTMLElement, rowData: any, rowIndex
     }
 
     // Check editing state once — reused for focus guard and content skip below.
-    const isEditing = cell.classList.contains('editing');
+    const isEditing = cell.classList.contains(GridClasses.EDITING);
 
     // Update focus state - must be data-driven, not DOM-element-driven.
     // Skip editing cells — their focus state is managed by the navigation
@@ -997,7 +998,7 @@ export function handleRowClick(grid: GridHost, e: MouseEvent, rowEl: HTMLElement
       grid._focusCol = colIndex;
 
       // If clicking an already-editing cell, just update focus styling and return
-      if (cellEl.classList.contains('editing')) {
+      if (cellEl.classList.contains(GridClasses.EDITING)) {
         if (focusChanged) {
           // Update .cell-focus class to reflect new focus (clear from grid element)
           clearCellFocus(grid._bodyEl ?? grid);

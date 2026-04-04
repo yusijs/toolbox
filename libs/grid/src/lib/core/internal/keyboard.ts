@@ -2,6 +2,7 @@
  * Central keyboard handler attached to the host element. Manages navigation, paging,
  * and edit lifecycle triggers while respecting active form field interactions.
  */
+import { GridClasses } from '../constants';
 import type { GridHost } from '../types';
 import { FOCUSABLE_EDITOR_SELECTOR } from './rows';
 import { clearCellFocus, isRTL } from './utils';
@@ -274,7 +275,7 @@ export function ensureCellVisible(grid: GridHost, options?: EnsureCellVisibleOpt
         }
       }
 
-      if (isEditing && cell.classList.contains('editing')) {
+      if (isEditing && cell.classList.contains(GridClasses.EDITING)) {
         // Editing cell: focus the editor input inside it
         const focusTarget = cell.querySelector(FOCUSABLE_EDITOR_SELECTOR) as HTMLElement | null;
         if (focusTarget && document.activeElement !== focusTarget) {

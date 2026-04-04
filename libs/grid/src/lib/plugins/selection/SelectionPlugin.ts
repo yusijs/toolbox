@@ -941,7 +941,7 @@ export class SelectionPlugin extends BaseGridPlugin<SelectionConfig> {
     // Clear all selection classes first
     const allCells = gridEl.querySelectorAll('.cell');
     allCells.forEach((cell) => {
-      cell.classList.remove('selected', 'top', 'bottom', 'first', 'last');
+      cell.classList.remove(GridClasses.SELECTED, 'top', 'bottom', 'first', 'last');
       // Clear selectable attribute - will be re-applied below
       if (hasSelectableCallback) {
         cell.removeAttribute('data-selectable');
@@ -950,7 +950,7 @@ export class SelectionPlugin extends BaseGridPlugin<SelectionConfig> {
 
     const allRows = gridEl.querySelectorAll('.data-grid-row');
     allRows.forEach((row) => {
-      row.classList.remove('selected', 'row-focus');
+      row.classList.remove(GridClasses.SELECTED, 'row-focus');
       row.setAttribute('aria-selected', 'false');
       // Clear selectable attribute - will be re-applied below
       if (hasSelectableCallback) {
@@ -972,7 +972,7 @@ export class SelectionPlugin extends BaseGridPlugin<SelectionConfig> {
             row.setAttribute('data-selectable', 'false');
           }
           if (this.selected.has(rowIndex)) {
-            row.classList.add('selected', 'row-focus');
+            row.classList.add(GridClasses.SELECTED, 'row-focus');
             row.setAttribute('aria-selected', 'true');
           }
         }
