@@ -105,7 +105,12 @@ export function handleTouchStart(clientX: number, clientY: number, state: TouchS
  * Uses incremental deltas (from previous position) for robustness.
  * Returns true if the event should be prevented (grid is handling scroll).
  */
-export function handleTouchMove(clientX: number, clientY: number, state: TouchScrollState, elements: TouchScrollElements): boolean {
+export function handleTouchMove(
+  clientX: number,
+  clientY: number,
+  state: TouchScrollState,
+  elements: TouchScrollElements,
+): boolean {
   if (state.lastY === null || state.lastX === null) {
     return false;
   }
@@ -128,12 +133,30 @@ export function handleTouchMove(clientX: number, clientY: number, state: TouchSc
   state.lastX = clientX;
   state.lastTime = now;
 
-  // If already locked to grid scrolling, keep preventing default
+  // If already locked to grid scrolling, check boundaries before scrolling
   if (state.locked) {
-    elements.fauxScrollbar.scrollTop += incrY;
-    if (elements.scrollArea) {
-      elements.scrollArea.scrollLeft += incrX;
+    const { scrollTop, scrollHeight, clientHeight } = elements.fauxScrollbar;
+    const canScrollY = (incrY > 0 && scrollTop < scrollHeight - clientHeight) || (incrY < 0 && scrollTop > 0);
+
+    if (canScrollY) {
+      elements.fauxScrollbar.scrollTop += incrY;
+    } else if (incrY !== 0) {
+      // At vertical boundary — propagate scroll to the page
+      window.scrollBy(0, incrY);
     }
+
+    if (elements.scrollArea) {
+      const { scrollLeft, scrollWidth, clientWidth } = elements.scrollArea;
+      const canScrollX = (incrX > 0 && scrollLeft < scrollWidth - clientWidth) || (incrX < 0 && scrollLeft > 0);
+
+      if (canScrollX) {
+        elements.scrollArea.scrollLeft += incrX;
+      } else if (incrX !== 0) {
+        // At horizontal boundary — propagate scroll to the page
+        window.scrollBy(incrX, 0);
+      }
+    }
+
     return true;
   }
 
@@ -146,9 +169,8 @@ export function handleTouchMove(clientX: number, clientY: number, state: TouchSc
   // Using totalDelta avoids mis-detection from finger jitter between frames.
   const isVerticalGesture = totalDeltaY >= totalDeltaX;
 
-  // Check if grid has scrollable content (don't check boundary position —
-  // the browser clamps scrollTop automatically, and checking boundaries here
-  // causes the lock to fail when momentum brought us to an edge).
+  // Check if grid has scrollable content in this axis.
+  // Boundary position checks happen in the locked branch above.
   const { scrollHeight, clientHeight } = elements.fauxScrollbar;
   const hasVerticalScroll = scrollHeight - clientHeight > 0;
 
@@ -179,6 +201,19 @@ export function handleTouchMove(clientX: number, clientY: number, state: TouchSc
 export function handleTouchEnd(state: TouchScrollState, elements: TouchScrollElements): void {
   const minVelocity = 0.1; // pixels per ms threshold
 
+  // Zero velocity when the finger was stationary before release.
+  // pointermove events fire every ~16ms during active movement. If the last
+  // move was more than ~60ms ago (4 frames), the user was holding still and
+  // expects scrolling to stop — not to resume with stale velocity from the
+  // earlier movement phase.
+  if (state.lastTime !== null) {
+    const timeSinceLastMove = performance.now() - state.lastTime;
+    if (timeSinceLastMove > 60) {
+      state.velocityY = 0;
+      state.velocityX = 0;
+    }
+  }
+
   // Start momentum scrolling if there's significant velocity
   if (Math.abs(state.velocityY) > minVelocity || Math.abs(state.velocityX) > minVelocity) {
     startMomentumScroll(state, elements);
@@ -191,30 +226,46 @@ export function handleTouchEnd(state: TouchScrollState, elements: TouchScrollEle
 // #region Momentum Scrolling
 /**
  * Start momentum scrolling animation.
+ *
+ * Uses time-based friction so deceleration is consistent regardless of actual
+ * frame timing. If the browser delays a rAF callback (mobile power-saving,
+ * compositor throttling), the elapsed time is still accounted for correctly.
  */
 function startMomentumScroll(state: TouchScrollState, elements: TouchScrollElements): void {
-  const friction = 0.95; // Deceleration factor per frame
-  const minVelocity = 0.01; // Stop threshold in px/ms
+  const friction = 0.95; // Deceleration factor per 16ms frame
+  const minFrameScroll = 1; // Stop when per-frame scroll < 1px
+  let lastFrameTime = performance.now();
 
   const animate = () => {
-    // Apply friction
-    state.velocityY *= friction;
-    state.velocityX *= friction;
+    const now = performance.now();
+    const elapsed = now - lastFrameTime;
+    lastFrameTime = now;
+
+    // Apply friction proportional to actual elapsed time.
+    const frames = elapsed / 16;
+    const decay = Math.pow(friction, frames);
+    state.velocityY *= decay;
+    state.velocityX *= decay;
 
     // Convert velocity (px/ms) to per-frame scroll amount (~16ms per frame)
     const scrollY = state.velocityY * 16;
     const scrollX = state.velocityX * 16;
 
-    // Apply scroll if above threshold
-    if (Math.abs(state.velocityY) > minVelocity) {
+    const movingY = Math.abs(scrollY) >= minFrameScroll;
+    const movingX = Math.abs(scrollX) >= minFrameScroll;
+
+    // Only apply scroll when per-frame amount is visible (>= 1px).
+    // Without this guard, a delayed rAF callback (e.g. 400ms gap from
+    // browser throttling) would still write a sub-pixel amount that
+    // rounds to 1px — producing the visible "late jump."
+    if (movingY) {
       elements.fauxScrollbar.scrollTop += scrollY;
     }
-    if (Math.abs(state.velocityX) > minVelocity && elements.scrollArea) {
+    if (movingX && elements.scrollArea) {
       elements.scrollArea.scrollLeft += scrollX;
     }
 
-    // Continue animation if still moving
-    if (Math.abs(state.velocityY) > minVelocity || Math.abs(state.velocityX) > minVelocity) {
+    if (movingY || movingX) {
       state.momentumRaf = requestAnimationFrame(animate);
     } else {
       state.momentumRaf = 0;

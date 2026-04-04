@@ -199,6 +199,96 @@ describe('touch-scroll', () => {
       expect(result).toBe(true);
     });
 
+    it('should propagate to window when locked and at bottom boundary scrolling down', () => {
+      const scrollBySpy = vi.spyOn(window, 'scrollBy').mockImplementation(vi.fn());
+
+      // Set scrollTop to bottom boundary
+      Object.defineProperties(fauxScrollbar, {
+        scrollTop: { value: 600, writable: true }, // scrollHeight(1000) - clientHeight(400)
+        scrollHeight: { value: 1000 },
+        clientHeight: { value: 400 },
+      });
+
+      // Lock the gesture
+      state.locked = true;
+
+      // Scroll down (positive incrY: lastY - clientY > 0 means clientY < lastY)
+      const result = handleTouchMove(50, 190, state, elements); // incrY = 200 - 190 = 10 (down)
+      expect(result).toBe(true);
+      expect(scrollBySpy).toHaveBeenCalledWith(0, 10);
+      // scrollTop should NOT have changed
+      expect(fauxScrollbar.scrollTop).toBe(600);
+
+      scrollBySpy.mockRestore();
+    });
+
+    it('should propagate to window when locked and at top boundary scrolling up', () => {
+      const scrollBySpy = vi.spyOn(window, 'scrollBy').mockImplementation(vi.fn());
+
+      Object.defineProperties(fauxScrollbar, {
+        scrollTop: { value: 0, writable: true },
+        scrollHeight: { value: 1000 },
+        clientHeight: { value: 400 },
+      });
+
+      state.locked = true;
+
+      // Scroll up (negative incrY: lastY - clientY < 0 means clientY > lastY)
+      const result = handleTouchMove(50, 210, state, elements); // incrY = 200 - 210 = -10 (up)
+      expect(result).toBe(true);
+      expect(scrollBySpy).toHaveBeenCalledWith(0, -10);
+      expect(fauxScrollbar.scrollTop).toBe(0);
+
+      scrollBySpy.mockRestore();
+    });
+
+    it('should scroll grid normally when locked at boundary but reversing direction', () => {
+      const scrollBySpy = vi.spyOn(window, 'scrollBy').mockImplementation(vi.fn());
+
+      Object.defineProperties(fauxScrollbar, {
+        scrollTop: { value: 600, writable: true }, // at bottom
+        scrollHeight: { value: 1000 },
+        clientHeight: { value: 400 },
+      });
+
+      state.locked = true;
+
+      // Scroll UP from bottom boundary (should scroll grid, not window)
+      handleTouchMove(50, 210, state, elements); // incrY = 200 - 210 = -10 (up)
+      expect(scrollBySpy).not.toHaveBeenCalled();
+      expect(fauxScrollbar.scrollTop).toBe(590); // 600 - 10
+
+      scrollBySpy.mockRestore();
+    });
+
+    it('should propagate horizontal scroll to window at boundary', () => {
+      const scrollBySpy = vi.spyOn(window, 'scrollBy').mockImplementation(vi.fn());
+
+      const scrollArea = document.createElement('div');
+      Object.defineProperties(scrollArea, {
+        scrollLeft: { value: 400, writable: true }, // at right boundary
+        scrollWidth: { value: 800 },
+        clientWidth: { value: 400 },
+      });
+      elements.scrollArea = scrollArea;
+
+      // At vertical bottom too so vertical doesn't consume the event
+      Object.defineProperties(fauxScrollbar, {
+        scrollTop: { value: 600, writable: true },
+        scrollHeight: { value: 1000 },
+        clientHeight: { value: 400 },
+      });
+
+      state.locked = true;
+
+      // Scroll right (positive incrX: lastX - clientX > 0)
+      handleTouchMove(40, 200, state, elements); // incrX = 50 - 40 = 10 (right)
+      expect(scrollBySpy).toHaveBeenCalledWith(10, 0);
+      expect(scrollArea.scrollLeft).toBe(400); // unchanged
+
+      scrollBySpy.mockRestore();
+    });
+
     it('should handle horizontal scrolling when scrollArea is present', () => {
       const scrollArea = document.createElement('div');
       Object.defineProperties(scrollArea, {
@@ -269,6 +359,34 @@ describe('touch-scroll', () => {
       expect(rafSpy).not.toHaveBeenCalled();
       rafSpy.mockRestore();
     });
+
+    it('should zero velocity when finger was stationary before release', () => {
+      const rafSpy = vi.spyOn(globalThis, 'requestAnimationFrame');
+      state.velocityY = 0.5; // High velocity from earlier movement
+
+      // Simulate 100ms hold: last move was 100ms ago
+      state.lastTime = performance.now() - 100;
+
+      handleTouchEnd(state, elements);
+
+      // Should not start momentum because velocity was zeroed
+      expect(rafSpy).not.toHaveBeenCalled();
+      rafSpy.mockRestore();
+    });
+
+    it('should preserve velocity when finger was still moving at release', () => {
+      const rafSpy = vi.spyOn(globalThis, 'requestAnimationFrame').mockReturnValue(999);
+      state.velocityY = 0.5;
+
+      // Last move was just 10ms ago (still actively moving)
+      state.lastTime = performance.now() - 10;
+
+      handleTouchEnd(state, elements);
+
+      expect(rafSpy).toHaveBeenCalled();
+      expect(state.momentumRaf).toBe(999);
+      rafSpy.mockRestore();
+    });
   });
 
   describe('setupTouchScrollListeners', () => {
@@ -332,7 +450,9 @@ describe('touch-scroll', () => {
     it('should set pointer capture on touch pointerdown', () => {
       setupTouchScrollListeners(gridContentEl, state, elements, controller.signal);
 
-      gridContentEl.dispatchEvent(createPointerEvent('pointerdown', { clientX: 50, clientY: 200, pointerId: 1, pointerType: 'touch' }));
+      gridContentEl.dispatchEvent(
+        createPointerEvent('pointerdown', { clientX: 50, clientY: 200, pointerId: 1, pointerType: 'touch' }),
+      );
 
       expect(state.activePointerId).toBe(1);
       expect(state.startY).toBe(200);
@@ -342,7 +462,9 @@ describe('touch-scroll', () => {
     it('should ignore mouse pointerdown events', () => {
       setupTouchScrollListeners(gridContentEl, state, elements, controller.signal);
 
-      gridContentEl.dispatchEvent(createPointerEvent('pointerdown', { clientX: 50, clientY: 200, pointerId: 1, pointerType: 'mouse' }));
+      gridContentEl.dispatchEvent(
+        createPointerEvent('pointerdown', { clientX: 50, clientY: 200, pointerId: 1, pointerType: 'mouse' }),
+      );
 
       expect(state.activePointerId).toBeNull();
       expect(state.startY).toBeNull();
@@ -351,8 +473,12 @@ describe('touch-scroll', () => {
     it('should ignore second touch while first is active', () => {
       setupTouchScrollListeners(gridContentEl, state, elements, controller.signal);
 
-      gridContentEl.dispatchEvent(createPointerEvent('pointerdown', { clientX: 50, clientY: 200, pointerId: 1, pointerType: 'touch' }));
-      gridContentEl.dispatchEvent(createPointerEvent('pointerdown', { clientX: 100, clientY: 300, pointerId: 2, pointerType: 'touch' }));
+      gridContentEl.dispatchEvent(
+        createPointerEvent('pointerdown', { clientX: 50, clientY: 200, pointerId: 1, pointerType: 'touch' }),
+      );
+      gridContentEl.dispatchEvent(
+        createPointerEvent('pointerdown', { clientX: 100, clientY: 300, pointerId: 2, pointerType: 'touch' }),
+      );
 
       expect(state.activePointerId).toBe(1);
       expect(state.startY).toBe(200);
@@ -362,7 +488,9 @@ describe('touch-scroll', () => {
       setupTouchScrollListeners(gridContentEl, state, elements, controller.signal);
 
       // Dispatch pointerdown and verify it updates state
-      gridContentEl.dispatchEvent(createPointerEvent('pointerdown', { clientX: 50, clientY: 200, pointerId: 1, pointerType: 'touch' }));
+      gridContentEl.dispatchEvent(
+        createPointerEvent('pointerdown', { clientX: 50, clientY: 200, pointerId: 1, pointerType: 'touch' }),
+      );
       expect(state.startY).toBe(200);
 
       // Abort and reset state
@@ -371,14 +499,18 @@ describe('touch-scroll', () => {
       state.activePointerId = null;
 
       // Dispatch again - should not update state
-      gridContentEl.dispatchEvent(createPointerEvent('pointerdown', { clientX: 50, clientY: 300, pointerId: 2, pointerType: 'touch' }));
+      gridContentEl.dispatchEvent(
+        createPointerEvent('pointerdown', { clientX: 50, clientY: 300, pointerId: 2, pointerType: 'touch' }),
+      );
       expect(state.startY).toBeNull();
     });
 
     it('should clean up state on pointercancel', () => {
       setupTouchScrollListeners(gridContentEl, state, elements, controller.signal);
 
-      gridContentEl.dispatchEvent(createPointerEvent('pointerdown', { clientX: 50, clientY: 200, pointerId: 1, pointerType: 'touch' }));
+      gridContentEl.dispatchEvent(
+        createPointerEvent('pointerdown', { clientX: 50, clientY: 200, pointerId: 1, pointerType: 'touch' }),
+      );
       expect(state.activePointerId).toBe(1);
 
       gridContentEl.dispatchEvent(createPointerEvent('pointercancel', { pointerId: 1, pointerType: 'touch' }));
@@ -389,7 +521,9 @@ describe('touch-scroll', () => {
     it('should clean up state on lostpointercapture', () => {
       setupTouchScrollListeners(gridContentEl, state, elements, controller.signal);
 
-      gridContentEl.dispatchEvent(createPointerEvent('pointerdown', { clientX: 50, clientY: 200, pointerId: 1, pointerType: 'touch' }));
+      gridContentEl.dispatchEvent(
+        createPointerEvent('pointerdown', { clientX: 50, clientY: 200, pointerId: 1, pointerType: 'touch' }),
+      );
       expect(state.activePointerId).toBe(1);
 
       gridContentEl.dispatchEvent(createPointerEvent('lostpointercapture', { pointerId: 1, pointerType: 'touch' }));
