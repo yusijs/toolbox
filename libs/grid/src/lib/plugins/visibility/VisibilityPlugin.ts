@@ -13,6 +13,7 @@
  * Drag-drop emits 'column-reorder-request' events that the ReorderPlugin can listen for.
  */
 
+import { GridClasses } from '../../core/constants';
 import {
   BaseGridPlugin,
   type PluginDependency,
@@ -189,7 +190,7 @@ export class VisibilityPlugin extends BaseGridPlugin<VisibilityConfig> {
   /** Clear drag-related classes from all rows and group headers in a list. */
   private clearDragClasses(container: HTMLElement): void {
     container.querySelectorAll('.tbw-visibility-row, .tbw-visibility-group-header').forEach((r) => {
-      r.classList.remove('dragging', 'drop-target', 'drop-before', 'drop-after');
+      r.classList.remove(GridClasses.DRAGGING, 'drop-target', 'drop-before', 'drop-after');
     });
   }
   // #endregion
@@ -733,11 +734,11 @@ export class VisibilityPlugin extends BaseGridPlugin<VisibilityConfig> {
       }
 
       // Mark entire group (header + children) as dragging
-      header.classList.add('dragging');
+      header.classList.add(GridClasses.DRAGGING);
       columnList.querySelectorAll(`.tbw-visibility-row--grouped`).forEach((row) => {
         const field = row.getAttribute('data-field');
         if (field && this.draggedGroupFields.includes(field)) {
-          row.classList.add('dragging');
+          row.classList.add(GridClasses.DRAGGING);
         }
       });
     });
@@ -861,7 +862,7 @@ export class VisibilityPlugin extends BaseGridPlugin<VisibilityConfig> {
         e.dataTransfer.setData('text/plain', field);
       }
 
-      row.classList.add('dragging');
+      row.classList.add(GridClasses.DRAGGING);
     });
 
     row.addEventListener('dragend', () => {
@@ -894,13 +895,15 @@ export class VisibilityPlugin extends BaseGridPlugin<VisibilityConfig> {
       if (this.draggedGroupId) {
         columnList
           .querySelector(`.tbw-visibility-group-header[data-group-id="${this.draggedGroupId}"]`)
-          ?.classList.add('dragging');
+          ?.classList.add(GridClasses.DRAGGING);
         columnList.querySelectorAll('.tbw-visibility-row--grouped').forEach((r) => {
           const f = r.getAttribute('data-field');
-          if (f && this.draggedGroupFields.includes(f)) r.classList.add('dragging');
+          if (f && this.draggedGroupFields.includes(f)) r.classList.add(GridClasses.DRAGGING);
         });
       } else if (this.draggedField) {
-        columnList.querySelector(`.tbw-visibility-row[data-field="${this.draggedField}"]`)?.classList.add('dragging');
+        columnList
+          .querySelector(`.tbw-visibility-row[data-field="${this.draggedField}"]`)
+          ?.classList.add(GridClasses.DRAGGING);
       }
 
       row.classList.add('drop-target');

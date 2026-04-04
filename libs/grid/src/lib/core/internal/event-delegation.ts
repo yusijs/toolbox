@@ -13,6 +13,7 @@
  * onCellClick and onKeyDown hooks.
  */
 
+import { GridClasses } from '../constants';
 import type { CellMouseEvent } from '../plugin/types';
 import type { GridHost, InternalGrid } from '../types';
 import { handleGridKeyDown } from './keyboard';
@@ -202,7 +203,7 @@ export function setupCellEventDelegation(grid: GridHost, bodyEl: HTMLElement, si
       if (!cell) return;
 
       // Skip if clicking inside an editing cell (let the editor handle it)
-      if (cell.classList.contains('editing')) return;
+      if (cell.classList.contains(GridClasses.EDITING)) return;
 
       // Skip preventDefault when clicking a draggable element (or its children).
       // Native HTML5 drag-and-drop requires mousedown to NOT be prevented;
@@ -237,7 +238,7 @@ export function setupCellEventDelegation(grid: GridHost, bodyEl: HTMLElement, si
       // keyboard shortcuts like Ctrl+C. The grid element (tabindex=0) is stable
       // and receives all keyboard events via bubble phase.
       // Skip if an editor is active — editors manage their own focus.
-      if (!document.activeElement?.closest('.cell.editing')) {
+      if (!document.activeElement?.closest(`.cell.${GridClasses.EDITING}`)) {
         const gridEl = (e.target as HTMLElement).closest('tbw-grid') as HTMLElement | null;
         if (gridEl) gridEl.focus({ preventScroll: true });
       }

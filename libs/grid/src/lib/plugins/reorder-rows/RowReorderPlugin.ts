@@ -5,6 +5,7 @@
  * Supports Ctrl+Up/Down keyboard shortcuts and optional drag handle column.
  */
 
+import { GridClasses } from '../../core/constants';
 import { ensureCellVisible } from '../../core/internal/keyboard';
 import { BaseGridPlugin } from '../../core/plugin/base-plugin';
 import type { ColumnConfig, GridHost } from '../../core/types';
@@ -324,7 +325,7 @@ export class RowReorderPlugin extends BaseGridPlugin<RowReorderConfig> {
           de.dataTransfer.setData('text/plain', String(rowIndex));
         }
 
-        rowEl.classList.add('dragging');
+        rowEl.classList.add(GridClasses.DRAGGING);
       },
       { signal },
     );
@@ -646,7 +647,7 @@ export class RowReorderPlugin extends BaseGridPlugin<RowReorderConfig> {
    */
   private clearDragClasses(): void {
     this.gridElement?.querySelectorAll('.data-grid-row').forEach((row) => {
-      row.classList.remove('dragging', 'drop-target', 'drop-before', 'drop-after');
+      row.classList.remove(GridClasses.DRAGGING, 'drop-target', 'drop-before', 'drop-after');
     });
   }
 

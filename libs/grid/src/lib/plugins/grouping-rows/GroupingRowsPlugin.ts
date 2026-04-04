@@ -4,6 +4,7 @@
  * Enables hierarchical row grouping with expand/collapse and aggregations.
  */
 
+import { GridClasses } from '../../core/constants';
 import { BaseGridPlugin, CellClickEvent, type PluginManifest, type PluginQuery } from '../../core/plugin/base-plugin';
 import { isExpanderColumn } from '../../core/plugin/expander-column';
 import type { RowElementInternal } from '../../core/types';
@@ -376,7 +377,7 @@ export class GroupingRowsPlugin extends BaseGridPlugin<GroupingRowsConfig> {
     // Check if this is a group row toggle
     if (row?.__isGroupRow) {
       const target = event.originalEvent.target as HTMLElement;
-      if (target?.closest('.group-toggle')) {
+      if (target?.closest(`.${GridClasses.GROUP_TOGGLE}`)) {
         this.toggle(row.__groupKey as string);
         return true; // Prevent default
       }
@@ -507,7 +508,7 @@ export class GroupingRowsPlugin extends BaseGridPlugin<GroupingRowsConfig> {
   private createToggleButton(expanded: boolean, handleToggle: () => void): HTMLButtonElement {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = `group-toggle${expanded ? ' expanded' : ''}`;
+    btn.className = `${GridClasses.GROUP_TOGGLE}${expanded ? ` ${GridClasses.EXPANDED}` : ''}`;
     btn.setAttribute('aria-label', expanded ? 'Collapse group' : 'Expand group');
     this.setIcon(btn, this.resolveIcon(expanded ? 'collapse' : 'expand'));
     btn.addEventListener('click', (e) => {
@@ -542,14 +543,14 @@ export class GroupingRowsPlugin extends BaseGridPlugin<GroupingRowsConfig> {
 
     // Group label
     const label = document.createElement('span');
-    label.className = 'group-label';
+    label.className = GridClasses.GROUP_LABEL;
     label.textContent = this.getGroupLabelText(row.__groupValue, row.__groupDepth || 0, row.__groupKey);
     cell.appendChild(label);
 
     // Row count
     if (config.showRowCount !== false) {
       const count = document.createElement('span');
-      count.className = 'group-count';
+      count.className = GridClasses.GROUP_COUNT;
       count.textContent = `(${row.__groupRowCount ?? row.__groupRows?.length ?? 0})`;
       cell.appendChild(count);
     }
@@ -630,7 +631,7 @@ export class GroupingRowsPlugin extends BaseGridPlugin<GroupingRowsConfig> {
 
         if (config.showRowCount !== false) {
           const count = document.createElement('span');
-          count.className = 'group-count';
+          count.className = GridClasses.GROUP_COUNT;
           count.textContent = ` (${groupRows.length})`;
           cell.appendChild(count);
         }

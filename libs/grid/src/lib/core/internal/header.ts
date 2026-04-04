@@ -6,6 +6,7 @@
  * `headerLabelRenderer` (label only) column properties.
  */
 
+import { GridClasses } from '../constants';
 import type { ColumnInternal, GridHost, HeaderCellContext, IconValue, InternalGrid } from '../types';
 import { DEFAULT_GRID_ICONS } from '../types';
 import { addPart } from './columns';
@@ -85,7 +86,7 @@ function createResizeHandle(grid: InternalGrid, colIndex: number, cell: HTMLElem
  * Setup sorting click/keyboard handlers for a header cell.
  */
 function setupSortHandlers(grid: GridHost, col: ColumnInternal, colIndex: number, cell: HTMLElement): void {
-  cell.classList.add('sortable');
+  cell.classList.add(GridClasses.SORTABLE);
   cell.tabIndex = 0;
   const active = grid._sortState?.field === col.field ? grid._sortState.direction : 0;
   cell.setAttribute('aria-sort', active === 0 ? 'none' : active === 1 ? 'ascending' : 'descending');
@@ -255,7 +256,7 @@ export function renderHeader(grid: GridHost): void {
   });
 
   // Ensure every sortable header has a baseline aria-sort if not already set during construction.
-  headerRow.querySelectorAll('.cell.sortable').forEach((el) => {
+  headerRow.querySelectorAll(`.cell.${GridClasses.SORTABLE}`).forEach((el) => {
     if (!el.getAttribute('aria-sort')) el.setAttribute('aria-sort', 'none');
   });
 

@@ -4,6 +4,7 @@
  * Enables column pinning (sticky left/right positioning).
  */
 
+import { GridClasses } from '../../core/constants';
 import { getDirection } from '../../core/internal/utils';
 import type { AfterCellRenderContext, PluginManifest, PluginQuery } from '../../core/plugin/base-plugin';
 import { BaseGridPlugin } from '../../core/plugin/base-plugin';
@@ -420,8 +421,8 @@ export class PinnedColumnsPlugin extends BaseGridPlugin<PinnedColumnsConfig> {
 
     if (rowEl) {
       // Calculate from rendered cells in the row
-      const stickyLeftCells = rowEl.querySelectorAll('.sticky-left');
-      const stickyRightCells = rowEl.querySelectorAll('.sticky-right');
+      const stickyLeftCells = rowEl.querySelectorAll(`.${GridClasses.STICKY_LEFT}`);
+      const stickyRightCells = rowEl.querySelectorAll(`.${GridClasses.STICKY_RIGHT}`);
       stickyLeftCells.forEach((el) => {
         left += (el as HTMLElement).offsetWidth;
       });
@@ -433,9 +434,9 @@ export class PinnedColumnsPlugin extends BaseGridPlugin<PinnedColumnsConfig> {
       const host = this.gridElement;
       const headerCells = host.querySelectorAll('.header-row .cell');
       headerCells.forEach((cell) => {
-        if (cell.classList.contains('sticky-left')) {
+        if (cell.classList.contains(GridClasses.STICKY_LEFT)) {
           left += (cell as HTMLElement).offsetWidth;
-        } else if (cell.classList.contains('sticky-right')) {
+        } else if (cell.classList.contains(GridClasses.STICKY_RIGHT)) {
           right += (cell as HTMLElement).offsetWidth;
         }
       });
@@ -443,7 +444,8 @@ export class PinnedColumnsPlugin extends BaseGridPlugin<PinnedColumnsConfig> {
 
     // Skip horizontal scrolling if focused cell is pinned (it's always visible)
     const skipScroll =
-      focusedCell?.classList.contains('sticky-left') || focusedCell?.classList.contains('sticky-right');
+      focusedCell?.classList.contains(GridClasses.STICKY_LEFT) ||
+      focusedCell?.classList.contains(GridClasses.STICKY_RIGHT);
 
     return { left, right, skipScroll };
   }

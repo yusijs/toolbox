@@ -5,6 +5,7 @@
  * Separated from PivotPlugin for better code organization.
  */
 
+import { GridClasses } from '../../core/constants';
 import type { AggFunc, PivotConfig, PivotValueField } from './types';
 
 /** All available aggregation functions */
@@ -190,7 +191,7 @@ function createFieldChip(field: string, zoneType: 'rowGroups' | 'columnGroups', 
     (e) => {
       e.dataTransfer?.setData('text/plain', field);
       e.dataTransfer?.setData('source-zone', zoneType);
-      chip.classList.add('dragging');
+      chip.classList.add(GridClasses.DRAGGING);
     },
     { signal },
   );
@@ -198,7 +199,7 @@ function createFieldChip(field: string, zoneType: 'rowGroups' | 'columnGroups', 
   chip.addEventListener(
     'dragend',
     () => {
-      chip.classList.remove('dragging');
+      chip.classList.remove(GridClasses.DRAGGING);
     },
     { signal },
   );
@@ -356,7 +357,7 @@ function createAvailableFieldsZone(ctx: RenderContext): HTMLElement {
         'dragstart',
         (e) => {
           e.dataTransfer?.setData('text/plain', field.field);
-          chip.classList.add('dragging');
+          chip.classList.add(GridClasses.DRAGGING);
         },
         { signal },
       );
@@ -364,7 +365,7 @@ function createAvailableFieldsZone(ctx: RenderContext): HTMLElement {
       chip.addEventListener(
         'dragend',
         () => {
-          chip.classList.remove('dragging');
+          chip.classList.remove(GridClasses.DRAGGING);
         },
         { signal },
       );

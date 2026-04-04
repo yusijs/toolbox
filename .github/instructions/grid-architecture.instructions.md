@@ -133,3 +133,10 @@ const employees = indices.map((i) => myLocalData[i]); // May be wrong after sort
 - **Element ref**: Access via `this` (extends HTMLElement)
 - **Lifecycle**: `connectedCallback()`, `disconnectedCallback()`, `attributeChangedCallback()`
 - **Light DOM**: Render directly to element with CSS nesting (`tbw-grid { }`) for style scoping
+
+## DOM Constants (`core/constants.ts`)
+
+- **Always use `GridClasses`** for CSS class names in TypeScript — never raw strings like `'sticky-left'` or `'dragging'`
+- **Bundle-safe**: Terser inlines the string values and tree-shakes the object — zero overhead in plugin bundles
+- **Shell UI classes are separate**: `shell.ts` uses `'expanded'`/`'resizing'` for its own accordion UI, NOT for grid row expansion — do not replace those with `GridClasses`
+- **`GridDataAttrs`** constants must match actual DOM attributes used in code (e.g., `data-row`, `data-col`, `data-field`)

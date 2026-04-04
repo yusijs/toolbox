@@ -10,6 +10,7 @@
  * - Narrow width (just fits the icon)
  */
 
+import { GridClasses } from '../constants';
 import type { ColumnConfig } from '../types';
 
 /** Special field name for the expander column */
@@ -88,7 +89,7 @@ export function createExpanderContainer(expanded: boolean, pluginClass: string):
   const container = document.createElement('span');
   container.className = `${pluginClass}-expander expander-cell`;
   if (expanded) {
-    container.classList.add('expanded');
+    container.classList.add(GridClasses.EXPANDED);
   }
   return container;
 }

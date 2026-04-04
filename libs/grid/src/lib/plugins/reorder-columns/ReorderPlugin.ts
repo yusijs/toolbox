@@ -8,6 +8,7 @@
  * Animation respects grid-level animation.mode setting but style is plugin-configured.
  */
 
+import { GridClasses } from '../../core/constants';
 import { ensureCellVisible } from '../../core/internal/keyboard';
 import { BaseGridPlugin } from '../../core/plugin/base-plugin';
 import type { ColumnConfig, GridHost } from '../../core/types';
@@ -153,7 +154,7 @@ export class ReorderPlugin extends BaseGridPlugin<ReorderConfig> {
    */
   private clearDragClasses(): void {
     this.gridElement?.querySelectorAll('.header-row > .cell, .header-group-row > .cell').forEach((h) => {
-      h.classList.remove('dragging', 'drop-target', 'drop-before', 'drop-after');
+      h.classList.remove(GridClasses.DRAGGING, 'drop-target', 'drop-before', 'drop-after');
     });
   }
   // #endregion
@@ -227,7 +228,7 @@ export class ReorderPlugin extends BaseGridPlugin<ReorderConfig> {
           e.dataTransfer.setData('text/plain', field);
         }
 
-        headerEl.classList.add('dragging');
+        headerEl.classList.add(GridClasses.DRAGGING);
       });
 
       headerEl.addEventListener('dragend', () => {
@@ -258,12 +259,14 @@ export class ReorderPlugin extends BaseGridPlugin<ReorderConfig> {
         // Re-mark dragged elements
         if (this.draggedGroupFields.length > 0) {
           for (const f of this.draggedGroupFields) {
-            this.gridElement?.querySelector(`.header-row > .cell[data-field="${f}"]`)?.classList.add('dragging');
+            this.gridElement
+              ?.querySelector(`.header-row > .cell[data-field="${f}"]`)
+              ?.classList.add(GridClasses.DRAGGING);
           }
         } else if (this.draggedField) {
           this.gridElement
             ?.querySelector(`.header-row > .cell[data-field="${this.draggedField}"]`)
-            ?.classList.add('dragging');
+            ?.classList.add(GridClasses.DRAGGING);
         }
         headerEl.classList.add('drop-target');
         headerEl.classList.toggle('drop-before', e.clientX < midX);
@@ -364,10 +367,10 @@ export class ReorderPlugin extends BaseGridPlugin<ReorderConfig> {
           e.dataTransfer.setData('text/plain', `group:${groupId}`);
         }
 
-        groupHeaderEl.classList.add('dragging');
+        groupHeaderEl.classList.add(GridClasses.DRAGGING);
         // Also mark the individual column headers as dragging
         for (const f of fragmentFields) {
-          gridEl.querySelector(`.header-row > .cell[data-field="${f}"]`)?.classList.add('dragging');
+          gridEl.querySelector(`.header-row > .cell[data-field="${f}"]`)?.classList.add(GridClasses.DRAGGING);
         }
       });
 

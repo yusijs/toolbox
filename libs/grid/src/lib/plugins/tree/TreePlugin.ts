@@ -4,6 +4,7 @@
  * Enables hierarchical tree data with expand/collapse, sorting, and auto-detection.
  */
 
+import { GridClasses } from '../../core/constants';
 import {
   BaseGridPlugin,
   CellClickEvent,
@@ -368,7 +369,7 @@ export class TreePlugin extends BaseGridPlugin<TreeConfig> {
       if (showExpandIcons) {
         if (treeRow.__treeHasChildren) {
           const icon = document.createElement('span');
-          icon.className = `tree-toggle${treeRow.__treeExpanded ? ' expanded' : ''}`;
+          icon.className = `${GridClasses.TREE_TOGGLE}${treeRow.__treeExpanded ? ` ${GridClasses.EXPANDED}` : ''}`;
           setIcon(icon, resolveIcon(treeRow.__treeExpanded ? 'collapse' : 'expand'));
           icon.setAttribute('data-tree-key', String(treeRow.__treeKey ?? ''));
           container.appendChild(icon);
@@ -408,7 +409,7 @@ export class TreePlugin extends BaseGridPlugin<TreeConfig> {
   /** @internal */
   override onCellClick(event: CellClickEvent): boolean {
     const target = event.originalEvent?.target as HTMLElement;
-    if (!target?.classList.contains('tree-toggle')) return false;
+    if (!target?.classList.contains(GridClasses.TREE_TOGGLE)) return false;
 
     const key = target.getAttribute('data-tree-key');
     if (!key) return false;

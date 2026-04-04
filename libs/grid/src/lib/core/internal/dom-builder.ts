@@ -9,6 +9,8 @@
  * Benchmark: DOM construction is ~2-3x faster than innerHTML for complex structures.
  */
 
+import { GridClasses } from '../constants';
+
 // #region Element Factories
 /**
  * Create an element with attributes and optional children.
@@ -170,7 +172,7 @@ export interface GridDOMOptions {
 export function buildGridDOM(options: GridDOMOptions): DocumentFragment {
   const fragment = document.createDocumentFragment();
 
-  const root = div(options.hasShell ? 'tbw-grid-root has-shell' : 'tbw-grid-root');
+  const root = div(options.hasShell ? `${GridClasses.ROOT} has-shell` : GridClasses.ROOT);
 
   if (options.hasShell && options.shellHeader && options.shellBody) {
     // Shell mode: header + body (with grid content inside)

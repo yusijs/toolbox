@@ -5,6 +5,7 @@
  * Supports Ctrl+Z/Cmd+Z for undo and Ctrl+Y/Cmd+Y (or Ctrl+Shift+Z) for redo.
  */
 
+import { GridClasses } from '../../core/constants';
 import { NO_TRANSACTION, TRANSACTION_IN_PROGRESS, throwDiagnostic } from '../../core/internal/diagnostics';
 import { FOCUSABLE_EDITOR_SELECTOR } from '../../core/internal/rows';
 import { BaseGridPlugin, type GridElement, type PluginDependency } from '../../core/plugin/base-plugin';
@@ -168,7 +169,7 @@ export class UndoRedoPlugin extends BaseGridPlugin<UndoRedoConfig> {
     if (!rowEl) return;
 
     const cellEl = rowEl.querySelector(`.cell[data-col="${colIdx}"]`) as HTMLElement | null;
-    if (cellEl?.classList.contains('editing')) {
+    if (cellEl?.classList.contains(GridClasses.EDITING)) {
       const editor = cellEl.querySelector(FOCUSABLE_EDITOR_SELECTOR) as HTMLElement | null;
       editor?.focus({ preventScroll: true });
     }

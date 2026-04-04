@@ -8,6 +8,7 @@
  * - 'range': Range selection. Shift+click or drag to select rectangular cell ranges.
  */
 
+import { GridClasses } from '../../core/constants';
 import { clearCellFocus, getRowIndexFromCell } from '../../core/internal/utils';
 import type { GridElement, PluginManifest, PluginQuery } from '../../core/plugin/base-plugin';
 import { BaseGridPlugin, CellClickEvent, CellMouseEvent } from '../../core/plugin/base-plugin';
@@ -1029,7 +1030,7 @@ export class SelectionPlugin extends BaseGridPlugin<SelectionConfig> {
           }
 
           if (isInSelection(rowIndex, colIndex)) {
-            cell.classList.add('selected');
+            cell.classList.add(GridClasses.SELECTED);
             cell.setAttribute('aria-selected', 'true');
 
             // Edge detection: add border class where neighbor is not selected

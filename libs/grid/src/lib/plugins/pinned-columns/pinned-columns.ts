@@ -6,6 +6,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { GridClasses } from '../../core/constants';
 import { getDirection, resolveInlinePosition, type TextDirection } from '../../core/internal/utils';
 import type { PinnedPosition, ResolvedPinnedPosition } from './types';
 
@@ -188,13 +189,13 @@ export function applyStickyOffsets(host: HTMLElement, columns: any[]): GroupEndA
     if (isResolvedLeft(col, direction)) {
       const cell = headerCells.find((c) => c.getAttribute('data-field') === col.field);
       if (cell) {
-        cell.classList.add('sticky-left');
+        cell.classList.add(GridClasses.STICKY_LEFT);
         cell.style.position = 'sticky';
         cell.style.left = left + 'px';
         // Body cells: use data-field for reliable matching (data-col indices may differ
         // between _columns and _visibleColumns due to hidden/utility columns)
         host.querySelectorAll(`.data-grid-row .cell[data-field="${col.field}"]`).forEach((el) => {
-          el.classList.add('sticky-left');
+          el.classList.add(GridClasses.STICKY_LEFT);
           (el as HTMLElement).style.position = 'sticky';
           (el as HTMLElement).style.left = left + 'px';
         });
@@ -209,12 +210,12 @@ export function applyStickyOffsets(host: HTMLElement, columns: any[]): GroupEndA
     if (isResolvedRight(col, direction)) {
       const cell = headerCells.find((c) => c.getAttribute('data-field') === col.field);
       if (cell) {
-        cell.classList.add('sticky-right');
+        cell.classList.add(GridClasses.STICKY_RIGHT);
         cell.style.position = 'sticky';
         cell.style.right = right + 'px';
         // Body cells: use data-field for reliable matching
         host.querySelectorAll(`.data-grid-row .cell[data-field="${col.field}"]`).forEach((el) => {
-          el.classList.add('sticky-right');
+          el.classList.add(GridClasses.STICKY_RIGHT);
           (el as HTMLElement).style.position = 'sticky';
           (el as HTMLElement).style.right = right + 'px';
         });
@@ -293,7 +294,7 @@ function applyGroupHeaderStickyOffsets(
       const firstField = spannedColumns[0].field;
       const firstCell = headerCells.find((c) => c.getAttribute('data-field') === firstField);
       if (firstCell) {
-        groupCell.classList.add('sticky-left');
+        groupCell.classList.add(GridClasses.STICKY_LEFT);
         groupCell.style.position = 'sticky';
         groupCell.style.left = firstCell.style.left;
       }
@@ -301,7 +302,7 @@ function applyGroupHeaderStickyOffsets(
       const lastField = spannedColumns[spannedColumns.length - 1].field;
       const lastCell = headerCells.find((c) => c.getAttribute('data-field') === lastField);
       if (lastCell) {
-        groupCell.classList.add('sticky-right');
+        groupCell.classList.add(GridClasses.STICKY_RIGHT);
         groupCell.style.position = 'sticky';
         groupCell.style.right = lastCell.style.right;
       }
@@ -372,7 +373,7 @@ function splitMixedPinImplicitGroup(
       const firstField = run.cols[0].field;
       const firstCell = headerCells.find((c) => c.getAttribute('data-field') === firstField);
       if (firstCell) {
-        cell.classList.add('sticky-left');
+        cell.classList.add(GridClasses.STICKY_LEFT);
         cell.style.position = 'sticky';
         cell.style.left = firstCell.style.left;
       }
@@ -380,7 +381,7 @@ function splitMixedPinImplicitGroup(
       const lastField = run.cols[run.cols.length - 1].field;
       const lastCell = headerCells.find((c) => c.getAttribute('data-field') === lastField);
       if (lastCell) {
-        cell.classList.add('sticky-right');
+        cell.classList.add(GridClasses.STICKY_RIGHT);
         cell.style.position = 'sticky';
         cell.style.right = lastCell.style.right;
       }
@@ -462,9 +463,9 @@ export function reorderColumnsForPinning(columns: readonly any[], direction: Tex
  */
 export function clearStickyOffsets(host: HTMLElement): void {
   // With light DOM, query the host element directly
-  const cells = host.querySelectorAll('.sticky-left, .sticky-right');
+  const cells = host.querySelectorAll(`.${GridClasses.STICKY_LEFT}, .${GridClasses.STICKY_RIGHT}`);
   cells.forEach((cell) => {
-    cell.classList.remove('sticky-left', 'sticky-right');
+    cell.classList.remove(GridClasses.STICKY_LEFT, GridClasses.STICKY_RIGHT);
     (cell as HTMLElement).style.position = '';
     (cell as HTMLElement).style.left = '';
     (cell as HTMLElement).style.right = '';
