@@ -6,6 +6,7 @@ import type {
   CellChangeDetail,
   CellClickDetail,
   CellCommitDetail,
+  ChangedRowsResetDetail,
   ClipboardConfig,
   ColumnMoveDetail,
   ColumnResizeDetail,
@@ -96,6 +97,56 @@ const props = defineProps({
   /** Fit mode shorthand */
   fitMode: {
     type: String as PropType<FitMode>,
+    default: undefined,
+  },
+
+  // ═══════════════════════════════════════════════════════════════════
+  // GRID-WIDE TOGGLES
+  // ═══════════════════════════════════════════════════════════════════
+
+  /**
+   * Grid-wide sorting toggle.
+   * When false, disables sorting for all columns regardless of their individual `sortable` setting.
+   * @default true
+   */
+  sortable: {
+    type: Boolean as PropType<boolean>,
+    default: undefined,
+  },
+  /**
+   * Grid-wide filtering toggle.
+   * When false, disables filtering for all columns regardless of their individual `filterable` setting.
+   * Requires the FilteringPlugin to be loaded (via `filtering` prop or feature import).
+   * @default true
+   */
+  filterable: {
+    type: Boolean as PropType<boolean>,
+    default: undefined,
+  },
+  /**
+   * Grid-wide selection toggle.
+   * When false, disables selection for all rows/cells.
+   * Requires the SelectionPlugin to be loaded (via `selection` prop or feature import).
+   * @default true
+   */
+  selectable: {
+    type: Boolean as PropType<boolean>,
+    default: undefined,
+  },
+  /**
+   * Show a loading overlay on the grid.
+   * Use this during initial data fetch or refresh operations.
+   * @default false
+   */
+  loading: {
+    type: Boolean as PropType<boolean>,
+    default: undefined,
+  },
+  /**
+   * Custom CSS styles to inject into the grid via `document.adoptedStyleSheets`.
+   */
+  customStyles: {
+    type: String as PropType<string>,
     default: undefined,
   },
 
@@ -246,6 +297,7 @@ const EVENT_MAP = {
   'cell-change': '' as unknown as CellChangeDetail,
   'cell-commit': '' as unknown as CellCommitDetail,
   'row-commit': '' as unknown as RowCommitDetail,
+  'changed-rows-reset': '' as unknown as ChangedRowsResetDetail,
   'sort-change': '' as unknown as SortChangeDetail,
   'filter-change': '' as unknown as FilterChangeDetail,
   'column-resize': '' as unknown as ColumnResizeDetail,
@@ -276,6 +328,7 @@ const emit = defineEmits<{
   (e: 'cell-change', event: CustomEvent<CellChangeDetail<TRow>>): void;
   (e: 'cell-commit', event: CustomEvent<CellCommitDetail<TRow>>): void;
   (e: 'row-commit', event: CustomEvent<RowCommitDetail<TRow>>): void;
+  (e: 'changed-rows-reset', event: CustomEvent<ChangedRowsResetDetail<TRow>>): void;
   (e: 'sort-change', event: CustomEvent<SortChangeDetail>): void;
   (e: 'filter-change', event: CustomEvent<FilterChangeDetail>): void;
   (e: 'column-resize', event: CustomEvent<ColumnResizeDetail>): void;
@@ -370,8 +423,21 @@ const mergedConfig = computed<GridConfig<TRow> | undefined>(() => {
   // Apply icon overrides if provided
   const icons = iconOverrides ? { ...baseConfig.icons, ...iconOverrides } : baseConfig.icons;
 
+  // Build core config overrides from individual props
+  const coreConfigOverrides: Record<string, unknown> = {};
+  if (props.sortable !== undefined) {
+    coreConfigOverrides['sortable'] = props.sortable;
+  }
+  if (props.filterable !== undefined) {
+    coreConfigOverrides['filterable'] = props.filterable;
+  }
+  if (props.selectable !== undefined) {
+    coreConfigOverrides['selectable'] = props.selectable;
+  }
+
   return {
     ...baseConfig,
+    ...coreConfigOverrides,
     ...(props.columns ? { columns: props.columns } : {}),
     ...(mergedPlugins.length > 0 ? { plugins: mergedPlugins } : {}),
     ...(icons ? { icons } : {}),
@@ -411,11 +477,27 @@ onMounted(() => {
   if (props.fitMode) {
     grid.fitMode = props.fitMode;
   }
+  if (props.loading !== undefined) {
+    grid.loading = props.loading;
+  }
+  // Handle initial custom styles
+  if (props.customStyles) {
+    grid.ready?.().then(() => {
+      if (gridRef.value) {
+        gridRef.value.registerStyles?.('vue-custom-styles', props.customStyles as string);
+      }
+    });
+  }
 });
 
 onBeforeUnmount(() => {
   const grid = gridRef.value as unknown as HTMLElement & DataGridElement<TRow>;
   if (!grid) return;
+
+  // Clean up custom styles
+  if (props.customStyles) {
+    (grid as DataGridElement).unregisterStyles?.('vue-custom-styles');
+  }
 
   // Unsubscribe all grid event listeners
   eventCleanups.forEach((fn) => fn());
@@ -448,6 +530,32 @@ watch(
   (newFitMode) => {
     if (gridRef.value && newFitMode) {
       gridRef.value.fitMode = newFitMode;
+    }
+  },
+);
+
+watch(
+  () => props.loading,
+  (newLoading) => {
+    if (gridRef.value && newLoading !== undefined) {
+      gridRef.value.loading = newLoading;
+    }
+  },
+);
+
+watch(
+  () => props.customStyles,
+  (newStyles, oldStyles) => {
+    if (!gridRef.value) return;
+    const grid = gridRef.value;
+    if (oldStyles && !newStyles) {
+      grid.unregisterStyles?.('vue-custom-styles');
+    } else if (newStyles) {
+      grid.ready?.().then(() => {
+        if (gridRef.value) {
+          gridRef.value.registerStyles?.('vue-custom-styles', newStyles);
+        }
+      });
     }
   },
 );

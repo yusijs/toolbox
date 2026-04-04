@@ -288,7 +288,7 @@ export interface DataGridProps<TRow = unknown> extends AllFeatureProps<TRow>, Ev
   loading?: boolean;
   /** Edit trigger mode - DEPRECATED: use `editing` prop instead */
   editOn?: 'click' | 'dblclick' | 'none';
-  /** Custom CSS styles to inject into grid shadow DOM */
+  /** Custom CSS styles to inject into the grid via `document.adoptedStyleSheets` */
   customStyles?: string;
   /** Class name for the grid element */
   className?: string;
@@ -719,7 +719,7 @@ export const DataGrid = forwardRef<DataGridRef, DataGridProps>(function DataGrid
     let isActive = true;
 
     // Wait for grid to be ready before registering styles
-    // This ensures the shadow DOM is available for style injection
+    // This ensures the grid is ready before registering styles
     grid.ready?.().then(() => {
       if (isActive && customStyles) {
         grid.registerStyles?.(styleId, customStyles);

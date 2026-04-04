@@ -2681,7 +2681,7 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
   }
 
   /**
-   * Find the header row element in the shadow DOM.
+   * Find the header row element.
    * Used by plugins that need to access header cells for styling or measurement.
    * @group DOM Access
    * @internal Plugin API
@@ -4085,7 +4085,7 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
 
       // Re-render the entire grid (shell structure may change)
       this.#render();
-      this.#injectAllPluginStyles(); // Re-inject after render clears shadow DOM
+      this.#injectAllPluginStyles(); // Re-inject after render clears DOM
 
       // Use lighter-weight post-render setup instead of full #afterConnect()
       // This avoids requesting another FULL render since #render() already rebuilt the DOM
@@ -4148,10 +4148,10 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
   #customStyleSheets = new Map<string, CSSStyleSheet>();
 
   /**
-   * Register custom CSS styles to be injected into the grid's shadow DOM.
+   * Register custom CSS styles via `document.adoptedStyleSheets`.
    * Use this to style custom cell renderers, editors, or detail panels.
    *
-   * Uses adoptedStyleSheets for efficiency - styles survive shadow DOM rebuilds.
+   * Uses adoptedStyleSheets for efficiency - styles survive DOM rebuilds.
    *
    * @group Custom Styles
    * @param id - Unique identifier for the style block (for removal/updates)

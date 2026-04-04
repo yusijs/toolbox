@@ -719,17 +719,18 @@ import type {
 
 ### DataGrid Props
 
-| Prop           | Type                                       | Description               |
-| -------------- | ------------------------------------------ | ------------------------- |
-| `rows`         | `TRow[]`                                   | Row data to display       |
-| `columns`      | `ColumnConfig[]`                           | Column definitions        |
-| `gridConfig`   | `GridConfig`                               | Full configuration object |
-| `fitMode`      | `'stretch' \| 'fit-columns' \| 'auto-fit'` | Column sizing mode        |
-| `customStyles` | `string`                                   | CSS to inject into grid   |
-| `ssr`          | `boolean`                                  | Disable features for SSR  |
-| `onRowsChange` | `(rows: TRow[]) => void`                   | Rows changed callback     |
-| `onCellEdit`   | `(event: CustomEvent) => void`             | Cell edited callback      |
-| `onRowClick`   | `(event: CustomEvent) => void`             | Row clicked callback      |
+| Prop                 | Type                                       | Description                                    |
+| -------------------- | ------------------------------------------ | ---------------------------------------------- |
+| `rows`               | `TRow[]`                                   | Row data to display                            |
+| `columns`            | `ColumnConfig[]`                           | Column definitions                             |
+| `gridConfig`         | `GridConfig`                               | Full configuration object                      |
+| `fitMode`            | `'stretch' \| 'fit-columns' \| 'auto-fit'` | Column sizing mode                             |
+| `customStyles`       | `string`                                   | CSS injected via `document.adoptedStyleSheets` |
+| `ssr`                | `boolean`                                  | Disable features for SSR                       |
+| `onRowsChange`       | `(rows: TRow[]) => void`                   | Rows changed callback                          |
+| `onCellEdit`         | `(event: CustomEvent) => void`             | Cell edited callback                           |
+| `onRowClick`         | `(event: CustomEvent) => void`             | Row clicked callback                           |
+| `onChangedRowsReset` | `(event: CustomEvent) => void`             | Changed rows state was reset                   |
 
 **Feature Props** (require corresponding feature import):
 

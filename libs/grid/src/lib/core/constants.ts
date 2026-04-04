@@ -15,7 +15,7 @@
 // #region CSS Classes
 
 /**
- * CSS class names used in the grid's shadow DOM.
+ * CSS class names used in the grid's DOM.
  * Use these when adding/removing classes or querying elements.
  *
  * Classes are organized by:

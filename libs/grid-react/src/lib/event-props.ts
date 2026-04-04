@@ -26,6 +26,7 @@ import type {
   CellChangeDetail,
   CellClickDetail,
   CellCommitDetail,
+  ChangedRowsResetDetail,
   ColumnMoveDetail,
   ColumnResizeDetail,
   ColumnVisibilityDetail,
@@ -139,6 +140,18 @@ export interface EventProps<TRow = unknown> {
    * ```
    */
   onRowCommit?: EventHandler<RowCommitDetail<TRow>>;
+
+  /**
+   * Fired when changed rows cache is reset via `resetChangedRows()`.
+   *
+   * @requires `import '@toolbox-web/grid-react/features/editing';`
+   *
+   * @example
+   * ```tsx
+   * onChangedRowsReset={(detail) => console.log('Reset:', detail.rows.length, 'rows cleared')}
+   * ```
+   */
+  onChangedRowsReset?: EventHandler<ChangedRowsResetDetail<TRow>>;
 
   // ═══════════════════════════════════════════════════════════════════
   // SORTING & FILTERING EVENTS
@@ -434,6 +447,7 @@ export const EVENT_PROP_MAP: Record<keyof EventProps, string> = {
   onCellChange: 'cell-change',
   onCellCommit: 'cell-commit',
   onRowCommit: 'row-commit',
+  onChangedRowsReset: 'changed-rows-reset',
   onSortChange: 'sort-change',
   onFilterChange: 'filter-change',
   onColumnResize: 'column-resize',

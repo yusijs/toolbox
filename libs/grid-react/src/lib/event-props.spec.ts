@@ -30,6 +30,11 @@ describe('event-props', () => {
     expect(EVENT_PROP_MAP['onSortChange']).toBe('sort-change');
   });
 
+  it('should map onChangedRowsReset to changed-rows-reset event', async () => {
+    const { EVENT_PROP_MAP } = await import('./event-props');
+    expect(EVENT_PROP_MAP['onChangedRowsReset']).toBe('changed-rows-reset');
+  });
+
   it('should map onFilterChange to filter-change event', async () => {
     const { EVENT_PROP_MAP } = await import('./event-props');
     expect(EVENT_PROP_MAP['onFilterChange']).toBe('filter-change');

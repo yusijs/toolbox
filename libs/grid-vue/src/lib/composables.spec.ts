@@ -6,7 +6,7 @@
  * - useGridEvent hook interface
  */
 
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createApp, defineComponent, h, provide, ref, type Ref } from 'vue';
 import { GRID_ELEMENT_KEY, useGrid } from './use-grid';
 import { useGridEvent } from './use-grid-event';
@@ -33,6 +33,12 @@ describe('use-grid', () => {
       expect(result).toHaveProperty('getConfig');
       expect(result).toHaveProperty('ready');
       expect(result).toHaveProperty('getPlugin');
+      expect(result).toHaveProperty('isReady');
+      expect(result).toHaveProperty('config');
+      expect(result).toHaveProperty('toggleGroup');
+      expect(result).toHaveProperty('registerStyles');
+      expect(result).toHaveProperty('unregisterStyles');
+      expect(result).toHaveProperty('getVisibleColumns');
     });
 
     it('should return async functions for forceLayout and ready', () => {
@@ -171,6 +177,65 @@ describe('use-grid', () => {
 
       app.unmount();
       container.remove();
+    });
+
+    it('should delegate toggleGroup to grid element', async () => {
+      const toggleGroup = vi.fn().mockResolvedValue(undefined);
+      const { result, app, container } = mountWithGrid({ toggleGroup });
+
+      await result.toggleGroup('group-key');
+      expect(toggleGroup).toHaveBeenCalledWith('group-key');
+
+      app.unmount();
+      container.remove();
+    });
+
+    it('should delegate registerStyles to grid element', () => {
+      const registerStyles = vi.fn();
+      const { result, app, container } = mountWithGrid({ registerStyles });
+
+      result.registerStyles('my-styles', '.cell { color: red; }');
+      expect(registerStyles).toHaveBeenCalledWith('my-styles', '.cell { color: red; }');
+
+      app.unmount();
+      container.remove();
+    });
+
+    it('should delegate unregisterStyles to grid element', () => {
+      const unregisterStyles = vi.fn();
+      const { result, app, container } = mountWithGrid({ unregisterStyles });
+
+      result.unregisterStyles('my-styles');
+      expect(unregisterStyles).toHaveBeenCalledWith('my-styles');
+
+      app.unmount();
+      container.remove();
+    });
+
+    it('should return visible columns excluding hidden ones', () => {
+      const gridConfig = {
+        columns: [{ field: 'a', hidden: false }, { field: 'b', hidden: true }, { field: 'c' }],
+      };
+      const { result, app, container } = mountWithGrid({ gridConfig });
+
+      const visible = result.getVisibleColumns();
+      expect(visible).toHaveLength(2);
+      expect(visible.map((c: any) => c.field)).toEqual(['a', 'c']);
+
+      app.unmount();
+      container.remove();
+    });
+
+    it('should have isReady as a ref', () => {
+      const result = useGrid();
+      expect(result.isReady).toBeDefined();
+      expect(result.isReady.value).toBe(false);
+    });
+
+    it('should have config as a ref', () => {
+      const result = useGrid();
+      expect(result.config).toBeDefined();
+      expect(result.config.value).toBe(null);
     });
   });
 });

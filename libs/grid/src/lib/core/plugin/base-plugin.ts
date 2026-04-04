@@ -443,7 +443,7 @@ export abstract class BaseGridPlugin<TConfig = unknown> implements GridPlugin {
    */
   readonly version: string = typeof __GRID_VERSION__ !== 'undefined' ? __GRID_VERSION__ : 'dev';
 
-  /** CSS styles to inject into the grid's shadow DOM */
+  /** CSS styles to inject via `document.adoptedStyleSheets` */
   readonly styles?: string;
 
   /** Custom cell renderers keyed by type name */

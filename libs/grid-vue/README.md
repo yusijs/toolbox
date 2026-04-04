@@ -80,6 +80,20 @@ const employees = ref<Employee[]>([
 </template>
 ```
 
+## TbwGrid Props
+
+| Prop           | Type                                       | Description                                    |
+| -------------- | ------------------------------------------ | ---------------------------------------------- |
+| `rows`         | `TRow[]`                                   | Row data to display                            |
+| `columns`      | `ColumnConfig[]`                           | Column definitions                             |
+| `gridConfig`   | `GridConfig`                               | Full configuration object                      |
+| `fitMode`      | `'stretch' \| 'fit-columns' \| 'auto-fit'` | Column sizing mode                             |
+| `sortable`     | `boolean`                                  | Grid-wide sorting toggle (default: `true`)     |
+| `filterable`   | `boolean`                                  | Grid-wide filtering toggle (default: `true`)   |
+| `selectable`   | `boolean`                                  | Grid-wide selection toggle (default: `true`)   |
+| `loading`      | `boolean`                                  | Show loading overlay (default: `false`)        |
+| `customStyles` | `string`                                   | CSS injected via `document.adoptedStyleSheets` |
+
 ## Enabling Features
 
 Features are enabled using **declarative props** with **side-effect imports**. This gives you the best of both worlds: clean, intuitive templates and tree-shakeable bundles.
@@ -246,17 +260,33 @@ function onSortChange(e: CustomEvent<SortChangeDetail>) {
 
 ### Available Events
 
-| Event                  | Detail Type          | Description                       |
-| ---------------------- | -------------------- | --------------------------------- |
-| `@cell-click`          | `CellClickDetail`    | Cell was clicked                  |
-| `@row-click`           | `RowClickDetail`     | Row was clicked                   |
-| `@cell-commit`         | `CellCommitDetail`   | Cell value committed (cancelable) |
-| `@row-commit`          | `RowCommitDetail`    | Row edit completed (cancelable)   |
-| `@cell-change`         | `CellChangeDetail`   | Row updated via API               |
-| `@sort-change`         | `SortChangeDetail`   | Sort state changed                |
-| `@column-resize`       | `ColumnResizeDetail` | Column was resized                |
-| `@cell-activate`       | `CellActivateDetail` | Cell activated (cancelable)       |
-| `@column-state-change` | `GridColumnState`    | Column visibility/order changed   |
+| Event                  | Detail Type              | Description                       |
+| ---------------------- | ------------------------ | --------------------------------- |
+| `@cell-click`          | `CellClickDetail`        | Cell was clicked                  |
+| `@row-click`           | `RowClickDetail`         | Row was clicked                   |
+| `@cell-activate`       | `CellActivateDetail`     | Cell activated (cancelable)       |
+| `@cell-change`         | `CellChangeDetail`       | Row updated via API               |
+| `@cell-commit`         | `CellCommitDetail`       | Cell value committed (cancelable) |
+| `@row-commit`          | `RowCommitDetail`        | Row edit completed (cancelable)   |
+| `@changed-rows-reset`  | `ChangedRowsResetDetail` | Changed rows state was reset      |
+| `@sort-change`         | `SortChangeDetail`       | Sort state changed                |
+| `@filter-change`       | `FilterChangeDetail`     | Filter state changed              |
+| `@column-resize`       | `ColumnResizeDetail`     | Column was resized                |
+| `@column-move`         | `ColumnMoveDetail`       | Column was reordered              |
+| `@column-visibility`   | `ColumnVisibilityDetail` | Column visibility toggled         |
+| `@column-state-change` | `GridColumnState`        | Column visibility/order changed   |
+| `@selection-change`    | `SelectionChangeDetail`  | Selection state changed           |
+| `@row-move`            | `RowMoveDetail`          | Row was reordered                 |
+| `@group-toggle`        | `GroupToggleDetail`      | Row group expanded/collapsed      |
+| `@tree-expand`         | `TreeExpandDetail`       | Tree node expanded/collapsed      |
+| `@detail-expand`       | `DetailExpandDetail`     | Master-detail row toggled         |
+| `@responsive-change`   | `ResponsiveChangeDetail` | Responsive layout mode changed    |
+| `@copy`                | `CopyDetail`             | Data copied to clipboard          |
+| `@paste`               | `PasteDetail`            | Data pasted from clipboard        |
+| `@undo-redo`           | `UndoRedoDetail`         | Undo/redo action performed        |
+| `@export-complete`     | `ExportCompleteDetail`   | Export operation completed        |
+| `@print-start`         | `PrintStartDetail`       | Print operation started           |
+| `@print-complete`      | `PrintCompleteDetail`    | Print operation completed         |
 
 ## Using Plugins (Advanced)
 
@@ -287,24 +317,41 @@ const gridConfig = {
 
 ### useGrid
 
-Access grid methods programmatically:
+Access grid methods and state programmatically:
 
 ```vue
 <script setup lang="ts">
 import { useGrid } from '@toolbox-web/grid-vue';
 
-const { forceLayout, getConfig, ready, getPlugin } = useGrid();
-
-async function handleResize() {
-  await forceLayout();
-}
-
-async function logConfig() {
-  await ready();
-  console.log(getConfig());
-}
+const {
+  isReady,
+  config,
+  forceLayout,
+  getConfig,
+  ready,
+  getPlugin,
+  toggleGroup,
+  registerStyles,
+  unregisterStyles,
+  getVisibleColumns,
+} = useGrid();
 </script>
 ```
+
+| Property / Method         | Type                                         | Description                               |
+| ------------------------- | -------------------------------------------- | ----------------------------------------- |
+| `isReady`                 | `Ref<boolean>`                               | Reactive flag — `true` once grid is ready |
+| `config`                  | `Ref<GridConfig \| null>`                    | Reactive effective grid configuration     |
+| `gridElement`             | `Ref<DataGridElement \| null>`               | Raw grid element reference                |
+| `ready()`                 | `() => Promise<void>`                        | Wait for grid to finish initializing      |
+| `forceLayout()`           | `() => Promise<void>`                        | Force layout recalculation                |
+| `getConfig()`             | `() => GridConfig \| undefined`              | Get effective configuration snapshot      |
+| `getPlugin(pluginClass)`  | `<T>(cls: new (...) => T) => T \| undefined` | Get plugin by class                       |
+| `getPluginByName(name)`   | `(name: string) => Plugin \| undefined`      | Get plugin by name                        |
+| `toggleGroup(key)`        | `(key: string) => Promise<void>`             | Toggle group expansion                    |
+| `registerStyles(id, css)` | `(id: string, css: string) => void`          | Register custom stylesheet                |
+| `unregisterStyles(id)`    | `(id: string) => void`                       | Remove custom stylesheet                  |
+| `getVisibleColumns()`     | `() => ColumnConfig[]`                       | Get non-hidden columns                    |
 
 ### useGridEvent
 
