@@ -251,6 +251,39 @@ export interface PublicGrid<T = any> {
    */
   columnState?: GridColumnState;
 
+  // Sort API
+  /**
+   * Get the current sort state.
+   *
+   * Returns `null` when no sort is active.
+   *
+   * @example
+   * ```typescript
+   * const sort = grid.sortModel;
+   * // { field: 'id', direction: 'desc' } | null
+   * ```
+   */
+  readonly sortModel?: { field: string; direction: 'asc' | 'desc' } | null;
+
+  /**
+   * Sort by a column, toggle a column's sort direction, or clear sorting.
+   *
+   * - `sort('id', 'desc')` — apply sort with explicit direction
+   * - `sort('id')` — toggle: none → asc → desc → none
+   * - `sort(null)` — clear sort, restore original row order
+   *
+   * @param field - Column field to sort by, or `null` to clear
+   * @param direction - Explicit direction; omit to toggle
+   *
+   * @example
+   * ```typescript
+   * grid.sort('id', 'desc');  // sort descending
+   * grid.sort('price');       // toggle sort on price
+   * grid.sort(null);          // clear sort
+   * ```
+   */
+  sort?(field: string | null, direction?: 'asc' | 'desc'): void;
+
   // Loading API
   /**
    * Whether the grid is currently in a loading state.

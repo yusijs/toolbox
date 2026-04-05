@@ -43,7 +43,7 @@ import {
   type ShellState,
   type ToolPanelRendererFactory,
 } from './internal/shell';
-import { reapplyCoreSort } from './internal/sorting';
+import { applySort, reapplyCoreSort, toggleSort } from './internal/sorting';
 import { addPluginStyles, injectStyles } from './internal/style-injector';
 import {
   cancelMomentum,
@@ -3694,6 +3694,77 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
 
     return true;
   }
+
+  // #region Sort API
+  /**
+   * Get the current single-column sort state.
+   *
+   * Returns `null` when no sort is active.
+   *
+   * @group Sorting
+   *
+   * @example
+   * ```typescript
+   * const sort = grid.sortModel;
+   * // { field: 'name', direction: 'desc' } | null
+   * ```
+   */
+  get sortModel(): { field: string; direction: 'asc' | 'desc' } | null {
+    if (!this._sortState) return null;
+    return {
+      field: this._sortState.field,
+      direction: this._sortState.direction === 1 ? 'asc' : 'desc',
+    };
+  }
+
+  /**
+   * Sort by a column, toggle a column's sort direction, or clear sorting.
+   *
+   * - `sort('id', 'desc')` — apply sort with explicit direction
+   * - `sort('id')` — toggle: none → asc → desc → none
+   * - `sort(null)` — clear sort, restore original row order
+   *
+   * @param field - Column field to sort by, or `null` to clear
+   * @param direction - Explicit direction; omit to toggle
+   *
+   * @group Sorting
+   *
+   * @example
+   * ```typescript
+   * grid.sort('id', 'desc');  // sort descending
+   * grid.sort('price');       // toggle sort on price
+   * grid.sort(null);          // clear sort
+   * ```
+   */
+  sort(field: string | null, direction?: 'asc' | 'desc'): void {
+    // Clear sort
+    if (field === null) {
+      if (!this._sortState) return;
+      const prevField = this._sortState.field;
+      this._sortState = null;
+      this.__rowRenderEpoch++;
+      this._rowPool.forEach((r) => (r.__epoch = -1));
+      this._rows = this.__originalOrder.slice();
+      renderHeader(this);
+      this.refreshVirtualWindow(true);
+      this.dispatchEvent(new CustomEvent('sort-change', { detail: { field: prevField, direction: 0 } }));
+      this.requestStateChange?.();
+      return;
+    }
+
+    const col = (this._columns as ColumnConfig<T>[]).find((c) => c.field === field);
+    if (!col) return;
+
+    if (direction) {
+      // Explicit direction
+      if (!this._sortState) this.__originalOrder = this._rows.slice();
+      applySort(this, col, direction === 'desc' ? -1 : 1);
+    } else {
+      // Toggle: delegates to existing cycle logic
+      toggleSort(this, col);
+    }
+  }
+  // #endregion
 
   /**
    * Request a state change event to be emitted.
