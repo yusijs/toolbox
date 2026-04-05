@@ -653,15 +653,15 @@ import '@toolbox-web/grid/features/filtering';
           }
         }
       }
-      // Overall geometric mean speedup across all non-tie data points
+      // Overall geometric mean speedup across non-tie TIME metrics only (memory is a separate dimension)
       const overallRatios: number[] = [];
       for (const r of allResults) {
         for (const metric of activeMetrics) {
+          if (metric === MEMORY_METRIC) continue;
           const t = r.tbw.get(metric);
           const a = r.ag.get(metric);
           if (t !== undefined && a !== undefined && t > 0 && a > 0) {
-            const isMemoryMetric2 = metric === MEMORY_METRIC;
-            const isTie2 = !isMemoryMetric2 && t < NOISE_FLOOR_MS && a < NOISE_FLOOR_MS;
+            const isTie2 = t < NOISE_FLOOR_MS && a < NOISE_FLOOR_MS;
             if (!isTie2) overallRatios.push(a / t);
           }
         }
