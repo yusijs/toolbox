@@ -39,7 +39,7 @@
 
   <div id="compare-results" class="perf-compare-results">
     <p>Click <strong>Run Comparison</strong> to benchmark both grids at increasing data sizes.</p>
-    <p style="opacity:0.7;font-size:12px;">Scale points: 100K → 500K → 1M rows × 10 columns. Tests: init render, scroll, sort, filter, data replacement, single-row update, column resize, scroll-to-end, memory. Each grid runs alone with a cooldown between them.</p>
+    <p style="opacity:0.7;font-size:12px;">Scale points: 5K → 100K → 500K → 1M rows × 10 columns. Tests: init render, scroll, sort, filter, data replacement, single-row update, column resize, scroll-to-end, memory. Each metric runs 5× per scale point (trimmed mean). Each grid runs alone with a cooldown between them.</p>
   </div>
 </div>
 
@@ -53,6 +53,7 @@ import '@toolbox-web/grid/features/filtering';
   // #region Constants
   const SCALE_POINTS = [5_000, 100_000, 500_000, 1_000_000];
   const COL_COUNT = 10;
+  const ITERATIONS = 5; // Repeat each metric this many times and report trimmed mean
   const TIME_METRICS = [
     'Initial render', 'Scroll avg frame', 'Sort', 'Filter', 'Data replacement',
     'Update single row', 'Column resize', 'Scroll to end',
@@ -131,6 +132,33 @@ import '@toolbox-web/grid/features/filtering';
     await new Promise<void>((r) => requestAnimationFrame(() => r())); // one frame to complete any deferred work
     return performance.now() - start;
   };
+
+  /**
+   * Run a measurement ITERATIONS times and return the trimmed mean (drop min & max).
+   * `measure` performs the operation and returns the time.
+   * `reset` is called between iterations to restore state (e.g. clear filter).
+   */
+  async function measureAvg(
+    measure: () => Promise<number>,
+    reset?: () => void | Promise<void>,
+  ): Promise<number> {
+    const samples: number[] = [];
+    for (let i = 0; i < ITERATIONS; i++) {
+      samples.push(await measure());
+      if (reset) {
+        await reset();
+        await nextFrame();
+        await cooldown(30);
+      }
+    }
+    // Trimmed mean: drop highest and lowest if we have enough samples
+    if (samples.length >= 4) {
+      samples.sort((a, b) => a - b);
+      const trimmed = samples.slice(1, -1);
+      return trimmed.reduce((a, b) => a + b, 0) / trimmed.length;
+    }
+    return samples.reduce((a, b) => a + b, 0) / samples.length;
+  }
 
   async function measureMemory(): Promise<number | null> {
     const mem = (performance as any).memory;
@@ -237,24 +265,30 @@ import '@toolbox-web/grid/features/filtering';
     }
 
     // Sort (programmatic via sort() API — synchronous, no rAF overhead)
-    await nextFrame(); // settle before measuring
-    const sortStart = performance.now();
-    grid.sort?.('id', 'desc');
-    const sortTime = performance.now() - sortStart;
+    const sortTime = await measureAvg(async () => {
+      await nextFrame();
+      const start = performance.now();
+      grid.sort?.('id', 'desc');
+      return performance.now() - start;
+    }, () => { grid.sort?.(null); });
     results.set('Sort', sortTime);
-    grid.sort?.(null);
-    await nextFrame();
     await cooldown(50);
 
     // Filter (number filter on id column — keeps rows with id > rowCount/2)
     const filterPlugin = grid.getPluginByName?.('filtering');
     if (filterPlugin) {
       const threshold = Math.floor(rowCount / 2);
-      const filterTime = await measureVisual(() => {
-        filterPlugin.setFilterModel([
-          { field: 'id', type: 'number', operator: 'greaterThan', value: threshold },
-        ]);
-      });
+      const filterTime = await measureAvg(
+        () => measureVisual(() => {
+          filterPlugin.setFilterModel([
+            { field: 'id', type: 'number', operator: 'greaterThan', value: threshold },
+          ]);
+        }),
+        async () => {
+          filterPlugin.clearAllFilters();
+          await grid.forceLayout?.();
+        },
+      );
       results.set('Filter', filterTime);
       filterPlugin.clearAllFilters();
       await grid.forceLayout?.();
@@ -262,38 +296,52 @@ import '@toolbox-web/grid/features/filtering';
     }
 
     // Data replacement
-    const newRows = generateRows(rowCount, COL_COUNT);
-    const replaceTime = await measureVisual(() => { grid.rows = newRows; });
+    const replaceTime = await measureAvg(
+      () => {
+        const fresh = generateRows(rowCount, COL_COUNT);
+        return measureVisual(() => { grid.rows = fresh; });
+      },
+    );
     results.set('Data replacement', replaceTime);
     await cooldown(50);
 
     // Update single row
     if (grid.updateRow) {
-      const updateTime = await measureVisual(() => {
-        grid.updateRow!(String(Math.floor(rowCount / 2) + 1), { col1: 'UPDATED' });
-      });
+      let updateCounter = 0;
+      const updateTime = await measureAvg(
+        () => measureVisual(() => {
+          grid.updateRow!(String(Math.floor(rowCount / 2) + 1), { col1: `UPDATED${++updateCounter}` });
+        }),
+      );
       results.set('Update single row', updateTime);
       await cooldown(50);
     }
 
     // Column resize
     {
-      const resizeTime = await measureVisual(() => {
-        const state = grid.getColumnState?.();
-        if (state?.columns?.[0]) {
-          state.columns[0].width = 200;
-          grid.columnState = state;
-        }
-      });
+      let wide = true;
+      const resizeTime = await measureAvg(
+        () => measureVisual(() => {
+          const state = grid.getColumnState?.();
+          if (state?.columns?.[0]) {
+            state.columns[0].width = wide ? 200 : 80;
+            wide = !wide;
+            grid.columnState = state;
+          }
+        }),
+      );
       results.set('Column resize', resizeTime);
       await cooldown(50);
     }
 
     // Scroll to end
     {
-      const scrollEndTime = await measureVisual(() => {
-        grid.scrollToRow?.(rowCount - 1, { align: 'end' });
-      });
+      const scrollEndTime = await measureAvg(
+        () => measureVisual(() => {
+          grid.scrollToRow?.(rowCount - 1, { align: 'end' });
+        }),
+        () => { grid.scrollToRow?.(0, { align: 'start' }); },
+      );
       results.set('Scroll to end', scrollEndTime);
       await cooldown(50);
     }
@@ -371,23 +419,30 @@ import '@toolbox-web/grid/features/filtering';
 
     // Sort (synchronous — measure directly without rAF overhead)
     if (gridApi) {
-      await nextFrame(); // settle before measuring
-      const sortStart = performance.now();
-      gridApi.applyColumnState({ state: [{ colId: 'id', sort: 'desc' }] });
-      const sortTime = performance.now() - sortStart;
+      const sortTime = await measureAvg(async () => {
+        await nextFrame();
+        const start = performance.now();
+        gridApi.applyColumnState({ state: [{ colId: 'id', sort: 'desc' }] });
+        return performance.now() - start;
+      }, () => { gridApi.applyColumnState({ defaultState: { sort: null } }); });
       results.set('Sort', sortTime);
-      gridApi.applyColumnState({ defaultState: { sort: null } });
       await cooldown(50);
     }
 
     // Filter (number filter on id column — keeps rows with id > rowCount/2)
     if (gridApi) {
       const threshold = Math.floor(rowCount / 2);
-      const filterTime = await measureVisual(() => {
-        gridApi.setFilterModel({
-          id: { filterType: 'number', type: 'greaterThan', filter: threshold },
-        });
-      });
+      const filterTime = await measureAvg(
+        () => measureVisual(() => {
+          gridApi.setFilterModel({
+            id: { filterType: 'number', type: 'greaterThan', filter: threshold },
+          });
+        }),
+        async () => {
+          gridApi.setFilterModel(null);
+          await nextFrame();
+        },
+      );
       results.set('Filter', filterTime);
       gridApi.setFilterModel(null);
       await nextFrame();
@@ -395,37 +450,49 @@ import '@toolbox-web/grid/features/filtering';
     }
 
     // Data replacement
-    const newRows = generateRows(rowCount, COL_COUNT);
-    const replaceTime = await measureVisual(() => {
-      gridApi.setGridOption('rowData', newRows);
-    });
+    const replaceTime = await measureAvg(
+      () => {
+        const fresh = generateRows(rowCount, COL_COUNT);
+        return measureVisual(() => { gridApi.setGridOption('rowData', fresh); });
+      },
+    );
     results.set('Data replacement', replaceTime);
     await cooldown(50);
 
     // Update single row
     if (gridApi) {
       const midId = Math.floor(rowCount / 2) + 1;
-      const updateTime = await measureVisual(() => {
-        gridApi.applyTransaction({ update: [{ id: midId, col1: 'UPDATED' }] });
-      });
+      let updateCounter = 0;
+      const updateTime = await measureAvg(
+        () => measureVisual(() => {
+          gridApi.applyTransaction({ update: [{ id: midId, col1: `UPDATED${++updateCounter}` }] });
+        }),
+      );
       results.set('Update single row', updateTime);
       await cooldown(50);
     }
 
     // Column resize
     if (gridApi) {
-      const resizeTime = await measureVisual(() => {
-        gridApi.applyColumnState({ state: [{ colId: 'id', width: 200 }] });
-      });
+      let wide = true;
+      const resizeTime = await measureAvg(
+        () => measureVisual(() => {
+          gridApi.applyColumnState({ state: [{ colId: 'id', width: wide ? 200 : 80 }] });
+          wide = !wide;
+        }),
+      );
       results.set('Column resize', resizeTime);
       await cooldown(50);
     }
 
     // Scroll to end
     if (gridApi) {
-      const scrollEndTime = await measureVisual(() => {
-        gridApi.ensureIndexVisible(rowCount - 1, 'bottom');
-      });
+      const scrollEndTime = await measureAvg(
+        () => measureVisual(() => {
+          gridApi.ensureIndexVisible(rowCount - 1, 'bottom');
+        }),
+        () => { gridApi.ensureIndexVisible(0, 'top'); },
+      );
       results.set('Scroll to end', scrollEndTime);
       await cooldown(50);
     }
@@ -482,8 +549,34 @@ import '@toolbox-web/grid/features/filtering';
 
       const isMemory = metric === MEMORY_METRIC;
 
+      // Compute per-card average speedup (geometric mean of ratios where both have data)
+      const cardRatios: number[] = [];
+      let cardTbwWins = 0;
+      let cardAgWins = 0;
+      for (const r of allResults) {
+        const t = r.tbw.get(metric);
+        const a = r.ag.get(metric);
+        if (t !== undefined && a !== undefined && t > 0 && a > 0) {
+          const isTieCheck = !isMemory && t < NOISE_FLOOR_MS && a < NOISE_FLOOR_MS;
+          if (!isTieCheck) {
+            cardRatios.push(a / t); // >1 means TBW wins
+            if (t <= a) cardTbwWins++; else cardAgWins++;
+          }
+        }
+      }
+      const cardGeoMean = cardRatios.length > 0
+        ? Math.pow(cardRatios.reduce((p, r) => p * r, 1), 1 / cardRatios.length)
+        : 1;
+      // Winner determined by geometric mean: >1 means TBW wins (lower is better for all metrics)
+      const cardWinner = cardGeoMean >= 1 ? 'TBW' : 'AG';
+      const cardSpeedup = cardGeoMean >= 1 ? cardGeoMean : 1 / cardGeoMean;
+      const cardLabel = isMemory ? `${cardSpeedup.toFixed(1)}× smaller` : `${cardSpeedup.toFixed(1)}× faster`;
+      const cardSubtitle = done && cardRatios.length > 0 && cardSpeedup >= 1.05
+        ? `<span class="perf-card-subtitle" style="color:${cardWinner === 'TBW' ? COLOR_TBW : COLOR_AG}">${cardWinner} ${cardLabel}</span>`
+        : '';
+
       html += `<div class="perf-card">
-        <div class="perf-card-title">${metric}</div>`;
+        <div class="perf-card-title">${metric}${cardSubtitle}</div>`;
 
       for (const r of allResults) {
         const tbw = r.tbw.get(metric);
@@ -560,11 +653,31 @@ import '@toolbox-web/grid/features/filtering';
           }
         }
       }
+      // Overall geometric mean speedup across all non-tie data points
+      const overallRatios: number[] = [];
+      for (const r of allResults) {
+        for (const metric of activeMetrics) {
+          const t = r.tbw.get(metric);
+          const a = r.ag.get(metric);
+          if (t !== undefined && a !== undefined && t > 0 && a > 0) {
+            const isMemoryMetric2 = metric === MEMORY_METRIC;
+            const isTie2 = !isMemoryMetric2 && t < NOISE_FLOOR_MS && a < NOISE_FLOOR_MS;
+            if (!isTie2) overallRatios.push(a / t);
+          }
+        }
+      }
+      const overallGeoMean = overallRatios.length > 0
+        ? Math.pow(overallRatios.reduce((p, r) => p * r, 1), 1 / overallRatios.length)
+        : 1;
+      const overallWinner = tbwWins >= agWins;
+      const overallSpeedup = overallGeoMean >= 1 ? overallGeoMean : 1 / overallGeoMean;
+      const speedupLabel = overallSpeedup >= 1.05 ? ` — <strong>${overallSpeedup.toFixed(1)}× faster</strong>` : '';
+
       html += `
         <div class="perf-summary">
-          <span style="color:${COLOR_TBW}">▎Toolbox Grid</span> wins <strong>${tbwWins}/${tbwWins + agWins + ties}</strong> data points${ties > 0 ? ` · ${ties} ties` : ''}
+          <span style="color:${overallWinner ? COLOR_TBW : COLOR_AG}">▎${overallWinner ? 'Toolbox Grid' : 'AG Grid'}</span> wins <strong>${Math.max(tbwWins, agWins)}/${tbwWins + agWins + ties}</strong> data points${ties > 0 ? ` · ${ties} ties` : ''}${speedupLabel}
           <div style="color:#888;font-size:12px;margin-top:4px;">
-            Tested at ${SCALE_POINTS.map(formatRowCount).join(', ')} rows × ${COL_COUNT} columns${hasMemoryApi ? ' — memory via Chrome performance.memory' : ''}
+            Tested at ${SCALE_POINTS.map(formatRowCount).join(', ')} rows × ${COL_COUNT} columns · ${ITERATIONS}× iterations (trimmed mean)${hasMemoryApi ? ' — memory via Chrome performance.memory' : ''}
           </div>
         </div>
       `;
@@ -903,6 +1016,16 @@ import '@toolbox-web/grid/features/filtering';
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .perf-card-subtitle {
+    font-size: 11px;
+    font-weight: 500;
+    flex-shrink: 0;
   }
 
   .perf-row {

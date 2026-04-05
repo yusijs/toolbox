@@ -2045,13 +2045,13 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
     this.#rowIdMap.clear();
     const getRowId = this.#effectiveConfig.getRowId;
 
-    this._rows.forEach((row, index) => {
-      const id = tryResolveRowId(row, getRowId);
+    for (let index = 0; index < this._rows.length; index++) {
+      const id = tryResolveRowId(this._rows[index], getRowId);
       if (id !== undefined) {
-        this.#rowIdMap.set(id, { row, index });
+        this.#rowIdMap.set(id, { row: this._rows[index], index });
       }
       // Rows without IDs are skipped - they won't be accessible via getRow/updateRow
-    });
+    }
   }
 
   #applyColumnsUpdate(): void {
@@ -2268,18 +2268,29 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
     // Invalidate cell display value cache - rows are changing
     invalidateCellCache(this);
 
-    // Start fresh from original rows (plugins will transform them)
-    const originalRows = Array.isArray(this.#rows) ? [...this.#rows] : [];
+    const baseRows = this.#rows;
+    if (!Array.isArray(baseRows)) {
+      this._rows = [];
+      this._rebuildRowIdMap();
+      if (this._virtualization.variableHeights) {
+        this.#virtManager.initializePositionCache();
+      }
+      this._emitDataChange();
+      return;
+    }
 
     // Apply initialSort on first data load (no active sort and config specifies one)
     if (!this._sortState && this.#effectiveConfig.initialSort) {
       const { field, direction } = this.#effectiveConfig.initialSort;
       const col = (this._columns as ColumnConfig<T>[]).find((c) => c.field === field);
       if (col) {
-        this.__originalOrder = [...originalRows];
+        this.__originalOrder = [...baseRows];
         this._sortState = { field, direction: direction === 'desc' ? -1 : 1 };
       }
     }
+
+    // Only copy when sort will mutate in-place; filter-only path avoids the O(n) spread
+    const originalRows = this._sortState ? [...baseRows] : baseRows;
 
     // Re-apply core sort before plugins so sorted order is maintained on data refresh.
     // This runs BEFORE processRows so grouping/filtering work on sorted data.
@@ -3758,6 +3769,7 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
       this.__rowRenderEpoch++;
       this._rowPool.forEach((r) => (r.__epoch = -1));
       this._rows = this.__originalOrder.slice();
+      this.__originalOrder = [];
       renderHeader(this);
       this.refreshVirtualWindow(true);
       this.dispatchEvent(new CustomEvent('sort-change', { detail: { field: prevField, direction: 0 } }));

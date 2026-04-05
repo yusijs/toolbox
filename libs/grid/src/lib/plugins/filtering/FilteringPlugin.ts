@@ -361,8 +361,8 @@ export class FilteringPlugin extends BaseGridPlugin<FilterConfig> {
 
   /** @internal */
   override processRows(rows: readonly unknown[]): unknown[] {
+    if (!this.filters.size) return rows as unknown[];
     const filterList = [...this.filters.values()];
-    if (!filterList.length) return [...rows];
 
     // If using async filterHandler, processRows becomes a passthrough
     // Actual filtering happens in applyFiltersAsync and rows are set directly on grid
@@ -370,7 +370,7 @@ export class FilteringPlugin extends BaseGridPlugin<FilterConfig> {
       // Return cached result if available (set by async handler)
       if (this.cachedResult) return this.cachedResult;
       // Otherwise return rows as-is (filtering happens async)
-      return [...rows];
+      return rows as unknown[];
     }
 
     // Check cache — also verify input rows haven't changed (e.g. due to sort)

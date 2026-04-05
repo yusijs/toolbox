@@ -117,44 +117,60 @@ function compileFilter(
     };
   }
 
-  // Numeric / date operators — pre-resolve threshold(s) once
+  // Numeric / date operators — pre-resolve threshold(s) once.
+  // When the filter type is 'number', the row values are expected to already
+  // be JS numbers, so we emit a tighter predicate that skips toNumeric().
+  const isNumType = filter.type === 'number';
   if (op === 'greaterThan') {
     const threshold = toNumeric(filter.value);
-    return (row) => {
-      const v = row[field];
-      return v != null && toNumeric(v) > threshold;
-    };
+    return isNumType
+      ? (row) => (row[field] as number) > threshold
+      : (row) => {
+          const v = row[field];
+          return v != null && toNumeric(v) > threshold;
+        };
   }
   if (op === 'greaterThanOrEqual') {
     const threshold = toNumeric(filter.value);
-    return (row) => {
-      const v = row[field];
-      return v != null && toNumeric(v) >= threshold;
-    };
+    return isNumType
+      ? (row) => (row[field] as number) >= threshold
+      : (row) => {
+          const v = row[field];
+          return v != null && toNumeric(v) >= threshold;
+        };
   }
   if (op === 'lessThan') {
     const threshold = toNumeric(filter.value);
-    return (row) => {
-      const v = row[field];
-      return v != null && toNumeric(v) < threshold;
-    };
+    return isNumType
+      ? (row) => (row[field] as number) < threshold
+      : (row) => {
+          const v = row[field];
+          return v != null && toNumeric(v) < threshold;
+        };
   }
   if (op === 'lessThanOrEqual') {
     const threshold = toNumeric(filter.value);
-    return (row) => {
-      const v = row[field];
-      return v != null && toNumeric(v) <= threshold;
-    };
+    return isNumType
+      ? (row) => (row[field] as number) <= threshold
+      : (row) => {
+          const v = row[field];
+          return v != null && toNumeric(v) <= threshold;
+        };
   }
   if (op === 'between') {
     const lo = toNumeric(filter.value);
     const hi = toNumeric(filter.valueTo);
-    return (row) => {
-      const v = row[field];
-      if (v == null) return false;
-      const n = toNumeric(v);
-      return n >= lo && n <= hi;
-    };
+    return isNumType
+      ? (row) => {
+          const n = row[field] as number;
+          return n >= lo && n <= hi;
+        }
+      : (row) => {
+          const v = row[field];
+          if (v == null) return false;
+          const n = toNumeric(v);
+          return n >= lo && n <= hi;
+        };
   }
 
   // Text operators — pre-resolve filter comparison value once

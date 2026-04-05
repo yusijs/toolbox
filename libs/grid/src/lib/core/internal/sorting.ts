@@ -155,6 +155,7 @@ export function toggleSort(grid: GridHost, col: ColumnConfig<any>): void {
     // Invalidate existing pooled row epochs so virtualization triggers a full inline rebuild
     grid._rowPool.forEach((r) => (r.__epoch = -1));
     grid._rows = grid.__originalOrder.slice();
+    grid.__originalOrder = [];
     renderHeader(grid);
     // After re-render ensure cleared column shows aria-sort="none" baseline.
     const headers = grid._headerRowEl?.querySelectorAll('[role="columnheader"].sortable');

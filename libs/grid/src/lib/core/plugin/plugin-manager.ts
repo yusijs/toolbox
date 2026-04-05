@@ -321,10 +321,13 @@ export class PluginManager {
    */
   processRows(rows: readonly any[]): any[] {
     if (!this._hasProcessRows) return rows as any[];
-    let result = [...rows];
+    let result: any[] = rows as any[];
     for (const plugin of this.plugins) {
       if (plugin.processRows) {
-        result = plugin.processRows(result);
+        const transformed = plugin.processRows(result);
+        if (transformed !== result) {
+          result = transformed;
+        }
       }
     }
     return result;
