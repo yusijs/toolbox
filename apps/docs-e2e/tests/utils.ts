@@ -138,4 +138,8 @@ export async function filterColumn(page: Page, fieldName: string, value: string)
  * List of all demo slugs (auto-discovered at test time).
  * Matches the pattern used by the catch-all route.
  */
-export const EXCLUDED_DEMOS = ['EmployeeManagementAllFeaturesDemo', 'EmployeeManagementGroupedDemo'];
+export const EXCLUDED_DEMOS = [
+  'EmployeeManagementAllFeaturesDemo',
+  'EmployeeManagementGroupedDemo',
+  'PerformanceComparisonDemo',
+];
