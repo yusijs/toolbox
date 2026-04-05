@@ -39,7 +39,7 @@
 
   <div id="compare-results" class="perf-compare-results">
     <p>Click <strong>Run Comparison</strong> to benchmark both grids at increasing data sizes.</p>
-    <p style="opacity:0.7;font-size:12px;">Scale points: 1K → 10K → 100K → 500K → 1M rows × 10 columns. Each grid runs alone with full CPU/GPU availability, with a cooldown between them at every scale point.</p>
+    <p style="opacity:0.7;font-size:12px;">Scale points: 1K → 10K → 100K → 500K → 1M rows × 10 columns. Tests: init render, scroll, sort, data replacement, single-row update, column resize, scroll-to-end, memory. Each grid runs alone with a cooldown between them.</p>
   </div>
 </div>
 
@@ -55,8 +55,14 @@ import '@toolbox-web/grid/features/selection';
   // #region Constants
   const SCALE_POINTS = [1_000, 10_000, 100_000, 500_000, 1_000_000];
   const COL_COUNT = 10;
-  const METRICS = ['Initial render', 'Scroll avg frame', 'Sort', 'Data replacement'] as const;
-  type MetricName = typeof METRICS[number];
+  const TIME_METRICS = [
+    'Initial render', 'Scroll avg frame', 'Sort', 'Data replacement',
+    'Update single row', 'Column resize', 'Scroll to end',
+  ] as const;
+  const MEMORY_METRIC = 'Memory usage' as const;
+  const ALL_METRICS = [...TIME_METRICS, MEMORY_METRIC] as const;
+  type MetricName = typeof ALL_METRICS[number];
+  const hasMemoryApi = !!(performance as any).memory;
   // #endregion
 
   // #region Types & Helpers
@@ -94,6 +100,16 @@ import '@toolbox-web/grid/features/selection';
     return `${(ms / 1000).toFixed(2)}s`;
   }
 
+  function formatBytes(bytes: number): string {
+    if (bytes < 1024) return `${bytes}B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+  }
+
+  function formatMetric(metric: string, value: number): string {
+    return metric === MEMORY_METRIC ? formatBytes(value) : formatTime(value);
+  }
+
   function formatRowCount(n: number): string {
     if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(0)}M`;
     if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
@@ -111,6 +127,11 @@ import '@toolbox-web/grid/features/selection';
     await nextFrame();
     return performance.now() - start;
   };
+
+  function measureMemory(): number | null {
+    const mem = (performance as any).memory;
+    return mem ? mem.usedJSHeapSize : null;
+  }
   // #endregion
 
   // #region AG Grid Loader
@@ -173,6 +194,7 @@ import '@toolbox-web/grid/features/selection';
       grid.gridConfig = {
         columns: tbwColumns,
         fitMode: 'fixed',
+        getRowId: (row: any) => String(row.id),
         features: { selection: 'range', multiSort: { maxSortColumns: 3 } },
       };
       grid.rows = rows;
@@ -219,6 +241,37 @@ import '@toolbox-web/grid/features/selection';
     results.set('Data replacement', replaceTime);
     await cooldown(50);
 
+    // Update single row
+    if ((grid as any).updateRow) {
+      const updateTime = await measure(() => {
+        (grid as any).updateRow(String(Math.floor(rowCount / 2) + 1), { col1: 'UPDATED' });
+      });
+      results.set('Update single row', updateTime);
+      await cooldown(50);
+    }
+
+    // Column resize
+    const resizeTime = await measure(() => {
+      const state = (grid as any).getColumnState?.();
+      if (state?.columns?.[0]) {
+        state.columns[0].width = 200;
+        (grid as any).columnState = state;
+      }
+    });
+    results.set('Column resize', resizeTime);
+    await cooldown(50);
+
+    // Scroll to end
+    const scrollEndTime = await measure(() => {
+      (grid as any).scrollToRow?.(rowCount - 1, { align: 'end' });
+    });
+    results.set('Scroll to end', scrollEndTime);
+    await cooldown(50);
+
+    // Memory usage (Chrome only)
+    const mem = measureMemory();
+    if (mem !== null) results.set('Memory usage', mem);
+
     // Cleanup
     grid.rows = [];
     grid.gridConfig = { columns: [] };
@@ -255,6 +308,7 @@ import '@toolbox-web/grid/features/selection';
       gridApi = agGrid.createGrid(container, {
         columnDefs: agColumnDefs, rowData: rows,
         suppressColumnVirtualisation: false, animateRows: false,
+        getRowId: (params: any) => String(params.data.id),
       });
     });
     results.set('Initial render', renderTime);
@@ -300,6 +354,38 @@ import '@toolbox-web/grid/features/selection';
     results.set('Data replacement', replaceTime);
     await cooldown(50);
 
+    // Update single row
+    if (gridApi) {
+      const midId = Math.floor(rowCount / 2) + 1;
+      const updateTime = await measure(() => {
+        gridApi.applyTransaction({ update: [{ id: midId, col1: 'UPDATED' }] });
+      });
+      results.set('Update single row', updateTime);
+      await cooldown(50);
+    }
+
+    // Column resize
+    if (gridApi) {
+      const resizeTime = await measure(() => {
+        gridApi.applyColumnState({ state: [{ colId: 'id', width: 200 }] });
+      });
+      results.set('Column resize', resizeTime);
+      await cooldown(50);
+    }
+
+    // Scroll to end
+    if (gridApi) {
+      const scrollEndTime = await measure(() => {
+        gridApi.ensureIndexVisible(rowCount - 1, 'bottom');
+      });
+      results.set('Scroll to end', scrollEndTime);
+      await cooldown(50);
+    }
+
+    // Memory usage (Chrome only)
+    const mem = measureMemory();
+    if (mem !== null) results.set('Memory usage', mem);
+
     // Cleanup
     if (gridApi) gridApi.destroy();
     gridArea.innerHTML = '';
@@ -310,13 +396,33 @@ import '@toolbox-web/grid/features/selection';
   // #endregion
 
   // #region Results Rendering
+  const COLOR_TBW = '#38bdf8'; // cyan — Toolbox brand
+  const COLOR_AG = '#fb923c';  // orange — AG Grid brand
+  const COLOR_WIN = '#4ade80'; // green — winner value
+  const COLOR_LOSE = '#f87171'; // red — loser value
+
+  function formatDelta(winner: number, loser: number): string {
+    if (loser === 0 || winner === 0) return '';
+    const ratio = loser / winner;
+    if (ratio < 1.05) return '';
+    return `${ratio.toFixed(1)}×`;
+  }
+
   function renderScaleTable(allResults: ScaleResult[], done: boolean): string {
-    let html = '';
+    // Determine which metrics have data
+    const activeMetrics = ALL_METRICS.filter((metric) =>
+      allResults.some((r) => r.tbw.has(metric) || r.ag.has(metric))
+    );
 
-    for (const metric of METRICS) {
-      const hasBothGrids = allResults.some((r) => r.tbw.has(metric) && r.ag.has(metric));
-      if (!hasBothGrids && allResults.length > 0 && allResults[0].ag.size > 0) continue;
+    // Legend + card grid
+    let html = `<div class="perf-legend">
+      <span class="perf-legend-item"><span class="perf-legend-swatch" style="background:${COLOR_TBW}"></span> Toolbox Grid</span>
+      <span class="perf-legend-item"><span class="perf-legend-swatch" style="background:${COLOR_AG}"></span> AG Grid</span>
+      <span class="perf-legend-hint">Lower is better · <span style="color:${COLOR_WIN}">green</span> = winner</span>
+    </div>`;
+    html += '<div class="perf-card-grid">';
 
+    for (const metric of activeMetrics) {
       // Find max value for bar scaling
       let maxVal = 0;
       for (const r of allResults) {
@@ -324,54 +430,64 @@ import '@toolbox-web/grid/features/selection';
       }
       if (maxVal === 0) maxVal = 1;
 
-      html += `
-        <div style="background:var(--sl-color-gray-6,#1e1e1e);border-radius:6px;padding:12px;margin-bottom:12px;">
-          <h4 style="margin:0 0 10px 0;color:var(--sl-color-white,#e5e5e5);font-size:13px;font-weight:600;">${metric}</h4>
-          <div style="display:grid;grid-template-columns:60px 1fr 1fr;gap:6px 12px;font-size:12px;align-items:center;">
-            <div style="font-weight:600;color:#888;font-size:11px;">ROWS</div>
-            <div style="font-weight:600;color:#888;font-size:11px;">TOOLBOX GRID</div>
-            <div style="font-weight:600;color:#888;font-size:11px;">AG GRID</div>
-            ${allResults.map((r) => {
-              const tbw = r.tbw.get(metric);
-              const ag = r.ag.get(metric);
-              const tbwDone = tbw !== undefined;
-              const agDone = ag !== undefined;
-              const tbwWins = tbwDone && agDone && (tbw ?? 0) <= (ag ?? 0);
-              const agWins = tbwDone && agDone && (ag ?? 0) < (tbw ?? 0);
+      html += `<div class="perf-card">
+        <div class="perf-card-title">${metric}</div>`;
 
-              const tbwPct = tbwDone ? Math.max(2, ((tbw ?? 0) / maxVal) * 100) : 0;
-              const agPct = agDone ? Math.max(2, ((ag ?? 0) / maxVal) * 100) : 0;
+      for (const r of allResults) {
+        const tbw = r.tbw.get(metric);
+        const ag = r.ag.get(metric);
+        const tbwDone = tbw !== undefined;
+        const agDone = ag !== undefined;
+        const bothDone = tbwDone && agDone;
+        const tbwWins = bothDone && (tbw!) <= (ag!);
+        const agWins = bothDone && (ag!) < (tbw!);
 
-              const tbwLabel = tbwDone ? formatTime(tbw ?? 0) : '...';
-              const agLabel = agDone ? formatTime(ag ?? 0) : '...';
+        const tbwPct = tbwDone ? Math.max(3, ((tbw!) / maxVal) * 100) : 0;
+        const agPct = agDone ? Math.max(3, ((ag!) / maxVal) * 100) : 0;
 
-              return `
-                <div style="color:var(--sl-color-white,#e5e5e5);font-family:monospace;font-weight:600;">${formatRowCount(r.rowCount)}</div>
-                <div style="display:flex;align-items:center;gap:8px;min-width:0;">
-                  <div style="flex:1;height:18px;background:var(--sl-color-gray-7,#111);border-radius:3px;overflow:hidden;">
-                    <div style="height:100%;width:${tbwPct}%;background:${tbwWins ? '#4ade80' : agWins ? '#f87171' : '#60a5fa'};border-radius:3px;transition:width 0.3s;"></div>
-                  </div>
-                  <span style="font-family:monospace;min-width:70px;text-align:right;color:${tbwWins ? '#4ade80' : agWins ? '#f87171' : 'var(--sl-color-white,#e5e5e5)'};">${tbwLabel}</span>
+        const tbwLabel = tbwDone ? formatMetric(metric, tbw!) : '…';
+        const agLabel = agDone ? formatMetric(metric, ag!) : '…';
+
+        // Bar always uses brand color; value text uses green/red for winner/loser
+        const tbwValColor = bothDone ? (tbwWins ? COLOR_WIN : COLOR_LOSE) : '#888';
+        const agValColor = bothDone ? (agWins ? COLOR_WIN : COLOR_LOSE) : '#888';
+
+        const tbwDelta = tbwWins ? formatDelta(tbw!, ag!) : '';
+        const agDelta = agWins ? formatDelta(ag!, tbw!) : '';
+
+        html += `
+          <div class="perf-row">
+            <div class="perf-row-label">${formatRowCount(r.rowCount)}</div>
+            <div class="perf-row-bars">
+              <div class="perf-bar-row perf-bar-row-top">
+                <span class="perf-bar-name" style="color:${COLOR_TBW}">TBW</span>
+                <div class="perf-bar-track">
+                  <div class="perf-bar-fill" style="width:${tbwPct}%;background:${COLOR_TBW};"></div>
                 </div>
-                <div style="display:flex;align-items:center;gap:8px;min-width:0;">
-                  <div style="flex:1;height:18px;background:var(--sl-color-gray-7,#111);border-radius:3px;overflow:hidden;">
-                    <div style="height:100%;width:${agPct}%;background:${agWins ? '#4ade80' : tbwWins ? '#f87171' : '#60a5fa'};border-radius:3px;transition:width 0.3s;"></div>
-                  </div>
-                  <span style="font-family:monospace;min-width:70px;text-align:right;color:${agWins ? '#4ade80' : tbwWins ? '#f87171' : 'var(--sl-color-white,#e5e5e5)'};">${agLabel}</span>
+                <span class="perf-bar-value" style="color:${tbwValColor}">${tbwLabel}${tbwDelta ? ` <span class="perf-delta">${tbwDelta}</span>` : ''}</span>
+              </div>
+              <div class="perf-bar-row perf-bar-row-bottom">
+                <span class="perf-bar-name" style="color:${COLOR_AG}">AG</span>
+                <div class="perf-bar-track">
+                  <div class="perf-bar-fill" style="width:${agPct}%;background:${COLOR_AG};"></div>
                 </div>
-              `;
-            }).join('')}
-          </div>
-        </div>
-      `;
+                <span class="perf-bar-value" style="color:${agValColor}">${agLabel}${agDelta ? ` <span class="perf-delta">${agDelta}</span>` : ''}</span>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      html += '</div>';
     }
+
+    html += '</div>';
 
     if (done) {
       // Summary: count wins across all scale points and metrics
       let tbwWins = 0;
       let agWins = 0;
       for (const r of allResults) {
-        for (const metric of METRICS) {
+        for (const metric of activeMetrics) {
           const tbw = r.tbw.get(metric);
           const ag = r.ag.get(metric);
           if (tbw !== undefined && ag !== undefined) {
@@ -380,12 +496,10 @@ import '@toolbox-web/grid/features/selection';
         }
       }
       html += `
-        <div style="margin-top:8px;padding:12px;background:var(--sl-color-gray-6,#1e1e1e);border-radius:6px;text-align:center;">
-          <strong style="color:var(--sl-color-white,#e5e5e5);font-size:14px;">
-            Toolbox Grid wins ${tbwWins}/${tbwWins + agWins} data points
-          </strong>
+        <div class="perf-summary">
+          <span style="color:${COLOR_TBW}">▎Toolbox Grid</span> wins <strong>${tbwWins}/${tbwWins + agWins}</strong> data points
           <div style="color:#888;font-size:12px;margin-top:4px;">
-            Tested at ${SCALE_POINTS.map(formatRowCount).join(', ')} rows × ${COL_COUNT} columns — results from your browser
+            Tested at ${SCALE_POINTS.map(formatRowCount).join(', ')} rows × ${COL_COUNT} columns${hasMemoryApi ? ' — memory via Chrome performance.memory' : ''}
           </div>
         </div>
       `;
@@ -414,6 +528,7 @@ import '@toolbox-web/grid/features/selection';
     '    // ... 9 more columns, width: 120, sortable: true',
     '  ],',
     "  fitMode: 'fixed',",
+    '  getRowId: (row) => String(row.id),',
     '  features: {',
     "    selection: 'range',",
     '    multiSort: { maxSortColumns: 3 },',
@@ -428,6 +543,7 @@ import '@toolbox-web/grid/features/selection';
     '    // ... 9 more columns, width: 120, sortable: true',
     '  ],',
     '  rowData: data, // 1K \u2192 1M rows',
+    '  getRowId: (params) => String(params.data.id),',
     '  suppressColumnVirtualisation: false,',
     '  animateRows: false,',
     '});',
@@ -512,7 +628,7 @@ import '@toolbox-web/grid/features/selection';
     runBtn.disabled = false;
 
     // Console log
-    for (const metric of METRICS) {
+    for (const metric of ALL_METRICS) {
       console.groupCollapsed(`📊 ${metric}`);
       console.table(allResults.map((r) => ({
         Rows: formatRowCount(r.rowCount),
@@ -642,11 +758,169 @@ import '@toolbox-web/grid/features/selection';
     padding: 12px 16px;
     font-size: 14px;
     line-height: 1.5;
-    max-height: 60vh;
+    max-height: 70vh;
     overflow-y: auto;
   }
 
   .perf-compare-results p {
     margin: 0 0 8px 0;
+  }
+
+  /* Legend */
+  .perf-legend {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: var(--sl-color-gray-2);
+    flex-wrap: wrap;
+  }
+
+  .perf-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 600;
+    color: var(--sl-color-white, #e5e5e5);
+  }
+
+  .perf-legend-swatch {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+  }
+
+  .perf-legend-hint {
+    font-size: 11px;
+    color: var(--sl-color-gray-3, #999);
+    margin-left: auto;
+  }
+
+  /* Card grid layout */
+  .perf-card-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  @media (max-width: 700px) {
+    .perf-card-grid { grid-template-columns: 1fr; }
+  }
+
+  .perf-card {
+    background: var(--sl-color-gray-6, #1e1e1e);
+    border-radius: 6px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .perf-card-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--sl-color-white, #e5e5e5);
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .perf-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 0;
+  }
+
+  .perf-row + .perf-row {
+    border-top: 1px solid var(--sl-color-gray-5, #333);
+  }
+
+  .perf-row-label {
+    font-family: monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--sl-color-white, #e5e5e5);
+    min-width: 28px;
+    text-align: right;
+  }
+
+  .perf-row-bars {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-width: 0;
+  }
+
+  .perf-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 10px;
+  }
+
+  .perf-bar-row-top {
+    /* flush against bottom bar */
+  }
+
+  .perf-bar-row-bottom {
+    /* flush against top bar */
+  }
+
+  .perf-bar-name {
+    font-size: 9px;
+    font-weight: 700;
+    font-family: monospace;
+    min-width: 22px;
+    text-align: right;
+  }
+
+  .perf-bar-track {
+    flex: 1;
+    height: 10px;
+    background: var(--sl-color-gray-7, #111);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .perf-bar-row-top .perf-bar-track {
+    border-radius: 2px 2px 0 0;
+  }
+
+  .perf-bar-row-bottom .perf-bar-track {
+    border-radius: 0 0 2px 2px;
+  }
+
+  .perf-bar-fill {
+    height: 100%;
+    border-radius: inherit;
+    transition: width 0.3s;
+  }
+
+  .perf-bar-value {
+    font-family: monospace;
+    font-size: 10px;
+    min-width: 70px;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .perf-delta {
+    font-size: 9px;
+    opacity: 0.8;
+  }
+
+  .perf-summary {
+    margin-top: 10px;
+    padding: 12px;
+    background: var(--sl-color-gray-6, #1e1e1e);
+    border-radius: 6px;
+    text-align: center;
+    color: var(--sl-color-white, #e5e5e5);
+    font-size: 14px;
   }
 </style>
