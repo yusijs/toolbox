@@ -1,0 +1,696 @@
+---
+// PerformanceComparisonDemo.astro — Head-to-head benchmark: Toolbox Grid vs AG Grid
+// Loads AG Grid Community from CDN (always latest). Runs each grid sequentially
+// on the same data with a cooldown between grids for a fair comparison.
+---
+<div class="perf-compare-wrapper not-content">
+  <div class="perf-compare-bar">
+    <div class="perf-compare-bar-left">
+      <button id="compare-run" class="perf-compare-btn">Run Comparison</button>
+      <span id="compare-status">Ready</span>
+    </div>
+    <div class="perf-compare-bar-right">
+      <label>Rows: <input type="range" id="compare-rows" min="1000" max="100000" step="1000" value="10000" /><span id="compare-rows-val">10,000</span></label>
+      <label>Columns: <input type="range" id="compare-cols" min="5" max="50" step="5" value="10" /><span id="compare-cols-val">10</span></label>
+    </div>
+  </div>
+
+  <details id="compare-config-details" class="perf-compare-config">
+    <summary>Show Grid Configurations</summary>
+    <div class="perf-compare-config-panels">
+      <div class="perf-compare-config-panel">
+        <h4>Toolbox Grid</h4>
+        <pre id="compare-config-tbw"><code>// Configuration shown after benchmark runs</code></pre>
+      </div>
+      <div class="perf-compare-config-panel">
+        <h4>AG Grid Community <span id="ag-version" style="font-weight:normal;opacity:0.7;font-size:12px;"></span></h4>
+        <pre id="compare-config-ag"><code>// Configuration shown after benchmark runs</code></pre>
+      </div>
+    </div>
+  </details>
+
+  <div id="compare-grid-area" class="perf-compare-grid-area">
+    <p style="text-align:center;opacity:0.6;padding:40px 0;">Grid will render here during benchmarks (one at a time)</p>
+  </div>
+
+  <div id="compare-results" class="perf-compare-results">
+    <p>Click <strong>Run Comparison</strong> to benchmark both grids sequentially with identical data.</p>
+    <p style="opacity:0.7;font-size:12px;">Tests: Initial render, scroll performance, sort, data replacement, memory (DOM nodes). Each grid is tested alone with full CPU/GPU availability.</p>
+  </div>
+</div>
+
+<script>
+  import '@toolbox-web/grid';
+import type { ColumnConfig } from '@toolbox-web/grid';
+import { queryGrid } from '@toolbox-web/grid';
+import '@toolbox-web/grid/features/column-virtualization';
+import '@toolbox-web/grid/features/filtering';
+import '@toolbox-web/grid/features/multi-sort';
+import '@toolbox-web/grid/features/selection';
+
+  // #region Types & Helpers
+  interface ComparisonResult {
+    name: string;
+    category: 'render' | 'scroll' | 'operation' | 'memory';
+    tbw: number;
+    ag: number;
+    unit: string;
+    note?: string;
+  }
+
+  function generateColumns(count: number): { field: string; header: string; width: number }[] {
+    const columns: { field: string; header: string; width: number }[] = [
+      { field: 'id', header: 'ID', width: 80 },
+    ];
+    for (let i = 1; i < count; i++) {
+      columns.push({ field: `col${i}`, header: `Column ${i}`, width: 120 });
+    }
+    return columns;
+  }
+
+  function generateRows(rowCount: number, columnCount: number): Record<string, unknown>[] {
+    const rows: Record<string, unknown>[] = [];
+    for (let i = 0; i < rowCount; i++) {
+      const row: Record<string, unknown> = { id: i + 1 };
+      for (let j = 1; j < columnCount; j++) {
+        row[`col${j}`] = `R${i + 1}C${j}`;
+      }
+      rows.push(row);
+    }
+    return rows;
+  }
+
+  function formatTime(ms: number): string {
+    if (ms < 1) return `${(ms * 1000).toFixed(0)}µs`;
+    if (ms < 1000) return `${ms.toFixed(1)}ms`;
+    return `${(ms / 1000).toFixed(2)}s`;
+  }
+
+  function formatValue(value: number, unit: string): string {
+    if (unit === 'count') return value.toLocaleString();
+    return formatTime(value);
+  }
+
+  const nextFrame = () => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
+
+  const cooldown = (ms = 500) => new Promise<void>((r) => setTimeout(r, ms));
+
+  const measure = async (fn: () => void | Promise<void>): Promise<number> => {
+    await nextFrame();
+    const start = performance.now();
+    await fn();
+    await nextFrame();
+    return performance.now() - start;
+  };
+  // #endregion
+
+  // #region AG Grid Loader
+  let agGridLoaded = false;
+  let agGridVersion = '';
+
+  async function loadAgGrid(): Promise<void> {
+    if (agGridLoaded) return;
+
+    // Fetch version from CDN package.json
+    try {
+      const res = await fetch('https://cdn.jsdelivr.net/npm/ag-grid-community/package.json');
+      if (res.ok) {
+        const pkg = await res.json();
+        agGridVersion = pkg.version || '';
+        const versionEl = document.getElementById('ag-version');
+        if (versionEl) versionEl.textContent = `v${agGridVersion}`;
+      }
+    } catch { /* version display is optional */ }
+
+    return new Promise((resolve, reject) => {
+      // Load CSS
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.min.css';
+      document.head.appendChild(link);
+
+      const themeLink = document.createElement('link');
+      themeLink.rel = 'stylesheet';
+      themeLink.href = 'https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-quartz.min.css';
+      document.head.appendChild(themeLink);
+
+      // Load JS
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js';
+      script.onload = () => { agGridLoaded = true; resolve(); };
+      script.onerror = () => reject(new Error('Failed to load AG Grid from CDN'));
+      document.head.appendChild(script);
+    });
+  }
+  // #endregion
+
+  // #region Toolbox Grid Benchmarks
+  async function runToolboxBenchmarks(
+    gridArea: HTMLElement,
+    rows: Record<string, unknown>[],
+    columns: { field: string; header: string; width: number }[],
+    rowCount: number,
+    colCount: number,
+  ): Promise<Map<string, { value: number; unit: string }>> {
+    const results = new Map<string, { value: number; unit: string }>();
+
+    // Create grid element
+    gridArea.innerHTML = '<tbw-grid id="compare-tbw-grid" style="width:100%;height:100%;"></tbw-grid>';
+    const grid = queryGrid('#compare-tbw-grid')!;
+    await cooldown(100);
+
+    // Initial render
+    const tbwColumns: ColumnConfig[] = columns.map((c) => ({
+      field: c.field,
+      header: c.header,
+      width: c.width,
+      type: c.field === 'id' ? 'number' : 'string',
+      sortable: true,
+    }));
+
+    const renderTime = await measure(() => {
+      grid.gridConfig = {
+        columns: tbwColumns,
+        fitMode: 'fixed',
+        features: {
+          selection: 'range',
+          multiSort: { maxSortColumns: 3 },
+          ...(colCount >= 20 ? { columnVirtualization: { threshold: 20, overscan: 3 } } : {}),
+        },
+      };
+      grid.rows = [...rows];
+    });
+    results.set('Initial render', { value: renderTime, unit: 'ms' });
+    await cooldown(200);
+
+    // Scroll performance
+    const scrollContainer = grid.querySelector('.faux-vscroll');
+    if (scrollContainer) {
+      const totalHeight = scrollContainer.scrollHeight;
+      const viewportHeight = scrollContainer.clientHeight;
+      const steps = 30;
+      const stepSize = (totalHeight - viewportHeight) / steps;
+
+      if (stepSize > 0) {
+        // Warm-up pass
+        for (let i = 0; i <= steps; i++) { scrollContainer.scrollTop = i * stepSize; await nextFrame(); }
+        scrollContainer.scrollTop = 0;
+        await cooldown(100);
+
+        // Measured pass
+        const frameTimes: number[] = [];
+        for (let i = 0; i <= steps; i++) {
+          const start = performance.now();
+          scrollContainer.scrollTop = i * stepSize;
+          await nextFrame();
+          frameTimes.push(performance.now() - start);
+        }
+        const avg = frameTimes.reduce((a, b) => a + b, 0) / frameTimes.length;
+        const sorted = [...frameTimes].sort((a, b) => a - b);
+        const p95 = sorted[Math.floor(sorted.length * 0.95)];
+        results.set('Scroll avg frame', { value: avg, unit: 'ms' });
+        results.set('Scroll P95 frame', { value: p95, unit: 'ms' });
+        scrollContainer.scrollTop = 0;
+        await cooldown(100);
+      }
+    }
+
+    // Sort
+    const sortPlugin = (grid as any).getPluginByName?.('multiSort') as { setSortModel: (m: unknown[]) => void; clearSort: () => void } | undefined;
+    if (sortPlugin) {
+      const sortTime = await measure(() => { sortPlugin.setSortModel([{ field: 'id', direction: 'desc' }]); });
+      results.set('Sort', { value: sortTime, unit: 'ms' });
+      sortPlugin.clearSort();
+      await cooldown(100);
+    }
+
+    // Data replacement
+    const newRows = generateRows(rowCount, colCount);
+    const replaceTime = await measure(() => { grid.rows = newRows; });
+    results.set('Data replacement', { value: replaceTime, unit: 'ms' });
+    await cooldown(100);
+
+    // DOM node count
+    const domRows = grid.querySelectorAll('.data-grid-row').length;
+    results.set('DOM rows rendered', { value: domRows, unit: 'count' });
+
+    // Cleanup
+    grid.rows = [];
+    grid.gridConfig = { columns: [] };
+    gridArea.innerHTML = '';
+    await cooldown(300);
+
+    return results;
+  }
+  // #endregion
+
+  // #region AG Grid Benchmarks
+  async function runAgGridBenchmarks(
+    gridArea: HTMLElement,
+    rows: Record<string, unknown>[],
+    columns: { field: string; header: string; width: number }[],
+    rowCount: number,
+    _colCount: number,
+  ): Promise<Map<string, { value: number; unit: string }>> {
+    const results = new Map<string, { value: number; unit: string }>();
+    const agGrid = (window as any).agGrid;
+    if (!agGrid) throw new Error('AG Grid not loaded');
+
+    // Create container
+    gridArea.innerHTML = '<div id="compare-ag-grid" class="ag-theme-quartz" style="width:100%;height:100%;"></div>';
+    const container = document.getElementById('compare-ag-grid')!;
+    await cooldown(100);
+
+    const agColumnDefs = columns.map((c) => ({
+      field: c.field,
+      headerName: c.header,
+      width: c.width,
+      sortable: true,
+    }));
+
+    // Initial render
+    let gridApi: any;
+    const renderTime = await measure(() => {
+      gridApi = agGrid.createGrid(container, {
+        columnDefs: agColumnDefs,
+        rowData: [...rows],
+        suppressColumnVirtualisation: false,
+        animateRows: false,
+      });
+    });
+    results.set('Initial render', { value: renderTime, unit: 'ms' });
+    await cooldown(200);
+
+    // Scroll performance
+    const agScrollViewport = container.querySelector('.ag-body-viewport');
+    if (agScrollViewport) {
+      const totalHeight = agScrollViewport.scrollHeight;
+      const viewportHeight = agScrollViewport.clientHeight;
+      const steps = 30;
+      const stepSize = (totalHeight - viewportHeight) / steps;
+
+      if (stepSize > 0) {
+        // Warm-up pass
+        for (let i = 0; i <= steps; i++) { agScrollViewport.scrollTop = i * stepSize; await nextFrame(); }
+        agScrollViewport.scrollTop = 0;
+        await cooldown(100);
+
+        // Measured pass
+        const frameTimes: number[] = [];
+        for (let i = 0; i <= steps; i++) {
+          const start = performance.now();
+          agScrollViewport.scrollTop = i * stepSize;
+          await nextFrame();
+          frameTimes.push(performance.now() - start);
+        }
+        const avg = frameTimes.reduce((a, b) => a + b, 0) / frameTimes.length;
+        const sorted = [...frameTimes].sort((a, b) => a - b);
+        const p95 = sorted[Math.floor(sorted.length * 0.95)];
+        results.set('Scroll avg frame', { value: avg, unit: 'ms' });
+        results.set('Scroll P95 frame', { value: p95, unit: 'ms' });
+        agScrollViewport.scrollTop = 0;
+        await cooldown(100);
+      }
+    }
+
+    // Sort
+    if (gridApi) {
+      const sortTime = await measure(() => {
+        gridApi.applyColumnState({ state: [{ colId: 'id', sort: 'desc' }] });
+      });
+      results.set('Sort', { value: sortTime, unit: 'ms' });
+      gridApi.applyColumnState({ defaultState: { sort: null } });
+      await cooldown(100);
+    }
+
+    // Data replacement
+    const newRows = generateRows(rowCount, _colCount);
+    const replaceTime = await measure(() => {
+      gridApi.setGridOption('rowData', newRows);
+    });
+    results.set('Data replacement', { value: replaceTime, unit: 'ms' });
+    await cooldown(100);
+
+    // DOM node count
+    const domRows = container.querySelectorAll('.ag-row').length;
+    results.set('DOM rows rendered', { value: domRows, unit: 'count' });
+
+    // Cleanup
+    if (gridApi) gridApi.destroy();
+    gridArea.innerHTML = '';
+    await cooldown(300);
+
+    return results;
+  }
+  // #endregion
+
+  // #region Results Rendering
+  function renderComparisonTable(results: ComparisonResult[], status: 'running' | 'complete'): string {
+    const categories = ['render', 'scroll', 'operation', 'memory'] as const;
+    const categoryLabels: Record<string, string> = {
+      render: '🎨 Render',
+      scroll: '📜 Scroll',
+      operation: '⚡ Operations',
+      memory: '💾 DOM / Memory',
+    };
+
+    let html = '';
+
+    for (const cat of categories) {
+      const catResults = results.filter((r) => r.category === cat);
+      if (catResults.length === 0) continue;
+
+      html += `
+        <div style="background:var(--sl-color-gray-6,#1e1e1e);border-radius:6px;padding:12px;margin-bottom:12px;">
+          <h4 style="margin:0 0 10px 0;color:var(--sl-color-white,#e5e5e5);font-size:13px;font-weight:600;">${categoryLabels[cat]}</h4>
+          <div style="display:grid;grid-template-columns:1fr auto auto auto;gap:4px 16px;font-size:12px;align-items:center;">
+            <div style="font-weight:600;color:#888;font-size:11px;">METRIC</div>
+            <div style="font-weight:600;color:#888;font-size:11px;text-align:right;">TOOLBOX</div>
+            <div style="font-weight:600;color:#888;font-size:11px;text-align:right;">AG GRID</div>
+            <div style="font-weight:600;color:#888;font-size:11px;text-align:center;">DIFF</div>
+            ${catResults.map((r) => {
+              const tbwStr = formatValue(r.tbw, r.unit);
+              const agStr = formatValue(r.ag, r.unit);
+
+              let diffStr: string;
+              let diffColor: string;
+              if (r.unit === 'count') {
+                const diff = r.ag - r.tbw;
+                if (diff === 0) { diffStr = 'Same'; diffColor = '#888'; }
+                else if (diff > 0) { diffStr = `${diff.toLocaleString()} fewer`; diffColor = '#4ade80'; }
+                else { diffStr = `${Math.abs(diff).toLocaleString()} more`; diffColor = '#f87171'; }
+              } else {
+                if (r.tbw === 0 && r.ag === 0) { diffStr = 'Same'; diffColor = '#888'; }
+                else if (r.ag === 0) { diffStr = '—'; diffColor = '#888'; }
+                else {
+                  const ratio = r.ag / r.tbw;
+                  if (ratio > 1.1) { diffStr = `${ratio.toFixed(1)}× faster`; diffColor = '#4ade80'; }
+                  else if (ratio < 0.9) { diffStr = `${(1 / ratio).toFixed(1)}× slower`; diffColor = '#f87171'; }
+                  else { diffStr = '~Same'; diffColor = '#888'; }
+                }
+              }
+
+              const tbwWins = r.unit === 'count' ? r.tbw <= r.ag : r.tbw <= r.ag;
+              const agWins = r.unit === 'count' ? r.ag < r.tbw : r.ag < r.tbw;
+
+              return `
+                <div style="color:var(--sl-color-white,#e5e5e5);white-space:nowrap;">${r.name}${r.note ? ` <span style="opacity:0.5;font-size:11px;">${r.note}</span>` : ''}</div>
+                <div style="font-family:monospace;text-align:right;color:${tbwWins ? '#4ade80' : agWins ? '#f87171' : 'var(--sl-color-white,#e5e5e5)'};">${tbwStr}</div>
+                <div style="font-family:monospace;text-align:right;color:${agWins ? '#4ade80' : tbwWins ? '#f87171' : 'var(--sl-color-white,#e5e5e5)'};">${agStr}</div>
+                <div style="font-family:monospace;text-align:center;font-size:11px;color:${diffColor};">${diffStr}</div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    if (status === 'complete') {
+      const wins = results.filter((r) => r.unit === 'count' ? r.tbw <= r.ag : r.tbw <= r.ag).length;
+      const total = results.length;
+      html += `
+        <div style="margin-top:8px;padding:12px;background:var(--sl-color-gray-6,#1e1e1e);border-radius:6px;text-align:center;">
+          <strong style="color:var(--sl-color-white,#e5e5e5);font-size:14px;">Toolbox Grid wins ${wins}/${total} metrics</strong>
+          <div style="color:#888;font-size:12px;margin-top:4px;">Results from your browser — run it again to verify consistency</div>
+        </div>
+      `;
+    } else {
+      html += `<div style="margin-top:8px;padding:8px;opacity:0.6;text-align:center;font-size:12px;">Running benchmarks...</div>`;
+    }
+
+    return html;
+  }
+  // #endregion
+
+  // #region Config Display
+  function getToolboxConfigString(colCount: number): string {
+    const features: Record<string, unknown> = {
+      selection: 'range',
+      multiSort: { maxSortColumns: 3 },
+    };
+    if (colCount >= 20) {
+      features['columnVirtualization'] = { threshold: 20, overscan: 3 };
+    }
+    return `grid.gridConfig = {
+  columns: [
+    { field: 'id', header: 'ID', width: 80, type: 'number', sortable: true },
+    // ... ${colCount - 1} more columns, width: 120, sortable: true
+  ],
+  fitMode: 'fixed',
+  features: ${JSON.stringify(features, null, 4).replace(/^/gm, '  ').trim()},
+};
+grid.rows = data; // ${'{rowCount}'} rows`;
+  }
+
+  function getAgGridConfigString(colCount: number, rowCount: number): string {
+    return `agGrid.createGrid(container, {
+  columnDefs: [
+    { field: 'id', headerName: 'ID', width: 80, sortable: true },
+    // ... ${colCount - 1} more columns, width: 120, sortable: true
+  ],
+  rowData: data, // ${rowCount.toLocaleString()} rows
+  suppressColumnVirtualisation: false,
+  animateRows: false,
+});`;
+  }
+  // #endregion
+
+  // #region DOM References
+  const rowsSlider = document.getElementById('compare-rows') as HTMLInputElement;
+  const colsSlider = document.getElementById('compare-cols') as HTMLInputElement;
+  const rowsVal = document.getElementById('compare-rows-val')!;
+  const colsVal = document.getElementById('compare-cols-val')!;
+  const runBtn = document.getElementById('compare-run') as HTMLButtonElement;
+  const statusEl = document.getElementById('compare-status')!;
+  const resultsEl = document.getElementById('compare-results')!;
+  const gridArea = document.getElementById('compare-grid-area')!;
+  const tbwConfigEl = document.getElementById('compare-config-tbw')!;
+  const agConfigEl = document.getElementById('compare-config-ag')!;
+  // #endregion
+
+  // #region Slider Handlers
+  function getRowCount() { return parseInt(rowsSlider.value, 10); }
+  function getColCount() { return parseInt(colsSlider.value, 10); }
+
+  rowsSlider.addEventListener('input', () => {
+    rowsVal.textContent = getRowCount().toLocaleString();
+    updateStatus();
+  });
+  colsSlider.addEventListener('input', () => {
+    colsVal.textContent = String(getColCount());
+    updateStatus();
+  });
+
+  function updateStatus() {
+    statusEl.textContent = `Ready — ${getRowCount().toLocaleString()} rows × ${getColCount()} columns`;
+  }
+  updateStatus();
+  // #endregion
+
+  // #region Benchmark Orchestrator
+  runBtn.addEventListener('click', async () => {
+    runBtn.disabled = true;
+    const rowCount = getRowCount();
+    const colCount = getColCount();
+    const columns = generateColumns(colCount);
+    const rows = generateRows(rowCount, colCount);
+
+    // Update config display
+    tbwConfigEl.innerHTML = `<code>${getToolboxConfigString(colCount).replace('{rowCount}', rowCount.toLocaleString())}</code>`;
+    agConfigEl.innerHTML = `<code>${getAgGridConfigString(colCount, rowCount)}</code>`;
+
+    // Load AG Grid from CDN
+    statusEl.textContent = 'Loading AG Grid from CDN...';
+    try {
+      await loadAgGrid();
+    } catch {
+      statusEl.textContent = 'Failed to load AG Grid from CDN';
+      runBtn.disabled = false;
+      return;
+    }
+
+    // Phase 1: Toolbox Grid
+    statusEl.textContent = 'Running: Toolbox Grid benchmarks...';
+    resultsEl.innerHTML = '<p style="text-align:center;padding:20px;opacity:0.6;">⏱ Running Toolbox Grid benchmarks...</p>';
+    await cooldown(200);
+
+    const tbwResults = await runToolboxBenchmarks(gridArea, rows, columns, rowCount, colCount);
+
+    // Cooldown between grids
+    statusEl.textContent = 'Cooldown — waiting for GC before AG Grid...';
+    gridArea.innerHTML = '<p style="text-align:center;opacity:0.6;padding:40px 0;">Cooldown between grids...</p>';
+    await cooldown(1000);
+
+    // Phase 2: AG Grid
+    statusEl.textContent = 'Running: AG Grid benchmarks...';
+    resultsEl.innerHTML = '<p style="text-align:center;padding:20px;opacity:0.6;">⏱ Running AG Grid benchmarks...</p>';
+    await cooldown(200);
+
+    const agResults = await runAgGridBenchmarks(gridArea, rows, columns, rowCount, colCount);
+
+    // Build comparison
+    const testNames = ['Initial render', 'Scroll avg frame', 'Scroll P95 frame', 'Sort', 'Data replacement', 'DOM rows rendered'];
+    const categoryMap: Record<string, ComparisonResult['category']> = {
+      'Initial render': 'render',
+      'Scroll avg frame': 'scroll',
+      'Scroll P95 frame': 'scroll',
+      'Sort': 'operation',
+      'Data replacement': 'operation',
+      'DOM rows rendered': 'memory',
+    };
+
+    const comparison: ComparisonResult[] = [];
+    for (const name of testNames) {
+      const tbw = tbwResults.get(name);
+      const ag = agResults.get(name);
+      if (tbw && ag) {
+        comparison.push({
+          name,
+          category: categoryMap[name],
+          tbw: tbw.value,
+          ag: ag.value,
+          unit: tbw.unit,
+        });
+      }
+    }
+
+    // Show results
+    gridArea.innerHTML = '<p style="text-align:center;opacity:0.6;padding:40px 0;">Benchmark complete</p>';
+    statusEl.textContent = `Complete — ${rowCount.toLocaleString()} rows × ${colCount} columns` + (agGridVersion ? ` — AG Grid v${agGridVersion}` : '');
+    resultsEl.innerHTML = renderComparisonTable(comparison, 'complete');
+    runBtn.disabled = false;
+
+    console.table(comparison.map((r) => ({
+      Metric: r.name,
+      'Toolbox Grid': formatValue(r.tbw, r.unit),
+      'AG Grid': formatValue(r.ag, r.unit),
+      Winner: r.unit === 'count'
+        ? (r.tbw <= r.ag ? 'Toolbox' : 'AG Grid')
+        : (r.tbw <= r.ag ? 'Toolbox' : 'AG Grid'),
+    })));
+  });
+  // #endregion
+</script>
+
+<style is:global>
+  .perf-compare-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 500px;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .perf-compare-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--sl-color-gray-6);
+    border-bottom: 1px solid var(--sl-color-gray-5);
+    font-size: 13px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .perf-compare-bar label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .perf-compare-bar-left,
+  .perf-compare-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .perf-compare-bar input[type="range"] {
+    width: 120px;
+  }
+
+  .perf-compare-btn {
+    background: var(--sl-color-accent);
+    color: #fff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .perf-compare-btn:hover { opacity: 0.9; }
+  .perf-compare-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  #compare-status {
+    font-size: 13px;
+    color: var(--sl-color-gray-2);
+  }
+
+  .perf-compare-config {
+    border-bottom: 1px solid var(--sl-color-gray-5);
+    background: var(--sl-color-gray-6);
+  }
+
+  .perf-compare-config summary {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--sl-color-gray-2);
+    user-select: none;
+  }
+
+  .perf-compare-config summary:hover {
+    color: var(--sl-color-white);
+  }
+
+  .perf-compare-config-panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 0 12px 12px;
+  }
+
+  .perf-compare-config-panel {
+    background: var(--sl-color-gray-7, #111);
+    border-radius: 4px;
+    padding: 10px;
+    overflow-x: auto;
+  }
+
+  .perf-compare-config-panel h4 {
+    margin: 0 0 8px 0;
+    font-size: 13px;
+    color: var(--sl-color-white, #e5e5e5);
+  }
+
+  .perf-compare-config-panel pre {
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    color: var(--sl-color-gray-2);
+  }
+
+  .perf-compare-grid-area {
+    height: 300px;
+    padding: 8px;
+    overflow: hidden;
+  }
+
+  .perf-compare-results {
+    border-top: 1px solid var(--sl-color-gray-5);
+    padding: 12px 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  .perf-compare-results p {
+    margin: 0 0 8px 0;
+  }
+</style>

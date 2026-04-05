@@ -126,6 +126,6 @@ Key TypeScript interfaces for configuration and events:
 ## Optional
 
 - [Accessibility Guide](https://toolboxjs.com/grid/guides/accessibility/): ARIA attributes and screen reader support
-- [Performance Guide](https://toolboxjs.com/grid/guides/performance/): Virtualization and optimization tips
+- [Performance Guide](https://toolboxjs.com/grid/guides/performance/): Virtualization, optimization tips, and live head-to-head comparison benchmark vs AG Grid
 - [Custom Plugins Guide](https://toolboxjs.com/grid/guides/custom-plugins/): How to create your own plugins
 - [Troubleshooting](https://toolboxjs.com/grid/guides/troubleshooting/): Common issues and solutions
