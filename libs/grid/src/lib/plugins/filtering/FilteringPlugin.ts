@@ -404,7 +404,7 @@ export class FilteringPlugin extends BaseGridPlugin<FilterConfig> {
 
     // Filter rows synchronously (worker support can be added later)
     const result = filterRows(
-      [...rows] as Record<string, unknown>[],
+      rows as Record<string, unknown>[],
       filterList,
       this.config.caseSensitive,
       this.getFilterValues(),

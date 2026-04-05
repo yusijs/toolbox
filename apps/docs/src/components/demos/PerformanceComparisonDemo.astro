@@ -39,7 +39,7 @@
 
   <div id="compare-results" class="perf-compare-results">
     <p>Click <strong>Run Comparison</strong> to benchmark both grids at increasing data sizes.</p>
-    <p style="opacity:0.7;font-size:12px;">Scale points: 1K → 10K → 100K → 500K → 1M rows × 10 columns. Tests: init render, scroll, sort, data replacement, single-row update, column resize, scroll-to-end, memory. Each grid runs alone with a cooldown between them.</p>
+    <p style="opacity:0.7;font-size:12px;">Scale points: 100K → 500K → 1M rows × 10 columns. Tests: init render, scroll, sort, filter, data replacement, single-row update, column resize, scroll-to-end, memory. Each grid runs alone with a cooldown between them.</p>
   </div>
 </div>
 
@@ -49,13 +49,12 @@ import type { ColumnConfig } from '@toolbox-web/grid';
 import { queryGrid } from '@toolbox-web/grid';
 import '@toolbox-web/grid/features/column-virtualization';
 import '@toolbox-web/grid/features/filtering';
-import '@toolbox-web/grid/features/selection';
 
   // #region Constants
-  const SCALE_POINTS = [1_000, 10_000, 100_000, 500_000, 1_000_000];
+  const SCALE_POINTS = [5_000, 100_000, 500_000, 1_000_000];
   const COL_COUNT = 10;
   const TIME_METRICS = [
-    'Initial render', 'Scroll avg frame', 'Sort', 'Data replacement',
+    'Initial render', 'Scroll avg frame', 'Sort', 'Filter', 'Data replacement',
     'Update single row', 'Column resize', 'Scroll to end',
   ] as const;
   const MEMORY_METRIC = 'Memory usage' as const;
@@ -194,7 +193,7 @@ import '@toolbox-web/grid/features/selection';
         columns: tbwColumns,
         fitMode: 'fixed',
         getRowId: (row: any) => String(row.id),
-        features: { selection: 'range' },
+        features: { filtering: true },
       };
       grid.rows = rows;
     });
@@ -225,16 +224,31 @@ import '@toolbox-web/grid/features/selection';
       }
     }
 
-    // Sort (built-in single-column sort via header click)
-    const idHeader = grid.querySelector('[role="columnheader"].sortable') as HTMLElement | null;
-    if (idHeader) {
-      const sortTime = await measure(() => { idHeader.click(); });
-      results.set('Sort', sortTime);
-      // Click again twice to cycle back to unsorted (asc → desc → none)
-      idHeader.click();
+    // Sort (programmatic via sort() API)
+    const sortTime = await measure(() => {
+      (grid as any).sort('id', 'desc');
+    });
+    results.set('Sort', sortTime);
+    (grid as any).sort(null);
+    await nextFrame();
+    await cooldown(50);
+
+    // Filter (number filter on id column — keeps rows with id > rowCount/2)
+    const filterPlugin = (grid as any).getPluginByName('filtering');
+    if (filterPlugin) {
+      const threshold = Math.floor(rowCount / 2);
+      // setFilterModel defers actual filtering to the render scheduler.
+      // Start timer before calling, then await forceLayout to capture full cost.
       await nextFrame();
-      idHeader.click();
-      await nextFrame();
+      const filterStart = performance.now();
+      filterPlugin.setFilterModel([
+        { field: 'id', type: 'number', operator: 'greaterThan', value: threshold },
+      ]);
+      await (grid as any).forceLayout();
+      const filterTime = performance.now() - filterStart;
+      results.set('Filter', filterTime);
+      filterPlugin.clearAllFilters();
+      await (grid as any).forceLayout();
       await cooldown(50);
     }
 
@@ -303,6 +317,7 @@ import '@toolbox-web/grid/features/selection';
 
     const agColumnDefs = columns.map((c) => ({
       field: c.field, headerName: c.header, width: c.width, sortable: true,
+      filter: c.field === 'id' ? 'agNumberColumnFilter' : true,
     }));
 
     // Initial render
@@ -348,6 +363,20 @@ import '@toolbox-web/grid/features/selection';
       });
       results.set('Sort', sortTime);
       gridApi.applyColumnState({ defaultState: { sort: null } });
+      await cooldown(50);
+    }
+
+    // Filter (number filter on id column — keeps rows with id > rowCount/2)
+    if (gridApi) {
+      const threshold = Math.floor(rowCount / 2);
+      const filterTime = await measure(() => {
+        gridApi.setFilterModel({
+          id: { filterType: 'number', type: 'greaterThan', filter: threshold },
+        });
+      });
+      results.set('Filter', filterTime);
+      gridApi.setFilterModel(null);
+      await nextFrame();
       await cooldown(50);
     }
 
@@ -403,6 +432,8 @@ import '@toolbox-web/grid/features/selection';
   const COLOR_AG = '#fb923c';  // orange — AG Grid brand
   const COLOR_WIN = '#4ade80'; // green — winner value
   const COLOR_LOSE = '#f87171'; // red — loser value
+  const COLOR_TIE = '#94a3b8'; // slate — within noise floor
+  const NOISE_FLOOR_MS = 34; // single frame @ 30fps — below this, results are noise
 
   function formatDelta(winner: number, loser: number): string {
     if (loser === 0 || winner === 0) return '';
@@ -421,7 +452,7 @@ import '@toolbox-web/grid/features/selection';
     let html = `<div class="perf-legend">
       <span class="perf-legend-item"><span class="perf-legend-swatch" style="background:${COLOR_TBW}"></span> Toolbox Grid</span>
       <span class="perf-legend-item"><span class="perf-legend-swatch" style="background:${COLOR_AG}"></span> AG Grid</span>
-      <span class="perf-legend-hint">Lower is better · <span style="color:${COLOR_WIN}">green</span> = winner</span>
+      <span class="perf-legend-hint">Lower is better · <span style="color:${COLOR_WIN}">green</span> = winner · <span style="color:${COLOR_TIE}">gray</span> = within noise</span>
     </div>`;
     html += '<div class="perf-card-grid">';
 
@@ -433,6 +464,8 @@ import '@toolbox-web/grid/features/selection';
       }
       if (maxVal === 0) maxVal = 1;
 
+      const isMemory = metric === MEMORY_METRIC;
+
       html += `<div class="perf-card">
         <div class="perf-card-title">${metric}</div>`;
 
@@ -442,8 +475,12 @@ import '@toolbox-web/grid/features/selection';
         const tbwDone = tbw !== undefined;
         const agDone = ag !== undefined;
         const bothDone = tbwDone && agDone;
-        const tbwWins = bothDone && (tbw!) <= (ag!);
-        const agWins = bothDone && (ag!) < (tbw!);
+
+        // Noise detection: for time metrics, if both are under one frame, it's a tie
+        const isTie = !isMemory && bothDone && (tbw!) < NOISE_FLOOR_MS && (ag!) < NOISE_FLOOR_MS;
+
+        const tbwWins = !isTie && bothDone && (tbw!) <= (ag!);
+        const agWins = !isTie && bothDone && (ag!) < (tbw!);
 
         const tbwPct = tbwDone ? Math.max(3, ((tbw!) / maxVal) * 100) : 0;
         const agPct = agDone ? Math.max(3, ((ag!) / maxVal) * 100) : 0;
@@ -451,15 +488,18 @@ import '@toolbox-web/grid/features/selection';
         const tbwLabel = tbwDone ? formatMetric(metric, tbw!) : '…';
         const agLabel = agDone ? formatMetric(metric, ag!) : '…';
 
-        // Bar always uses brand color; value text uses green/red for winner/loser
-        const tbwValColor = bothDone ? (tbwWins ? COLOR_WIN : COLOR_LOSE) : '#888';
-        const agValColor = bothDone ? (agWins ? COLOR_WIN : COLOR_LOSE) : '#888';
+        // Value coloring: green = winner, red = loser, slate = tie/noise
+        const tbwValColor = !bothDone ? '#888' : isTie ? COLOR_TIE : tbwWins ? COLOR_WIN : COLOR_LOSE;
+        const agValColor = !bothDone ? '#888' : isTie ? COLOR_TIE : agWins ? COLOR_WIN : COLOR_LOSE;
 
         const tbwDelta = tbwWins ? formatDelta(tbw!, ag!) : '';
         const agDelta = agWins ? formatDelta(ag!, tbw!) : '';
 
+        // Winner gets a subtle background highlight
+        const rowClass = tbwWins ? 'perf-row perf-row-tbw-wins' : agWins ? 'perf-row perf-row-ag-wins' : 'perf-row';
+
         html += `
-          <div class="perf-row">
+          <div class="${rowClass}">
             <div class="perf-row-label">${formatRowCount(r.rowCount)}</div>
             <div class="perf-row-bars">
               <div class="perf-bar-row perf-bar-row-top">
@@ -486,21 +526,27 @@ import '@toolbox-web/grid/features/selection';
     html += '</div>';
 
     if (done) {
-      // Summary: count wins across all scale points and metrics
+      // Summary: count wins across all scale points and metrics (ties don't count)
       let tbwWins = 0;
       let agWins = 0;
+      let ties = 0;
       for (const r of allResults) {
         for (const metric of activeMetrics) {
           const tbw = r.tbw.get(metric);
           const ag = r.ag.get(metric);
           if (tbw !== undefined && ag !== undefined) {
-            if (tbw < ag) tbwWins++; else if (ag < tbw) agWins++;
+            const isMemoryMetric = metric === MEMORY_METRIC;
+            const isTieResult = !isMemoryMetric && tbw < NOISE_FLOOR_MS && ag < NOISE_FLOOR_MS;
+            if (isTieResult) ties++;
+            else if (tbw < ag) tbwWins++;
+            else if (ag < tbw) agWins++;
+            else ties++;
           }
         }
       }
       html += `
         <div class="perf-summary">
-          <span style="color:${COLOR_TBW}">▎Toolbox Grid</span> wins <strong>${tbwWins}/${tbwWins + agWins}</strong> data points
+          <span style="color:${COLOR_TBW}">▎Toolbox Grid</span> wins <strong>${tbwWins}/${tbwWins + agWins + ties}</strong> data points${ties > 0 ? ` · ${ties} ties` : ''}
           <div style="color:#888;font-size:12px;margin-top:4px;">
             Tested at ${SCALE_POINTS.map(formatRowCount).join(', ')} rows × ${COL_COUNT} columns${hasMemoryApi ? ' — memory via Chrome performance.memory' : ''}
           </div>
@@ -532,23 +578,28 @@ import '@toolbox-web/grid/features/selection';
     '  ],',
     "  fitMode: 'fixed',",
     '  getRowId: (row) => String(row.id),',
-    '  features: {',
-    "    selection: 'range',",
-    '  },',
+    '  features: { filtering: true },',
     '};',
-    'grid.rows = data; // 1K \u2192 1M rows',
+    'grid.rows = data; // 100K → 1M rows',
+    '',
+    "grid.sort('id', 'desc');  // programmatic sort",
+    'grid.sort(null);          // clear sort',
   ].join('\n');
   agConfigEl.textContent = [
     'agGrid.createGrid(container, {',
     '  columnDefs: [',
-    "    { field: 'id', headerName: 'ID', width: 80, sortable: true },",
-    '    // ... 9 more columns, width: 120, sortable: true',
+    "    { field: 'id', headerName: 'ID', width: 80, sortable: true,",
+    "      filter: 'agNumberColumnFilter' },",
+    '    // ... 9 more columns, width: 120, sortable: true, filter: true',
     '  ],',
-    '  rowData: data, // 1K \u2192 1M rows',
+    '  rowData: data, // 100K → 1M rows',
     '  getRowId: (params) => String(params.data.id),',
     '  suppressColumnVirtualisation: false,',
     '  animateRows: false,',
     '});',
+    '',
+    "api.applyColumnState({ state: [{ colId: 'id', sort: 'desc' }] });",
+    'api.setFilterModel({ id: { filterType: "number", type: "greaterThan", filter: N } });',
   ].join('\n');
   // #endregion
 
@@ -862,7 +913,7 @@ import '@toolbox-web/grid/features/selection';
     display: flex;
     align-items: center;
     gap: 4px;
-    height: 10px;
+    height: 16px;
   }
 
   .perf-bar-row-top {
@@ -883,7 +934,7 @@ import '@toolbox-web/grid/features/selection';
 
   .perf-bar-track {
     flex: 1;
-    height: 10px;
+    height: 14px;
     background: var(--sl-color-gray-7, #111);
     border-radius: 2px;
     overflow: hidden;
@@ -905,15 +956,30 @@ import '@toolbox-web/grid/features/selection';
 
   .perf-bar-value {
     font-family: monospace;
-    font-size: 10px;
-    min-width: 70px;
+    font-size: 11px;
+    min-width: 80px;
     text-align: right;
     white-space: nowrap;
   }
 
   .perf-delta {
-    font-size: 9px;
-    opacity: 0.8;
+    font-size: 10px;
+    font-weight: 700;
+    background: rgba(74, 222, 128, 0.15);
+    color: #4ade80;
+    padding: 1px 5px;
+    border-radius: 8px;
+    margin-left: 2px;
+  }
+
+  .perf-row-tbw-wins {
+    background: rgba(56, 189, 248, 0.06);
+    border-radius: 4px;
+  }
+
+  .perf-row-ag-wins {
+    background: rgba(251, 146, 60, 0.06);
+    border-radius: 4px;
   }
 
   .perf-summary {

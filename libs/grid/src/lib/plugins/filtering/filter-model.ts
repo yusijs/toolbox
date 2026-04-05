@@ -18,6 +18,7 @@ export const BLANK_FILTER_VALUE = '(Blank)';
  * Handles Date objects, numeric values, and date/ISO strings.
  */
 function toNumeric(value: unknown): number {
+  if (typeof value === 'number') return value;
   if (value instanceof Date) return value.getTime();
   const n = Number(value);
   if (!isNaN(n)) return n;
@@ -140,8 +141,190 @@ export function matchesFilter(
 }
 
 /**
+ * Compile a single filter into a specialized predicate with pre-resolved values.
+ * Avoids repeated type coercion and string conversion inside the hot loop.
+ */
+function compileFilter(
+  filter: FilterModel,
+  caseSensitive: boolean,
+  filterValue?: (value: unknown, row: Record<string, unknown>) => unknown | unknown[],
+): (row: Record<string, unknown>) => boolean {
+  const field = filter.field;
+  const op = filter.operator;
+
+  // blank / notBlank — no value needed
+  if (op === 'blank')
+    return (row) => {
+      const v = row[field];
+      return v == null || v === '';
+    };
+  if (op === 'notBlank')
+    return (row) => {
+      const v = row[field];
+      return v != null && v !== '';
+    };
+
+  // Set operators with filterValue extractor
+  if (filterValue && (op === 'notIn' || op === 'in')) {
+    const set = filter.value;
+    if (op === 'notIn') {
+      if (!Array.isArray(set)) return () => true;
+      return (row) => {
+        const extracted = filterValue(row[field], row);
+        const values = Array.isArray(extracted) ? extracted : extracted != null ? [extracted] : [];
+        if (values.length === 0) return !set.includes(BLANK_FILTER_VALUE);
+        return !values.some((v) => set.includes(v));
+      };
+    }
+    // op === 'in'
+    if (!Array.isArray(set)) return () => false;
+    return (row) => {
+      const extracted = filterValue(row[field], row);
+      const values = Array.isArray(extracted) ? extracted : extracted != null ? [extracted] : [];
+      if (values.length === 0) return set.includes(BLANK_FILTER_VALUE);
+      return values.some((v) => set.includes(v));
+    };
+  }
+
+  // Set operators without extractor
+  if (op === 'notIn') {
+    if (!Array.isArray(filter.value)) return () => true;
+    const set = filter.value;
+    return (row) => {
+      const v = row[field];
+      if (v == null || v === '') return !set.includes(BLANK_FILTER_VALUE);
+      return !set.includes(v);
+    };
+  }
+  if (op === 'in') {
+    if (!Array.isArray(filter.value)) return () => false;
+    const set = filter.value;
+    return (row) => {
+      const v = row[field];
+      if (v == null || v === '') return set.includes(BLANK_FILTER_VALUE);
+      return set.includes(v);
+    };
+  }
+
+  // Numeric / date operators — pre-resolve threshold(s) once
+  if (op === 'greaterThan') {
+    const threshold = toNumeric(filter.value);
+    return (row) => {
+      const v = row[field];
+      return v != null && toNumeric(v) > threshold;
+    };
+  }
+  if (op === 'greaterThanOrEqual') {
+    const threshold = toNumeric(filter.value);
+    return (row) => {
+      const v = row[field];
+      return v != null && toNumeric(v) >= threshold;
+    };
+  }
+  if (op === 'lessThan') {
+    const threshold = toNumeric(filter.value);
+    return (row) => {
+      const v = row[field];
+      return v != null && toNumeric(v) < threshold;
+    };
+  }
+  if (op === 'lessThanOrEqual') {
+    const threshold = toNumeric(filter.value);
+    return (row) => {
+      const v = row[field];
+      return v != null && toNumeric(v) <= threshold;
+    };
+  }
+  if (op === 'between') {
+    const lo = toNumeric(filter.value);
+    const hi = toNumeric(filter.valueTo);
+    return (row) => {
+      const v = row[field];
+      if (v == null) return false;
+      const n = toNumeric(v);
+      return n >= lo && n <= hi;
+    };
+  }
+
+  // Text operators — pre-resolve filter comparison value once
+  const compareFilterValue = caseSensitive ? String(filter.value) : String(filter.value).toLowerCase();
+  if (op === 'contains') {
+    return caseSensitive
+      ? (row) => {
+          const v = row[field];
+          return v != null && String(v).includes(compareFilterValue);
+        }
+      : (row) => {
+          const v = row[field];
+          return v != null && String(v).toLowerCase().includes(compareFilterValue);
+        };
+  }
+  if (op === 'notContains') {
+    return caseSensitive
+      ? (row) => {
+          const v = row[field];
+          return v != null && !String(v).includes(compareFilterValue);
+        }
+      : (row) => {
+          const v = row[field];
+          return v != null && !String(v).toLowerCase().includes(compareFilterValue);
+        };
+  }
+  if (op === 'equals') {
+    return caseSensitive
+      ? (row) => {
+          const v = row[field];
+          return v != null && String(v) === compareFilterValue;
+        }
+      : (row) => {
+          const v = row[field];
+          return v != null && String(v).toLowerCase() === compareFilterValue;
+        };
+  }
+  if (op === 'notEquals') {
+    return caseSensitive
+      ? (row) => {
+          const v = row[field];
+          return v != null && String(v) !== compareFilterValue;
+        }
+      : (row) => {
+          const v = row[field];
+          return v != null && String(v).toLowerCase() !== compareFilterValue;
+        };
+  }
+  if (op === 'startsWith') {
+    return caseSensitive
+      ? (row) => {
+          const v = row[field];
+          return v != null && String(v).startsWith(compareFilterValue);
+        }
+      : (row) => {
+          const v = row[field];
+          return v != null && String(v).toLowerCase().startsWith(compareFilterValue);
+        };
+  }
+  if (op === 'endsWith') {
+    return caseSensitive
+      ? (row) => {
+          const v = row[field];
+          return v != null && String(v).endsWith(compareFilterValue);
+        }
+      : (row) => {
+          const v = row[field];
+          return v != null && String(v).toLowerCase().endsWith(compareFilterValue);
+        };
+  }
+
+  // Fallback: use the generic matchesFilter
+  return (row) => matchesFilter(row, filter, caseSensitive, filterValue);
+}
+
+/**
  * Filter rows based on multiple filter conditions (AND logic).
  * All filters must match for a row to be included.
+ *
+ * Pre-compiles each filter into a specialized predicate to avoid
+ * repeated type coercion and branch checks inside the hot loop.
  *
  * @param rows - The rows to filter
  * @param filters - Array of filters to apply
@@ -150,24 +333,33 @@ export function matchesFilter(
  * @returns Filtered rows
  */
 export function filterRows<T extends Record<string, unknown>>(
-  rows: T[],
+  rows: readonly T[],
   filters: FilterModel[],
   caseSensitive = false,
   filterValues?: Map<string, (value: unknown, row: T) => unknown | unknown[]>,
 ): T[] {
-  if (!filters.length) return rows;
-  return rows.filter((row) =>
-    filters.every((f) =>
-      matchesFilter(
-        row,
-        f,
-        caseSensitive,
-        filterValues?.get(f.field) as
-          | ((value: unknown, row: Record<string, unknown>) => unknown | unknown[])
-          | undefined,
-      ),
+  if (!filters.length) return rows as T[];
+
+  // Pre-compile all filters into specialized predicates
+  const predicates = filters.map((f) =>
+    compileFilter(
+      f,
+      caseSensitive,
+      filterValues?.get(f.field) as ((value: unknown, row: Record<string, unknown>) => unknown | unknown[]) | undefined,
     ),
   );
+
+  // Single-filter fast path avoids per-row loop overhead
+  if (predicates.length === 1) {
+    return rows.filter(predicates[0]);
+  }
+
+  return rows.filter((row) => {
+    for (let i = 0; i < predicates.length; i++) {
+      if (!predicates[i](row)) return false;
+    }
+    return true;
+  });
 }
 
 /**
