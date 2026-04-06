@@ -276,31 +276,24 @@ export function updateTemplate(grid: GridHost): void {
   //  - 'fixed': columns with explicit width use that width; columns without width use max-content
   const mode = grid.effectiveConfig?.fitMode || grid.fitMode || FitModeEnum.STRETCH;
 
-  const visibleColumns = grid._visibleColumns;
-
   if (mode === FitModeEnum.STRETCH) {
-    let template = '';
-    for (let i = 0; i < visibleColumns.length; i++) {
-      const c = visibleColumns[i] as ColumnInternal;
-      let track: string;
-      if (c.width != null) {
-        track = resolveWidth(c.width, c.field);
-      } else {
+    grid._gridTemplate = grid._visibleColumns
+      .map((c: ColumnInternal) => {
+        if (c.width != null) return resolveWidth(c.width, c.field);
+        // Flexible column: pure 1fr unless minWidth specified
         const min = c.minWidth;
-        track = min != null ? `minmax(${min}px, 1fr)` : '1fr';
-      }
-      template += (template ? ' ' : '') + track;
-    }
-    grid._gridTemplate = template;
+        return min != null ? `minmax(${min}px, 1fr)` : '1fr';
+      })
+      .join(' ')
+      .trim();
   } else {
     // fixed mode: explicit pixel widths or max-content for content-based sizing
-    let template = '';
-    for (let i = 0; i < visibleColumns.length; i++) {
-      const c = visibleColumns[i] as ColumnInternal;
-      const track = c.width != null ? resolveWidth(c.width, c.field) : 'max-content';
-      template += (template ? ' ' : '') + track;
-    }
-    grid._gridTemplate = template;
+    grid._gridTemplate = grid._visibleColumns
+      .map((c: ColumnInternal) => {
+        if (c.width != null) return resolveWidth(c.width, c.field);
+        return 'max-content';
+      })
+      .join(' ');
   }
   grid.style.setProperty('--tbw-column-template', grid._gridTemplate);
 }

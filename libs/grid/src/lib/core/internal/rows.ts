@@ -111,9 +111,7 @@ function clearEditingState(rowEl: RowElementInternal): void {
   rowEl.removeAttribute('data-has-editing');
   // Clear editing class from all cells
   const cells = rowEl.querySelectorAll(`.cell.${GridClasses.EDITING}`);
-  for (let i = 0; i < cells.length; i++) {
-    cells[i].classList.remove(GridClasses.EDITING);
-  }
+  cells.forEach((cell) => cell.classList.remove(GridClasses.EDITING));
 }
 // #endregion
 
