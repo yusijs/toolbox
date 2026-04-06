@@ -247,12 +247,41 @@ describe('sticky-columns', () => {
         expect(groupCell.style.left).toBe('0px');
       });
 
-      it('does not pin explicit group header when only some columns are pinned', () => {
+      it('splits explicit group header when some columns are left-pinned', () => {
         const cols = [{ field: 'a', pinned: 'left' }, { field: 'b' }, { field: 'c' }, { field: 'd' }];
-        applyStickyOffsets(groupHost, cols);
+        const result = applyStickyOffsets(groupHost, cols);
 
-        const groupCell = groupHost.querySelector('.header-group-cell[data-group="info"]') as HTMLElement;
-        expect(groupCell.classList.contains('sticky-left')).toBe(false);
+        // Original group cell should be replaced by two fragments
+        const infoCells = groupHost.querySelectorAll('.header-group-cell[data-group="info"]');
+        expect(infoCells.length).toBe(2);
+
+        // First fragment: pinned 'a' — sticky, empty (label floats from scrollable fragment)
+        const pinnedFragment = infoCells[0] as HTMLElement;
+        expect(pinnedFragment.classList.contains('sticky-left')).toBe(true);
+        expect(pinnedFragment.style.position).toBe('sticky');
+        expect(pinnedFragment.style.left).toBe('0px');
+        expect(pinnedFragment.textContent).toBe('');
+        expect(pinnedFragment.style.borderRightStyle).toBe('none');
+        expect(pinnedFragment.style.gridColumn).toBe('1 / span 1');
+
+        // Second fragment: non-pinned 'b' — scrolls, carries floating label span
+        const scrollFragment = infoCells[1] as HTMLElement;
+        expect(scrollFragment.classList.contains('sticky-left')).toBe(false);
+        expect(scrollFragment.style.overflow).toBe('visible');
+        expect(scrollFragment.style.gridColumn).toBe('2 / span 1');
+
+        // Floating label span inside the scrollable fragment — positioned relatively for transform
+        const floatSpan = scrollFragment.querySelector('span') as HTMLElement;
+        expect(floatSpan).toBeTruthy();
+        expect(floatSpan.textContent).toBe('Info');
+        expect(floatSpan.style.position).toBe('relative');
+        expect(floatSpan.style.zIndex).toBe('36');
+
+        // splitGroups state is returned for scroll-driven transfer
+        expect(result.splitGroups.length).toBe(1);
+        expect(result.splitGroups[0].label).toBe('Info');
+        expect(result.splitGroups[0].pinnedField).toBe('a');
+        expect(result.splitGroups[0].isTransferred).toBe(false);
       });
 
       it('applies sticky-right to group header when all spanned columns are right-pinned', () => {

@@ -6,7 +6,7 @@
 
 import { GridClasses } from '../../core/constants';
 import { getDirection } from '../../core/internal/utils';
-import type { AfterCellRenderContext, PluginManifest, PluginQuery } from '../../core/plugin/base-plugin';
+import type { AfterCellRenderContext, PluginManifest, PluginQuery, ScrollEvent } from '../../core/plugin/base-plugin';
 import { BaseGridPlugin } from '../../core/plugin/base-plugin';
 import type { ColumnConfig } from '../../core/types';
 import type { ContextMenuParams, HeaderContextMenuItem } from '../context-menu/types';
@@ -19,6 +19,7 @@ import {
   hasStickyColumns,
   reorderColumnsForPinning,
   type GroupEndAdjustments,
+  type SplitGroupState,
 } from './pinned-columns';
 import type { PinnedColumnsConfig, PinnedPosition } from './types';
 
@@ -143,6 +144,8 @@ export class PinnedColumnsPlugin extends BaseGridPlugin<PinnedColumnsConfig> {
   private rightOffsets = new Map<string, number>();
   /** Group-end adjustments for pin boundaries within implicit groups. */
   #groupEndAdjustments: GroupEndAdjustments = { addGroupEnd: new Set(), removeGroupEnd: new Set() };
+  /** Split explicit-group state for scroll-driven label transfer. */
+  #splitGroups: SplitGroupState[] = [];
   /**
    * Snapshot of the column field order before the first context-menu pin.
    * Used to restore original positions when unpinning.
@@ -158,6 +161,7 @@ export class PinnedColumnsPlugin extends BaseGridPlugin<PinnedColumnsConfig> {
     this.rightOffsets.clear();
     this.isApplied = false;
     this.#groupEndAdjustments = { addGroupEnd: new Set(), removeGroupEnd: new Set() };
+    this.#splitGroups = [];
     this.#originalColumnOrder = [];
   }
   // #endregion
@@ -208,6 +212,9 @@ export class PinnedColumnsPlugin extends BaseGridPlugin<PinnedColumnsConfig> {
       this.#groupEndAdjustments = result.groupEndAdjustments;
       this.leftOffsets = result.leftOffsets;
       this.rightOffsets = result.rightOffsets;
+      this.#splitGroups = result.splitGroups;
+      // Re-apply scroll-driven state (transfer + translateX) to the fresh DOM elements
+      this.#updateSplitGroupScroll();
     });
   }
 
@@ -247,6 +254,104 @@ export class PinnedColumnsPlugin extends BaseGridPlugin<PinnedColumnsConfig> {
       context.cellElement.classList.add('group-end');
     } else if (this.#groupEndAdjustments.removeGroupEnd.has(field)) {
       context.cellElement.classList.remove('group-end');
+    }
+  }
+
+  /**
+   * Handle horizontal scroll to manage floating group labels.
+   *
+   * When an explicit column group has a mix of pinned and non-pinned columns,
+   * the label starts in the scrollable fragment and floats toward the pinned
+   * column via CSS `position: sticky`.  Once the scrollable fragment scrolls
+   * far enough that the label would be clipped, this hook transfers the label
+   * into the sticky pinned fragment and applies `.group-end` to the pinned
+   * column cells, creating a visual separator.  Scrolling back reverses the
+   * transfer.
+   * @internal
+   */
+  override onScroll(_event: ScrollEvent): void {
+    this.#updateSplitGroupScroll();
+  }
+
+  /**
+   * Apply scroll-driven state to split group headers.
+   *
+   * Handles both the manual translateX positioning (simulating sticky) and the
+   * transfer of the label into/out of the pinned fragment with `.group-end`.
+   * Called from `onScroll` on every scroll event and from `afterRender` after
+   * the split group DOM is rebuilt (e.g. after selection click triggers re-render).
+   */
+  #updateSplitGroupScroll(): void {
+    if (!this.isApplied || this.#splitGroups.length === 0) return;
+
+    const host = this.gridElement;
+
+    for (const sg of this.#splitGroups) {
+      const pinnedRect = sg.pinnedFragment.getBoundingClientRect();
+      const scrollableRect = sg.scrollableFragment.getBoundingClientRect();
+
+      // Transfer when the non-pinned fragment's right edge reaches the pinned
+      // fragment's right edge — all non-pinned columns scrolled behind the pin.
+      const shouldTransfer = scrollableRect.right <= pinnedRect.right;
+
+      if (shouldTransfer && !sg.isTransferred) {
+        // Move label into the pinned fragment
+        sg.pinnedFragment.textContent = sg.label;
+        sg.pinnedFragment.style.overflow = 'hidden';
+        sg.pinnedFragment.style.textOverflow = 'ellipsis';
+        sg.pinnedFragment.style.whiteSpace = 'nowrap';
+        sg.pinnedFragment.style.borderRightStyle = '';
+        sg.floatLabel.style.visibility = 'hidden';
+        sg.floatLabel.style.transform = '';
+        sg.floatOffset = 0;
+
+        // Add group-end to pinned column header + body cells
+        this.#groupEndAdjustments.addGroupEnd.add(sg.pinnedField);
+        host
+          .querySelectorAll(
+            `.header-row .cell[data-field="${sg.pinnedField}"], .data-grid-row .cell[data-field="${sg.pinnedField}"]`,
+          )
+          .forEach((el) => el.classList.add('group-end'));
+
+        sg.isTransferred = true;
+      } else if (!shouldTransfer && sg.isTransferred) {
+        // Reverse transfer — label goes back to the floating span
+        sg.pinnedFragment.textContent = '';
+        sg.pinnedFragment.style.overflow = '';
+        sg.pinnedFragment.style.textOverflow = '';
+        sg.pinnedFragment.style.whiteSpace = '';
+        sg.pinnedFragment.style.borderRightStyle = 'none';
+        sg.floatLabel.style.visibility = '';
+        sg.floatLabel.style.transform = '';
+        sg.floatOffset = 0;
+
+        // Remove group-end from pinned column cells
+        this.#groupEndAdjustments.addGroupEnd.delete(sg.pinnedField);
+        host
+          .querySelectorAll(
+            `.header-row .cell[data-field="${sg.pinnedField}"], .data-grid-row .cell[data-field="${sg.pinnedField}"]`,
+          )
+          .forEach((el) => el.classList.remove('group-end'));
+
+        sg.isTransferred = false;
+      }
+
+      // Manually position the floating label to simulate sticky behavior.
+      // CSS sticky can't be used because .header-group-cell has overflow:hidden.
+      // We track the current translateX offset to correctly compute the span's
+      // natural (un-translated) position from its measured rect.
+      if (!sg.isTransferred) {
+        const spanRect = sg.floatLabel.getBoundingClientRect();
+        const spanNaturalLeft = spanRect.left - sg.floatOffset;
+        const targetLeft = pinnedRect.left;
+        if (spanNaturalLeft < targetLeft) {
+          sg.floatOffset = targetLeft - spanNaturalLeft;
+          sg.floatLabel.style.transform = `translateX(${sg.floatOffset}px)`;
+        } else {
+          sg.floatOffset = 0;
+          sg.floatLabel.style.transform = '';
+        }
+      }
     }
   }
 
@@ -405,6 +510,7 @@ export class PinnedColumnsPlugin extends BaseGridPlugin<PinnedColumnsConfig> {
     this.#groupEndAdjustments = result.groupEndAdjustments;
     this.leftOffsets = result.leftOffsets;
     this.rightOffsets = result.rightOffsets;
+    this.#splitGroups = result.splitGroups;
   }
 
   /**
