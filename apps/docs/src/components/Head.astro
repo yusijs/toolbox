@@ -4,6 +4,14 @@ import Default from '@astrojs/starlight/components/Head.astro';
 
 <Default {...Astro.props}><slot /></Default>
 
+<!-- Deduplicate title when page title matches site title (e.g. homepage) -->
+<script is:inline>
+(function() {
+  var parts = document.title.split(' | ');
+  if (parts.length === 2 && parts[0] === parts[1]) document.title = parts[0];
+})();
+</script>
+
 <!-- Structured data for search engines -->
 <script type="application/ld+json" set:html={JSON.stringify({
   "@context": "https://schema.org",
@@ -20,7 +28,10 @@ import Default from '@astrojs/starlight/components/Head.astro';
     "url": "https://github.com/OysteinAmundsen"
   },
   "license": "https://opensource.org/licenses/MIT",
-  "keywords": ["datagrid", "data grid", "javascript datagrid", "react datagrid", "angular datagrid", "vue datagrid", "web component", "typescript grid"]
+  "keywords": [
+    "datagrid", "data grid", "web component", "javascript", "typescript",
+    "react", "angular", "vue", "framework-agnostic", "open source"
+  ]
 })} />
 
 <!-- Open Graph defaults -->
