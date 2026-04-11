@@ -252,6 +252,8 @@ export class ContextMenuPlugin extends BaseGridPlugin<ContextMenuConfig> {
     '--tbw-context-menu-icon-size',
     '--tbw-context-menu-shortcut-size',
     '--tbw-context-menu-arrow-size',
+    // Icon variables for context menu icons rendered outside tbw-grid
+    '--tbw-icon-submenu-arrow',
   ];
 
   /**
@@ -471,7 +473,7 @@ export class ContextMenuPlugin extends BaseGridPlugin<ContextMenuConfig> {
         this.menuElement = null;
         this.isOpen = false;
       },
-      this.gridIcons.submenuArrow,
+      this.grid?.gridConfig?.icons?.submenuArrow,
     );
 
     // Attach keyboard navigation (arrow keys, Enter, Escape)
