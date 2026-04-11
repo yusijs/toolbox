@@ -43,7 +43,9 @@ export function buildGroupedRowModel({ rows, config, expanded, initialExpanded }
 
   const root: GroupNode = { key: '__root__', value: null, depth: -1, rows: [], children: new Map() };
 
-  // Build tree structure
+  // Build tree structure — push each row into every ancestor along the path
+  // so that each group's `rows` array contains ALL data rows in its subtree.
+  // This is required for correct counts and aggregations on multi-level groups.
   rows.forEach((r) => {
     let path: any = groupOn(r);
     if (path == null || path === false) path = ['__ungrouped__'];
@@ -58,31 +60,15 @@ export function buildGroupedRowModel({ rows, config, expanded, initialExpanded }
         node = { key: composite, value: rawVal, depth: depthIdx, rows: [], children: new Map(), parent };
         parent.children.set(seg, node);
       }
+      node.rows.push(r);
       parent = node;
     });
-    parent.rows.push(r);
   });
 
   // All ungrouped? treat as no grouping
   if (root.children.size === 1 && root.children.has('__ungrouped__')) {
     const only = root.children.get('__ungrouped__')!;
     if (only.rows.length === rows.length) return [];
-  }
-
-  // Propagate descendant rows up to parent nodes so that each group's
-  // `rows` array contains ALL data rows in its subtree, not just direct children.
-  // This is required for correct counts and aggregations on multi-level groups.
-  const collectRows = (node: GroupNode): any[] => {
-    if (node.children.size === 0) return node.rows;
-    const all: any[] = [...node.rows];
-    for (const child of node.children.values()) {
-      all.push(...collectRows(child));
-    }
-    node.rows = all;
-    return all;
-  };
-  for (const child of root.children.values()) {
-    collectRows(child);
   }
 
   // Merge expanded sets - use initialExpanded on first render, then expanded takes over
