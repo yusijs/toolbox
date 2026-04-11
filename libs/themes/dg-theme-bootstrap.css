@@ -50,7 +50,9 @@
 
     /* ========== Dimensions ========== */
     /* Bootstrap .table uses 0.5rem cell padding */
-    --tbw-cell-padding: 0.5rem 0.75rem;
+    --tbw-cell-padding-v: 0.5rem;
+    --tbw-cell-padding-h: 0.75rem;
+    --tbw-cell-padding: var(--tbw-cell-padding-v) var(--tbw-cell-padding-h);
     --tbw-cell-padding-header: 0.5rem 0.75rem;
     --tbw-row-height: 37px;
     --tbw-header-height: 41px;

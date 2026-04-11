@@ -28,3 +28,4 @@ When adding colors to CSS, follow these rules:
 
 - **Gate row hover styles with `@media (hover: hover)`** — Bare `:hover` on virtualized rows causes "jumping highlight" on touch devices: the browser applies `:hover` on touch-start, and as DOM elements are recycled during scroll the highlight follows the physical element. Always wrap row-level hover rules in `@media (hover: hover)`
 - **`overflow: hidden` on ancestors blocks `position: sticky`** — When CSS sticky is impossible due to ancestor `overflow`, use `position: relative` with manual `translateX` in a scroll handler instead. Always verify the entire ancestor chain
+- **Themes overriding `--tbw-cell-padding` must also set `--tbw-cell-padding-v` and `--tbw-cell-padding-h`** — The editing plugin's `min-height` formula uses `--tbw-cell-padding-v` to match non-editing cell height. If a theme sets a shorthand `--tbw-cell-padding` without updating the individual components, editing cells will be the wrong height

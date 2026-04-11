@@ -933,6 +933,19 @@ The `ctx` object passed to custom editors contains:
 | `updateRow(changes)` | `function` | Update other fields on the same row (triggers `cell-change` events) |
 | `onValueChange(cb)` | `function` | Register a callback to receive pushed values when the cell's value changes externally (e.g., via `updateRow` from another cell's commit) |
 
+:::tip[Preventing Row Height Growth]
+Built-in editors are sized to match the cell exactly, so row height stays constant when entering edit mode. Custom editors inherit this behavior automatically if they return a standard `<input>`, `<select>`, or `<textarea>` element.
+
+If your custom editor uses a non-standard element (e.g., a `<div>` with buttons), ensure it doesn't exceed the cell height. Add these styles to your editor's root element:
+
+```css
+max-height: 100%;
+overflow: hidden;
+```
+
+For editors that need overlays (datepickers, dropdown panels), render the overlay **outside** the cell using `position: fixed` or `position: absolute` on a `<body>`-appended element, and register it with `grid.registerExternalFocusContainer(overlay)` so the grid doesn't close the editor when the overlay receives focus.
+:::
+
 ### Cascade Updates (onValueChange)
 
 When one cell's commit updates other fields via `updateRow()`, any editors open on those fields

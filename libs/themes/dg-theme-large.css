@@ -29,7 +29,9 @@
     /* Typography & spacing overrides */
     --tbw-font-size: 18px; /* larger base */
     --tbw-font-size-header: 19px;
-    --tbw-cell-padding: 6px 14px; /* vertical horiz */
+    --tbw-cell-padding-v: 6px;
+    --tbw-cell-padding-h: 14px;
+    --tbw-cell-padding: var(--tbw-cell-padding-v) var(--tbw-cell-padding-h);
     --tbw-cell-padding-header: 6px 14px;
     --tbw-cell-padding-input: 4px 10px;
     --tbw-row-height: 38px;

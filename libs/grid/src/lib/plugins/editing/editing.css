@@ -48,8 +48,15 @@
       padding: 0;
       /* Override block to flex for editing inputs */
       display: flex;
-      /* Match the height that non-editing cells naturally have from line-height + padding */
-      min-height: calc(var(--tbw-row-height) + 2px);
+      /* Match the non-editing cell height exactly. Non-editing height is:
+         max(--tbw-row-height [border-box], line-height + padding + border [content-driven])
+         Since editing cells have padding:0, min-height must compensate for both cases:
+         - Content-driven: line-height (1lh) + original vertical padding + border
+         - Min-height-driven: just var(--tbw-row-height) (border-box already includes padding+border) */
+      min-height: max(
+        var(--tbw-row-height),
+        calc(1lh + 2 * var(--tbw-cell-padding-v, 0.25em) + var(--tbw-border-width, 1px))
+      );
       align-items: center;
       justify-content: center;
     }
@@ -61,6 +68,7 @@
       width: 100%;
       height: 100%;
       flex: 1 1 auto;
+      align-self: stretch;
       min-width: 0;
       border: var(--tbw-editing-border);
       padding: var(--tbw-padding-editing-input);

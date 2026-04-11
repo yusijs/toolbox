@@ -51,7 +51,9 @@
 
     /* ========== Spacing & Dimensions ========== */
     /* M3 uses generous whitespace */
-    --tbw-cell-padding: 4px 16px;
+    --tbw-cell-padding-v: 4px;
+    --tbw-cell-padding-h: 16px;
+    --tbw-cell-padding: var(--tbw-cell-padding-v) var(--tbw-cell-padding-h);
     --tbw-cell-padding-header: 4px 16px;
     --tbw-row-height: 52px;
     --tbw-header-height: 56px;
