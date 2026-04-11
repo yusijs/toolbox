@@ -5,6 +5,7 @@ description: "Transform row data into a cross-tabulation (pivot table) layout."
 
 import { TabItem, Tabs } from '@astrojs/starlight/components';
 import PivotDefaultDemo from '@components/demos/pivot/PivotDefaultDemo.astro';
+import PivotEventsDemo from '@components/demos/pivot/PivotEventsDemo.astro';
 import ShowSource from '@components/ShowSource.astro';
 
 
@@ -147,13 +148,27 @@ export class SalesPivotComponent {
   <PivotDefaultDemo />
 </ShowSource>
 
-Use the controls to explore the full pivot configuration — toggle active state, totals, grand total, tool panel, default expansion, indent width, aggregation function, and animation style.
+Use the controls to explore the full pivot configuration — toggle active state, totals, grand total, tool panel, default expansion, indent width, aggregation function, sorting, value formatting, and animation style.
+
+## Events & Programmatic API
+
+<ShowSource file="demos/pivot/PivotEventsDemo.astro">
+  <PivotEventsDemo />
+</ShowSource>
+
+Click groups to expand/collapse and watch the event log. Use the buttons to call the programmatic API. Open the tool panel and drag fields between zones to see `pivot-config-change` events.
 
 
 
 ## Configuration Options
 
 See [`PivotConfig`](./Interfaces/PivotConfig/) for the full list of options and defaults.
+
+Key options:
+
+- **`showTotals`** — Shows/hides the per-row **Total column** on the right (the sum across all pivot columns for each row). This does *not* affect the aggregated values shown in group rows.
+- **`showGrandTotal`** — Shows/hides the grand total row at the bottom.
+- **`grandTotalInRowModel`** — When `true`, the grand total renders as a regular row instead of a sticky footer (useful for data export and copy/paste).
 
 ## Aggregation Functions
 
@@ -208,6 +223,17 @@ features: {
 
 The pivot API methods remain available for programmatic control.
 
+## Tool Panel
+
+When `showToolPanel: true` (default), the pivot panel lets users configure the pivot interactively:
+
+- **Drag fields** between Row Groups, Column Groups, and Values zones
+- **Reorder fields** within a zone by dragging
+- **Search fields** using the filter input at the top of the Available Fields list
+- **Change aggregation** via the dropdown on each value field (built-in functions only — custom aggregators show "CUSTOM" and cannot be changed via the UI)
+
+The panel fires `pivot-config-change` events when users modify the configuration.
+
 ## Animation
 
 The plugin supports animated expand/collapse transitions. Animation respects the grid-level
@@ -240,7 +266,7 @@ plugin.getExpandedGroups();         // returns string[] of expanded keys
 
 ## Sorting
 
-Sort pivot rows and columns:
+Sort pivot rows and columns via configuration:
 
 ```ts
 features: {
@@ -255,6 +281,12 @@ features: {
 
 `sortRows` accepts `{ by: 'label' | 'value', direction: 'asc' | 'desc', valueField?: string }`.
 When `by` is `'value'`, rows are sorted by their total (or by a specific `valueField`).
+
+:::note
+Pivot sorting is applied at build time via configuration. Interactive sorting by clicking column
+headers is not currently supported — pivot columns are generated dynamically and don't participate
+in the grid's built-in sort mechanism.
+:::
 
 ## Default Expanded
 

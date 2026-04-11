@@ -356,6 +356,11 @@ export class PivotPlugin extends BaseGridPlugin<PivotConfig> {
   override renderRow(row: Record<string, unknown>, rowEl: HTMLElement, rowIndex: number): boolean {
     const pivotRow = row as PivotRowData;
 
+    // Handle grand total row in row model (when grandTotalInRowModel is true)
+    if (pivotRow.__pivotIsGrandTotal) {
+      return renderPivotGrandTotalRow(pivotRow, rowEl, this.gridColumns);
+    }
+
     // Handle pivot group row (has children)
     if (pivotRow.__pivotRowKey && pivotRow.__pivotHasChildren) {
       return renderPivotGroupRow(pivotRow, rowEl, {
@@ -485,6 +490,8 @@ export class PivotPlugin extends BaseGridPlugin<PivotConfig> {
 
     // Render the grand total row into the footer
     renderPivotGrandTotalRow(grandTotalRow, this.grandTotalFooter, this.gridColumns);
+    // Footer is outside the grid's role=grid element — use presentation role
+    this.grandTotalFooter.setAttribute('role', 'presentation');
   }
 
   /**

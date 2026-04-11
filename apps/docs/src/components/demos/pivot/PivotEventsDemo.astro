@@ -1,0 +1,157 @@
+---
+// PivotEventsDemo.astro — Interactive demo showing pivot events and programmatic API
+---
+<div class="grid-demo not-content" id="pivot-events-demo">
+  <div class="pivot-events-toolbar">
+    <button id="pivot-expand-all">Expand All</button>
+    <button id="pivot-collapse-all">Collapse All</button>
+    <button id="pivot-get-expanded">Get Expanded Groups</button>
+  </div>
+  <tbw-grid style="height: 350px;"></tbw-grid>
+  <div class="pivot-event-log" id="pivot-event-log" data-event-log>
+    <strong>Event Log</strong>
+    <div class="pivot-event-entries" id="pivot-event-entries"></div>
+  </div>
+</div>
+
+<script>
+import '@toolbox-web/grid';
+import { queryGrid } from '@toolbox-web/grid';
+import '@toolbox-web/grid/features/pivot';
+
+const container = document.getElementById('pivot-events-demo');
+if (container) {
+  const salesData = [
+    { region: 'North', product: 'Widget A', quarter: 'Q1', sales: 1200 },
+    { region: 'North', product: 'Widget B', quarter: 'Q1', sales: 800 },
+    { region: 'North', product: 'Widget A', quarter: 'Q2', sales: 1500 },
+    { region: 'North', product: 'Widget B', quarter: 'Q2', sales: 950 },
+    { region: 'South', product: 'Widget A', quarter: 'Q1', sales: 900 },
+    { region: 'South', product: 'Widget B', quarter: 'Q1', sales: 1100 },
+    { region: 'South', product: 'Widget A', quarter: 'Q2', sales: 1300 },
+    { region: 'South', product: 'Widget B', quarter: 'Q2', sales: 1400 },
+    { region: 'East', product: 'Widget A', quarter: 'Q1', sales: 750 },
+    { region: 'East', product: 'Widget B', quarter: 'Q1', sales: 650 },
+    { region: 'East', product: 'Widget A', quarter: 'Q2', sales: 880 },
+    { region: 'East', product: 'Widget B', quarter: 'Q2', sales: 720 },
+  ];
+
+  const grid = queryGrid('tbw-grid', container)!;
+
+  grid.gridConfig = {
+    columns: [
+      { field: 'region', header: 'Region' },
+      { field: 'product', header: 'Product' },
+      { field: 'quarter', header: 'Quarter' },
+      { field: 'sales', header: 'Sales', type: 'number' },
+    ],
+    features: {
+      pivot: {
+        rowGroupFields: ['region', 'product'],
+        columnGroupFields: ['quarter'],
+        valueFields: [{ field: 'sales', aggFunc: 'sum', header: 'Total Sales' }],
+        showTotals: true,
+        showGrandTotal: true,
+        showToolPanel: true,
+        defaultExpanded: true,
+      } as any,
+    },
+  };
+  grid.rows = salesData;
+
+  // Event log
+  const entries = document.getElementById('pivot-event-entries')!;
+  const MAX_LOG = 20;
+
+  function log(type: string, detail: string) {
+    const el = document.createElement('div');
+    el.className = 'pivot-event-entry';
+    el.innerHTML = `<span class="pivot-event-type">${type}</span> ${detail}`;
+    entries.prepend(el);
+    while (entries.children.length > MAX_LOG) {
+      entries.lastElementChild?.remove();
+    }
+  }
+
+  grid.addEventListener('pivot-toggle', ((e: CustomEvent) => {
+    const d = e.detail;
+    log('toggle', `<strong>${d.label}</strong> ${d.expanded ? 'expanded' : 'collapsed'} (depth ${d.depth})`);
+  }) as EventListener);
+
+  grid.addEventListener('pivot-state-change', ((e: CustomEvent) => {
+    log('state', `Pivot is now <strong>${e.detail.active ? 'active' : 'inactive'}</strong>`);
+  }) as EventListener);
+
+  grid.addEventListener('pivot-config-change', ((e: CustomEvent) => {
+    const d = e.detail;
+    const parts = [`property: <strong>${d.property}</strong>`];
+    if (d.field) parts.push(`field: ${d.field}`);
+    if (d.zone) parts.push(`zone: ${d.zone}`);
+    log('config', parts.join(', '));
+  }) as EventListener);
+
+  // Programmatic API buttons
+  const plugin = grid.getPluginByName('pivot') as any;
+
+  document.getElementById('pivot-expand-all')?.addEventListener('click', () => {
+    plugin?.expandAll();
+    log('api', 'Called <strong>expandAll()</strong>');
+  });
+
+  document.getElementById('pivot-collapse-all')?.addEventListener('click', () => {
+    plugin?.collapseAll();
+    log('api', 'Called <strong>collapseAll()</strong>');
+  });
+
+  document.getElementById('pivot-get-expanded')?.addEventListener('click', () => {
+    const groups = plugin?.getExpandedGroups() ?? [];
+    log('api', `<strong>getExpandedGroups()</strong> → [${groups.map((k: string) => `"${k}"`).join(', ')}]`);
+  });
+}
+</script>
+
+<style>
+  .pivot-events-toolbar {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .pivot-events-toolbar button {
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 4px;
+    background: var(--sl-color-gray-6);
+    color: var(--sl-color-text);
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  .pivot-events-toolbar button:hover {
+    background: var(--sl-color-gray-5);
+  }
+  .pivot-event-log {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 4px;
+    background: var(--sl-color-gray-7);
+    max-height: 180px;
+    overflow-y: auto;
+    font-size: 0.82rem;
+    font-family: var(--sl-font-mono);
+  }
+  .pivot-event-entry {
+    padding: 0.15rem 0;
+    border-bottom: 1px solid var(--sl-color-gray-6);
+  }
+  .pivot-event-type {
+    display: inline-block;
+    min-width: 4.5em;
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    font-weight: 600;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    background: var(--sl-color-accent);
+    color: var(--sl-color-accent-high);
+  }
+</style>

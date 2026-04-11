@@ -3,6 +3,10 @@
  *
  * Pure functions for rendering pivot rows (group rows, leaf rows, grand total).
  * Separated from PivotPlugin for better code organization.
+ *
+ * IMPORTANT: These functions bypass the grid's normal cell rendering pipeline.
+ * Column-level features (format, cellRenderer, cellClass) must be applied manually.
+ * When adding new cell rendering logic, always check for `col.format` on value columns.
  */
 
 import type { ColumnConfig, IconValue } from '../../core/types';
@@ -78,9 +82,9 @@ export function renderPivotGroupRow(row: PivotRowData, rowEl: HTMLElement, ctx: 
       count.textContent = ` (${Number(row.__pivotRowCount) || 0})`;
       cell.appendChild(count);
     } else {
-      // Other columns: render value
+      // Other columns: render value, applying column format when available
       const value = row[col.field];
-      cell.textContent = value != null ? String(value) : '';
+      cell.textContent = value != null ? (col.format ? col.format(value, row) : String(value)) : '';
     }
 
     rowEl.appendChild(cell);
@@ -121,9 +125,9 @@ export function renderPivotLeafRow(
       label.textContent = String(row.__pivotLabel ?? '');
       cell.appendChild(label);
     } else {
-      // Other columns: render value
+      // Other columns: render value, applying column format when available
       const value = row[col.field];
-      cell.textContent = value != null ? String(value) : '';
+      cell.textContent = value != null ? (col.format ? col.format(value, row) : String(value)) : '';
     }
 
     rowEl.appendChild(cell);
@@ -134,11 +138,10 @@ export function renderPivotLeafRow(
 
 /**
  * Render the grand total row.
+ * Used both for the sticky footer and for in-row-model rendering.
  */
 export function renderPivotGrandTotalRow(row: PivotRowData, rowEl: HTMLElement, columns: ColumnConfig[]): boolean {
-  rowEl.className = 'pivot-grand-total-row';
-  // Use role=presentation since grand total is rendered outside the role=grid element
-  rowEl.setAttribute('role', 'presentation');
+  rowEl.className = 'data-grid-row pivot-grand-total-row';
   rowEl.innerHTML = '';
 
   columns.forEach((col, colIdx) => {
@@ -154,9 +157,9 @@ export function renderPivotGrandTotalRow(row: PivotRowData, rowEl: HTMLElement, 
       label.textContent = 'Grand Total';
       cell.appendChild(label);
     } else {
-      // Other columns: render totals
+      // Other columns: render totals, applying column format when available
       const value = row[col.field];
-      cell.textContent = value != null ? String(value) : '';
+      cell.textContent = value != null ? (col.format ? col.format(value, row) : String(value)) : '';
     }
 
     rowEl.appendChild(cell);

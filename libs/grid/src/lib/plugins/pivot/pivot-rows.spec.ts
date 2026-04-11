@@ -194,7 +194,7 @@ describe('pivot-rows', () => {
       expect(cells[2].textContent).toBe('123');
     });
 
-    it('should handle null/undefined values in columns', () => {
+    it('should handle null/undefined values', () => {
       const row: PivotRowData = {
         __pivotRowKey: 'group-1',
         __pivotLabel: 'Group',
@@ -209,6 +209,29 @@ describe('pivot-rows', () => {
       const cells = rowEl.querySelectorAll('.cell');
       expect(cells[1].textContent).toBe('');
       expect(cells[2].textContent).toBe('');
+    });
+
+    it('should apply column format function to non-first columns', () => {
+      const row: PivotRowData = {
+        __pivotRowKey: 'group-1',
+        __pivotLabel: 'Group',
+        __pivotRowCount: 1,
+        value: 1200,
+        count: 5,
+      };
+
+      const ctx = createContext({
+        columns: [
+          { field: 'label', header: 'Label' },
+          { field: 'value', header: 'Value', format: (v: unknown) => `$${Number(v).toLocaleString()}` },
+          { field: 'count', header: 'Count' },
+        ] as ColumnConfig[],
+      });
+      renderPivotGroupRow(row, rowEl, ctx);
+
+      const cells = rowEl.querySelectorAll('.cell');
+      expect(cells[1].textContent).toContain('$');
+      expect(cells[2].textContent).toBe('5');
     });
 
     it('should handle missing pivot metadata with defaults', () => {
@@ -309,6 +332,23 @@ describe('pivot-rows', () => {
       expect(cells[1].textContent).toBe('');
     });
 
+    it('should apply column format function to non-first columns', () => {
+      const fmtColumns: ColumnConfig[] = [
+        { field: 'name', header: 'Name' },
+        { field: 'amount', header: 'Amount', format: (v: unknown) => `$${Number(v).toFixed(2)}` },
+      ];
+      const row: PivotRowData = {
+        __pivotRowKey: 'leaf-1',
+        __pivotLabel: 'Item',
+        amount: 75.5,
+      };
+
+      renderPivotLeafRow(row, rowEl, fmtColumns, 0);
+
+      const cells = rowEl.querySelectorAll('.cell');
+      expect(cells[1].textContent).toBe('$75.50');
+    });
+
     it('should handle missing metadata with defaults', () => {
       const row: PivotRowData = {};
 
@@ -336,8 +376,7 @@ describe('pivot-rows', () => {
       const result = renderPivotGrandTotalRow(row, rowEl, columns);
 
       expect(result).toBe(true);
-      expect(rowEl.className).toBe('pivot-grand-total-row');
-      expect(rowEl.getAttribute('role')).toBe('presentation');
+      expect(rowEl.className).toBe('data-grid-row pivot-grand-total-row');
     });
 
     it('should render "Grand Total" label in first column', () => {
@@ -378,6 +417,25 @@ describe('pivot-rows', () => {
       const cells = rowEl.querySelectorAll('.cell');
       expect(cells[1].textContent).toBe('');
       expect(cells[2].textContent).toBe('');
+    });
+
+    it('should apply column format function to non-first columns', () => {
+      const fmtColumns: ColumnConfig[] = [
+        { field: 'label', header: 'Label' },
+        { field: 'total', header: 'Total', format: (v: unknown) => `€${Number(v).toLocaleString()}` },
+        { field: 'avg', header: 'Average' },
+      ];
+      const row: PivotRowData = {
+        __pivotIsGrandTotal: true,
+        total: 5000,
+        avg: 125,
+      };
+
+      renderPivotGrandTotalRow(row, rowEl, fmtColumns);
+
+      const cells = rowEl.querySelectorAll('.cell');
+      expect(cells[1].textContent).toContain('€');
+      expect(cells[2].textContent).toBe('125');
     });
 
     it('should clear existing content before rendering', () => {
