@@ -359,6 +359,74 @@ export function sortPivotRows(rows: PivotRow[], sortConfig: PivotSortConfig, val
 }
 
 /**
+ * Sort pivot rows by multiple criteria (from MultiSort's sort model).
+ * Each criterion is a PivotSortConfig; earlier entries take precedence.
+ * Maintains hierarchy by sorting children recursively at each level.
+ */
+export function sortPivotMulti(rows: PivotRow[], configs: PivotSortConfig[], valueFields: PivotValueField[]): void {
+  if (configs.length === 0) return;
+
+  const knownValueFields = new Set(valueFields.map((vf) => vf.field));
+
+  /** Resolve the numeric sort value for a row given a valueField key. */
+  const getSortValue = (row: PivotRow, valueField: string): number => {
+    // Direct match (full value key like "Q1|sales")
+    if (row.values[valueField] != null) {
+      return typeof row.values[valueField] === 'number' ? (row.values[valueField] as number) : 0;
+    }
+    // Suffix match — sum all matching columns for a bare field name
+    if (knownValueFields.has(valueField)) {
+      const suffix = `|${valueField}`;
+      let sum = 0;
+      let found = false;
+      for (const key of Object.keys(row.values)) {
+        if (key.endsWith(suffix)) {
+          sum += typeof row.values[key] === 'number' ? (row.values[key] as number) : 0;
+          found = true;
+        }
+      }
+      if (found) return sum;
+    }
+    return row.total ?? 0;
+  };
+
+  // Precompute accessors for deterministic ordering (same accessor for both a and b)
+  const accessors = configs.map((cfg) => {
+    if (cfg.by === 'value') {
+      if (cfg.valueField) {
+        return (row: PivotRow) => getSortValue(row, cfg.valueField!);
+      }
+      return (row: PivotRow) => row.total ?? 0;
+    }
+    return null; // label sort — uses localeCompare directly
+  });
+
+  rows.sort((a, b) => {
+    for (let i = 0; i < configs.length; i++) {
+      const cfg = configs[i];
+      const dir = cfg.direction === 'desc' ? -1 : 1;
+      let cmp = 0;
+
+      if (cfg.by === 'value') {
+        const accessor = accessors[i] as (row: PivotRow) => number;
+        cmp = (accessor(a) - accessor(b)) * dir;
+      } else {
+        cmp = a.rowLabel.localeCompare(b.rowLabel) * dir;
+      }
+
+      if (cmp !== 0) return cmp;
+    }
+    return 0;
+  });
+
+  for (const row of rows) {
+    if (row.children?.length) {
+      sortPivotMulti(row.children, configs, valueFields);
+    }
+  }
+}
+
+/**
  * Resolve `defaultExpanded` config to a set of keys, similar to grouping-rows.
  */
 export function resolveDefaultExpanded(
