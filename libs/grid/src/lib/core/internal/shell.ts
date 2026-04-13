@@ -1314,6 +1314,7 @@ export const GRID_CONTENT_HTML = `
 // #endregion
 
 // #region DOM Construction
+import { GridClasses } from '../constants';
 import {
   buildGridDOM,
   buildShellBody,
@@ -1423,6 +1424,101 @@ export function buildGridDOMIntoElement(
     // No shell - just grid content
     const fragment = buildGridDOM({ hasShell: false });
     renderRoot.appendChild(fragment);
+  }
+
+  return hasShell;
+}
+
+/**
+ * Surgically rebuild only the shell wrapper (header + tool panel) while
+ * preserving the existing `.tbw-grid-root` element and its `.tbw-grid-content`
+ * child with all descendants and event listeners intact.
+ *
+ * This avoids the full `replaceChildren()` nuke that `buildGridDOMIntoElement`
+ * performs, so event listeners bound to `.tbw-grid-root` or its grid content
+ * descendants (e.g. tooltip's delegated mouseover) remain intact.
+ *
+ * If no existing `.tbw-grid-root` is found (first render), falls back to
+ * `buildGridDOMIntoElement` for a full rebuild.
+ */
+export function rebuildShellDOM(
+  renderRoot: Element,
+  shellConfig: ShellConfig | undefined,
+  runtimeState: { isPanelOpen: boolean; expandedSections: Set<string> },
+  icons?: { toolPanel?: IconValue; expand?: IconValue; collapse?: IconValue },
+): boolean {
+  // Find the existing grid root and content to preserve
+  const existingRoot = renderRoot.querySelector(`.${GridClasses.ROOT}`) as HTMLElement | null;
+  const existingContent = existingRoot?.querySelector('.tbw-grid-content');
+
+  // If there's no existing root, fall back to full rebuild (first render)
+  if (!existingRoot || !existingContent) {
+    return buildGridDOMIntoElement(renderRoot, shellConfig, runtimeState, icons);
+  }
+
+  // Detach grid content so it survives the child replacement
+  existingContent.remove();
+
+  const hasShell = shouldRenderShellHeader(shellConfig);
+
+  // Clear the root's children (shell header, shell body, etc.) but keep the root element itself
+  existingRoot.replaceChildren();
+
+  if (hasShell) {
+    existingRoot.className = `${GridClasses.ROOT} has-shell`;
+
+    const toolPanelIcon = icons?.toolPanel !== undefined ? iconToString(icons.toolPanel) : undefined;
+    const expandIcon = icons?.expand !== undefined ? iconToString(icons.expand) : undefined;
+    const collapseIcon = icons?.collapse !== undefined ? iconToString(icons.collapse) : undefined;
+
+    const allContents = shellConfig?.header?.toolbarContents ?? [];
+    const sortedContents = [...allContents].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+    const allPanels = shellConfig?.toolPanels ?? [];
+    const sortedPanels = [...allPanels].sort((a, b) => (a.order ?? 100) - (b.order ?? 100));
+
+    const headerOptions: ShellHeaderOptions = {
+      title: shellConfig?.header?.title ?? undefined,
+      hasPanels: sortedPanels.length > 0,
+      isPanelOpen: runtimeState.isPanelOpen,
+      toolPanelIcon,
+      configButtons: sortedContents.map((c) => ({
+        id: c.id,
+        hasElement: false,
+        hasRender: !!c.render,
+      })),
+      apiButtons: [],
+    };
+
+    const bodyOptions: ShellBodyOptions = {
+      position: shellConfig?.toolPanel?.position ?? 'right',
+      isPanelOpen: runtimeState.isPanelOpen,
+      expandIcon,
+      collapseIcon,
+      panels: sortedPanels.map((p) => ({
+        id: p.id,
+        title: p.title,
+        icon: iconToString(p.icon),
+        isExpanded: runtimeState.expandedSections.has(p.id),
+      })),
+    };
+
+    // Build new shell elements
+    const shellHeader = buildShellHeader(headerOptions);
+    const shellBody = buildShellBody(bodyOptions);
+
+    // Replace the freshly cloned grid content with the preserved one
+    const freshContent = shellBody.querySelector('.tbw-grid-content');
+    if (freshContent) {
+      freshContent.replaceWith(existingContent);
+    }
+
+    existingRoot.appendChild(shellHeader);
+    existingRoot.appendChild(shellBody);
+  } else {
+    // No shell — place content directly in root
+    existingRoot.className = GridClasses.ROOT;
+    existingRoot.appendChild(existingContent);
   }
 
   return hasShell;

@@ -29,6 +29,7 @@ import {
   parseLightDomToolButtons,
   parseLightDomToolPanels,
   prepareForRerender,
+  rebuildShellDOM,
   renderCustomToolbarContents,
   renderHeaderContent,
   renderPanelContent,
@@ -4236,12 +4237,21 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
       // Prepare shell state for re-render (moves toolbar buttons back to original container)
       prepareForRerender(this.#shellState);
 
-      // Re-render the entire grid (shell structure may change)
-      this.#render();
-      this.#injectAllPluginStyles(); // Re-inject after render clears DOM
+      // Surgically rebuild only the shell wrapper (header, toolbar, tool panel)
+      // while preserving .tbw-grid-content and all its event listeners intact.
+      const hasShell = rebuildShellDOM(
+        this.#renderRoot,
+        this.#effectiveConfig?.shell,
+        { isPanelOpen: this.#shellState.isPanelOpen, expandedSections: this.#shellState.expandedSections },
+        this.#effectiveConfig?.icons,
+      );
 
-      // Use lighter-weight post-render setup instead of full #afterConnect()
-      // This avoids requesting another FULL render since #render() already rebuilt the DOM
+      if (hasShell) {
+        this.#setupShellListeners();
+        this.#shellController.setInitialized(true);
+      }
+
+      // Use lighter-weight post-render setup
       this.#afterShellRefresh();
     });
   }
@@ -4251,7 +4261,8 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
    * Unlike #afterConnect(), this skips scheduler FULL request since DOM is already built.
    */
   #afterShellRefresh(): void {
-    // Shell changes the DOM structure - need to re-cache element references
+    // Grid content was preserved by rebuildShellDOM, but the .tbw-grid-root
+    // wrapper is new. Re-cache element references (same DOM nodes, new parent).
     const gridContent = this.#renderRoot.querySelector('.tbw-grid-content');
     const gridRoot = gridContent ?? this.#renderRoot.querySelector('.tbw-grid-root');
 
