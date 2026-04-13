@@ -128,6 +128,43 @@ describe('renderDefaultFilterPanel', () => {
     expect(labels.every((l) => !l.checked)).toBe(true);
   });
 
+  it('should sort numeric values numerically, not alphabetically', () => {
+    const panel = createPanel();
+    const uniqueValues = [3, 20, 1, 11, 2];
+    const excludedValues = new Set<unknown>();
+
+    renderDefaultFilterPanel(
+      panel,
+      createParams({ uniqueValues, excludedValues }),
+      uniqueValues,
+      excludedValues,
+      {},
+      new Map(),
+    );
+
+    const labels = getCheckboxLabels(panel);
+    expect(labels.map((l) => l.text)).toEqual(['1', '2', '3', '11', '20']);
+  });
+
+  it('should sort numeric values numerically when some are excluded', () => {
+    const panel = createPanel();
+    const uniqueValues = [3, 20, 1, 11, 2];
+    const excludedValues = new Set<unknown>([3, 20]);
+
+    renderDefaultFilterPanel(
+      panel,
+      createParams({ uniqueValues, excludedValues }),
+      uniqueValues,
+      excludedValues,
+      {},
+      new Map(),
+    );
+
+    const labels = getCheckboxLabels(panel);
+    // Checked first (1, 2, 11 — numeric order), then unchecked (3, 20 — numeric order)
+    expect(labels.map((l) => l.text)).toEqual(['1', '2', '11', '3', '20']);
+  });
+
   it('should handle (Blank) value correctly in sort order', () => {
     const panel = createPanel();
     const uniqueValues = ['Banana', null, 'Apple'];

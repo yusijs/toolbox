@@ -76,8 +76,11 @@ export function renderDefaultFilterPanel(
     return String(value);
   };
 
-  // Sort unique values by formatted display name
-  uniqueValues = uniqueValues.slice().sort((a, b) => formatValue(a).localeCompare(formatValue(b)));
+  // Sort unique values — numbers numerically, everything else by display name
+  uniqueValues = uniqueValues.slice().sort((a, b) => {
+    if (typeof a === 'number' && typeof b === 'number') return a - b;
+    return formatValue(a).localeCompare(formatValue(b));
+  });
 
   // Search input
   const searchContainer = document.createElement('div');
@@ -250,6 +253,7 @@ export function renderDefaultFilterPanel(
       const checkedA = checkState.get(keyA) ?? true;
       const checkedB = checkState.get(keyB) ?? true;
       if (checkedA !== checkedB) return checkedA ? -1 : 1;
+      if (typeof a === 'number' && typeof b === 'number') return a - b;
       return formatValue(a).localeCompare(formatValue(b));
     });
 
