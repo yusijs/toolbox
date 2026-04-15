@@ -811,7 +811,14 @@ export function renderInlineRow(grid: GridHost, rowEl: HTMLElement, rowData: any
 
     if (viewRenderer) {
       // Pass cellEl for framework adapters that want to cache per-cell
-      const produced = viewRenderer({ row: rowData, value, field: col.field, column: col, cellEl: cell });
+      const produced = viewRenderer({
+        row: rowData,
+        value,
+        field: col.field,
+        column: col,
+        grid: grid as any,
+        cellEl: cell,
+      });
       if (typeof produced === 'string') {
         // Sanitize HTML from viewRenderer to prevent XSS from user-controlled data
         cell.innerHTML = sanitizeHTML(produced);

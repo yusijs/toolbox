@@ -1252,6 +1252,19 @@ export interface CellRenderContext<TRow = any, TValue = any> {
   /** Column configuration reference. */
   column: ColumnConfig<TRow>;
   /**
+   * The grid element that owns this cell.
+   * Use to access public grid API (e.g., `getPluginByName()`) from custom renderers.
+   *
+   * @example
+   * ```typescript
+   * const renderer: ColumnViewRenderer<MyRow> = (ctx) => {
+   *   const tree = ctx.grid?.getPluginByName('tree');
+   *   // ...
+   * };
+   * ```
+   */
+  grid?: DataGridElement;
+  /**
    * The cell DOM element being rendered into.
    * Framework adapters can use this to cache per-cell state (e.g., React roots).
    * @internal

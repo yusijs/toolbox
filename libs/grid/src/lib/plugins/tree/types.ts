@@ -38,6 +38,12 @@ export interface TreeConfig {
   /** Show expand/collapse icons (default: true) */
   showExpandIcons?: boolean;
   /**
+   * Field name of the column that displays the tree toggle and indentation.
+   * Defaults to the first visible column. Use this when the first column is
+   * narrow (e.g. an ID column) or when combining with pinned columns.
+   */
+  treeColumn?: string;
+  /**
    * Animation style for expanding/collapsing tree nodes.
    * - `false`: No animation
    * - `'slide'`: Slide animation (default)

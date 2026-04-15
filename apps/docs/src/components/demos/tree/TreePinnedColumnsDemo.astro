@@ -1,0 +1,96 @@
+---
+// TreePinnedColumnsDemo.astro — Tree plugin combined with pinned (sticky) columns
+import DemoControls from '@components/DemoControls.astro';
+---
+<div class="grid-demo not-content" id="tree-pinned-columns-demo">
+  <DemoControls controls={[
+    { section: 'TREE', name: 'treeColumn', label: 'Tree column', type: 'select',
+      options: ['(first)', 'name', 'department'], default: 'name',
+      description: 'Which column shows the tree toggle and indentation' },
+    { section: 'TREE', name: 'indentWidth', label: 'Indent width (px)', type: 'number',
+      min: 10, max: 50, step: 5, default: 20, description: 'Indentation per nesting level' },
+    { section: 'PINNED', name: 'pinId', label: 'Pin ID column', type: 'boolean',
+      default: true, description: 'Pin the ID column to the left' },
+    { section: 'PINNED', name: 'pinName', label: 'Pin Name column', type: 'boolean',
+      default: true, description: 'Pin the Name column to the left' },
+  ]} />
+  <tbw-grid style="height: 400px;"></tbw-grid>
+</div>
+
+<script>
+import '@toolbox-web/grid';
+import { queryGrid } from '@toolbox-web/grid';
+import '@toolbox-web/grid/features/pinned-columns';
+import '@toolbox-web/grid/features/tree';
+
+const container = document.getElementById('tree-pinned-columns-demo');
+if (container) {
+  const orgData = [
+    {
+      id: 1, name: 'Engineering', department: 'Tech', headcount: 42, budget: '$2.1M',
+      children: [
+        {
+          id: 2, name: 'Frontend', department: 'Tech', headcount: 18, budget: '$900K',
+          children: [
+            { id: 3, name: 'Alice Chen', department: 'Tech', headcount: 1, budget: '$120K' },
+            { id: 4, name: 'Bob Lee', department: 'Tech', headcount: 1, budget: '$115K' },
+            { id: 5, name: 'Carol Wu', department: 'Tech', headcount: 1, budget: '$110K' },
+          ],
+        },
+        {
+          id: 6, name: 'Backend', department: 'Tech', headcount: 24, budget: '$1.2M',
+          children: [
+            { id: 7, name: 'Dan Kim', department: 'Tech', headcount: 1, budget: '$130K' },
+            { id: 8, name: 'Eve Park', department: 'Tech', headcount: 1, budget: '$125K' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 10, name: 'Marketing', department: 'Business', headcount: 15, budget: '$800K',
+      children: [
+        { id: 11, name: 'Frank Diaz', department: 'Business', headcount: 1, budget: '$95K' },
+        { id: 12, name: 'Grace Ito', department: 'Business', headcount: 1, budget: '$90K' },
+      ],
+    },
+    {
+      id: 20, name: 'Sales', department: 'Business', headcount: 20, budget: '$1.5M',
+      children: [
+        { id: 21, name: 'Hank Novak', department: 'Business', headcount: 1, budget: '$100K' },
+        { id: 22, name: 'Ivy Shah', department: 'Business', headcount: 1, budget: '$105K' },
+      ],
+    },
+  ];
+
+  const grid = queryGrid('tbw-grid', container)!;
+
+  function rebuild(opts: Record<string, unknown>) {
+    const treeColumn = opts.treeColumn === '(first)' ? undefined : (opts.treeColumn as string);
+    grid.gridConfig = {
+      columns: [
+        { field: 'id', header: 'ID', width: 60, pinned: opts.pinId ? 'left' : undefined },
+        { field: 'name', header: 'Name', width: 180, pinned: opts.pinName ? 'left' : undefined },
+        { field: 'department', header: 'Department', width: 120 },
+        { field: 'headcount', header: 'Headcount', width: 100, type: 'number' },
+        { field: 'budget', header: 'Budget', width: 100 },
+      ],
+      features: {
+        tree: {
+          childrenField: 'children',
+          defaultExpanded: true,
+          indentWidth: (opts.indentWidth as number) ?? 20,
+          treeColumn,
+        } as any,
+        pinnedColumns: true,
+      },
+    };
+    grid.rows = orgData;
+  }
+
+  rebuild({ treeColumn: 'name', indentWidth: 20, pinId: true, pinName: true });
+
+  container.addEventListener('control-change', ((e: CustomEvent) => {
+    rebuild(e.detail.allValues);
+  }) as EventListener);
+}
+</script>

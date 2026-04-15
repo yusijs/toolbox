@@ -90,6 +90,76 @@ describe('tree plugin integration', () => {
     expect(processedCols[0].viewRenderer).toBeUndefined();
   });
 
+  it('should wrap the specified treeColumn instead of the first column', () => {
+    const config: TreeConfig = {
+      defaultExpanded: true,
+      childrenField: 'children',
+      treeColumn: 'name',
+    };
+    const plugin = new TreePlugin(config);
+
+    const mockGrid = {
+      dispatchEvent: () => {
+        /* noop */
+      },
+      requestRender: () => {
+        /* noop */
+      },
+      rows: [],
+      _columns: [],
+    };
+    plugin.attach(mockGrid as any);
+
+    const rows = [{ id: 1, name: 'Root', children: [{ id: 2, name: 'Child' }] }];
+    plugin.processRows(rows);
+
+    const cols = [
+      { field: 'id', header: 'ID' },
+      { field: 'name', header: 'Name' },
+    ];
+    const processedCols = plugin.processColumns(cols);
+
+    // ID column should be untouched
+    expect(processedCols[0].viewRenderer).toBeUndefined();
+    // Name column should be wrapped with tree renderer
+    expect(processedCols[1].viewRenderer).toBeDefined();
+    expect(typeof processedCols[1].viewRenderer).toBe('function');
+  });
+
+  it('should fall back to first column when treeColumn field is not found', () => {
+    const config: TreeConfig = {
+      defaultExpanded: true,
+      childrenField: 'children',
+      treeColumn: 'nonExistentField',
+    };
+    const plugin = new TreePlugin(config);
+
+    const mockGrid = {
+      dispatchEvent: () => {
+        /* noop */
+      },
+      requestRender: () => {
+        /* noop */
+      },
+      rows: [],
+      _columns: [],
+    };
+    plugin.attach(mockGrid as any);
+
+    const rows = [{ id: 1, name: 'Root', children: [{ id: 2, name: 'Child' }] }];
+    plugin.processRows(rows);
+
+    const cols = [
+      { field: 'id', header: 'ID' },
+      { field: 'name', header: 'Name' },
+    ];
+    const processedCols = plugin.processColumns(cols);
+
+    // Should wrap first column as fallback
+    expect(processedCols[0].viewRenderer).toBeDefined();
+    expect(processedCols[1].viewRenderer).toBeUndefined();
+  });
+
   it('should correctly flatten rows after expansion toggle', () => {
     const config: TreeConfig = {
       defaultExpanded: false,

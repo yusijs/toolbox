@@ -27,6 +27,8 @@
     .tree-cell-wrapper {
       display: inline-flex;
       align-items: center;
+      /* Override cell > * { overflow: hidden } which clips indented tree content */
+      overflow: visible;
       /* Indent must be >= toggle icon width to keep leaf nodes aligned */
       padding-inline-start: calc(
         var(--tbw-tree-depth, 0) * var(--tbw-tree-indent-width, var(--tbw-tree-toggle-size, 1.25em))

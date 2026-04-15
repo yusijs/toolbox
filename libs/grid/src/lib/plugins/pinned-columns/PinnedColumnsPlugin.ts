@@ -100,6 +100,10 @@ export class PinnedColumnsPlugin extends BaseGridPlugin<PinnedColumnsConfig> {
    * @internal
    */
   static override readonly manifest: PluginManifest = {
+    hookPriority: {
+      // Reorder columns before other plugins (e.g. TreePlugin) wrap them
+      processColumns: -10,
+    },
     ownedProperties: [
       {
         property: 'pinned',

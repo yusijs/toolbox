@@ -1144,4 +1144,13 @@ describe('RTL support', () => {
       expect(headerCell.classList.contains('sticky-left')).toBe(true);
     });
   });
+
+  describe('manifest hookPriority', () => {
+    it('has negative processColumns priority to run before other plugins', async () => {
+      const { PinnedColumnsPlugin } = await import('./PinnedColumnsPlugin');
+      const priority = PinnedColumnsPlugin.manifest?.hookPriority?.processColumns;
+      expect(priority).toBeDefined();
+      expect(priority).toBeLessThan(0);
+    });
+  });
 });

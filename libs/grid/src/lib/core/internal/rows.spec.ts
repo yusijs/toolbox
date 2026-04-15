@@ -259,6 +259,42 @@ describe('renderVisibleRows', () => {
     expect(btn).toBeTruthy();
     expect(btn?.textContent).toBe('Test');
   });
+
+  it('passes grid reference in CellRenderContext', () => {
+    const bodyEl = document.createElement('div');
+    const g = document.createElement('div') as any;
+    let capturedGrid: unknown = undefined;
+    g._rows = [{ id: 1, name: 'Test' }];
+    g._columns = [
+      {
+        field: 'name',
+        viewRenderer: (ctx: any) => {
+          capturedGrid = ctx.grid;
+          return document.createTextNode(ctx.value);
+        },
+      },
+    ];
+    Object.defineProperty(g, '_visibleColumns', {
+      get() {
+        return this._columns.filter((c: any) => !c.hidden);
+      },
+    });
+    g._bodyEl = bodyEl;
+    g._rowPool = [];
+    g._changedRowIdsSet = new Set<string>();
+    g.changedRowIds = [];
+    g.getRowId = (row: any) => (row.id != null ? String(row.id) : undefined);
+    g._rowEditSnapshots = new Map<number, any>();
+    g._activeEditRows = -1;
+    g.findRenderedRowElement = (ri: number) => bodyEl.querySelectorAll('.data-grid-row')[ri] || null;
+    g._focusRow = 0;
+    g._focusCol = 0;
+    g.dispatchEvent = () => {
+      /* noop */
+    };
+    renderVisibleRows(g, 0, 1, 1);
+    expect(capturedGrid).toBe(g);
+  });
 });
 
 describe('handleRowClick', () => {

@@ -319,13 +319,16 @@ export class TreePlugin extends BaseGridPlugin<TreeConfig> {
     const cols = [...columns] as ColumnConfig[];
     if (cols.length === 0) return cols;
 
-    // Wrap the first column's renderer to add tree indentation and expand icons
-    // This is the correct approach for trees because:
-    // 1. Indentation can grow naturally with depth
-    // 2. Expand icons appear inline with content
-    // 3. Works with column reordering (icons stay with first visible column)
-    const firstCol = cols[0];
-    const originalRenderer = firstCol.viewRenderer;
+    // Determine which column gets the tree toggle and indentation.
+    // If treeColumn is configured, find it by field name; otherwise use the first column.
+    const { treeColumn } = this.config;
+    let targetIndex = 0;
+    if (treeColumn) {
+      const idx = cols.findIndex((c) => c.field === treeColumn);
+      if (idx >= 0) targetIndex = idx;
+    }
+    const targetCol = cols[targetIndex];
+    const originalRenderer = targetCol.viewRenderer;
     const getConfig = () => this.config;
     const setIconFn = this.setIcon.bind(this);
 
@@ -376,7 +379,7 @@ export class TreePlugin extends BaseGridPlugin<TreeConfig> {
       return container;
     };
 
-    cols[0] = { ...firstCol, viewRenderer: wrappedRenderer };
+    cols[targetIndex] = { ...targetCol, viewRenderer: wrappedRenderer };
     return cols;
   }
 
