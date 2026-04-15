@@ -381,6 +381,19 @@ export interface PluginManifest<TConfig = unknown> {
    * ```
    */
   events?: EventDefinition[];
+
+  /**
+   * Whether this plugin's `processRows` hook injects or removes rows
+   * (group headers, tree nodes, pivot aggregates, placeholders, etc.).
+   *
+   * When true, the core sorting module delegates to the render scheduler
+   * instead of sorting `_rows` in-place, because `_rows` may contain
+   * plugin-generated marker objects that would be corrupted by a direct sort.
+   *
+   * Plugins that only **filter** or **reorder** existing rows (e.g. Filtering,
+   * MultiSort) should leave this unset or set it to `false`.
+   */
+  modifiesRowStructure?: boolean;
 }
 
 /** Convert camelCase icon key to kebab-case data-icon attribute value. */

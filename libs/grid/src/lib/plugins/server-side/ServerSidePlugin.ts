@@ -67,6 +67,7 @@ export class ServerSidePlugin extends BaseGridPlugin<ServerSideConfig> {
    * @internal
    */
   static override readonly manifest: PluginManifest = {
+    modifiesRowStructure: true,
     incompatibleWith: [
       {
         name: 'groupingRows',

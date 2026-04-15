@@ -494,6 +494,10 @@ export interface InternalGrid<T = any> extends PublicGrid<T>, GridConfig<T> {
   __hasSpecialColumns?: boolean;
   /** Cached flag for whether any plugin has renderRow hooks. @internal */
   __hasRenderRowPlugins?: boolean;
+  /** @internal Access the plugin manager's cached state. */
+  _pluginManager?: {
+    _hasRowStructurePlugins: boolean;
+  };
   _gridTemplate: string;
   _virtualization: VirtualState;
   _focusRow: number;

@@ -33,6 +33,7 @@ function makeGrid(opts: Partial<any> = {}) {
     _sortState: opts._sortState || null,
     __originalOrder: opts.__originalOrder || null,
     __rowRenderEpoch: 0,
+    _pluginManager: opts._pluginManager || undefined,
     findHeaderRow: function () {
       return this._headerRowEl;
     },
@@ -49,6 +50,11 @@ function makeGrid(opts: Partial<any> = {}) {
     requestStateChange: () => {
       /* empty */
     },
+    _requestSchedulerPhase:
+      opts._requestSchedulerPhase ||
+      (() => {
+        /* noop */
+      }),
     __events: events,
   };
   return grid;
@@ -350,5 +356,123 @@ describe('reapplyCoreSort', () => {
     ];
     reapplyCoreSort(g, input);
     expect(g.__originalOrder.map((r: any) => r.id)).toEqual([3, 1]);
+  });
+});
+
+describe('sorting with row-structure plugins (grouping/tree/pivot)', () => {
+  function makeGridWithRowStructurePlugins() {
+    const schedulerSpy = vi.fn();
+    return makeGrid({
+      _pluginManager: { _hasRowStructurePlugins: true },
+      _requestSchedulerPhase: schedulerSpy,
+    });
+  }
+
+  describe('applySort', () => {
+    it('delegates to render scheduler when row-structure plugins are active', () => {
+      const g = makeGridWithRowStructurePlugins();
+      applySort(g, g._columns[0], 1);
+
+      expect(g._requestSchedulerPhase).toHaveBeenCalledWith(4, 'sort-apply');
+    });
+
+    it('sets _sortState before delegating to scheduler', () => {
+      const g = makeGridWithRowStructurePlugins();
+      applySort(g, g._columns[1], -1);
+
+      expect(g._sortState).toEqual({ field: 'name', direction: -1 });
+    });
+
+    it('emits sort-change event when delegating to scheduler', () => {
+      const g = makeGridWithRowStructurePlugins();
+      applySort(g, g._columns[0], 1);
+
+      const event = g.__events.find((e: any) => e.type === 'sort-change');
+      expect(event).toBeTruthy();
+      expect(event.detail).toEqual({ field: 'id', direction: 1 });
+    });
+
+    it('does NOT mutate _rows directly when row-structure plugins are active', () => {
+      const g = makeGridWithRowStructurePlugins();
+      const rowsBefore = [...g._rows];
+      applySort(g, g._columns[0], 1);
+
+      // _rows should be untouched — the scheduler will handle rebuilding via #rebuildRowModel
+      expect(g._rows.map((r: any) => r.id)).toEqual(rowsBefore.map((r: any) => r.id));
+    });
+
+    it('sorts _rows directly when no row-structure plugins are active', () => {
+      const g = makeGrid(); // no _pluginManager
+      applySort(g, g._columns[0], 1);
+
+      expect(g._rows.map((r: any) => r.id)).toEqual([1, 2, 3]);
+    });
+
+    it('sorts _rows directly when only filtering plugins are active (no row-structure)', () => {
+      const g = makeGrid({
+        _pluginManager: { _hasRowStructurePlugins: false },
+      });
+      applySort(g, g._columns[0], 1);
+
+      // Filtering doesn't inject synthetic rows — fast path is safe
+      expect(g._rows.map((r: any) => r.id)).toEqual([1, 2, 3]);
+    });
+  });
+
+  describe('toggleSort', () => {
+    it('delegates sort-clear to scheduler when row-structure plugins are active', () => {
+      const g = makeGridWithRowStructurePlugins();
+      const col = g._columns[0];
+      toggleSort(g, col); // asc
+      toggleSort(g, col); // desc
+      toggleSort(g, col); // clear
+
+      expect(g._sortState).toBeNull();
+      expect(g._requestSchedulerPhase).toHaveBeenCalledWith(4, 'sort-clear');
+    });
+
+    it('emits sort-change with direction 0 on scheduler-delegated clear', () => {
+      const g = makeGridWithRowStructurePlugins();
+      const col = g._columns[0];
+      toggleSort(g, col);
+      toggleSort(g, col);
+      toggleSort(g, col);
+
+      const lastEvent = g.__events[g.__events.length - 1];
+      expect(lastEvent.type).toBe('sort-change');
+      expect(lastEvent.detail).toEqual({ field: 'id', direction: 0 });
+    });
+
+    it('does NOT restore __originalOrder directly when clearing with row-structure plugins', () => {
+      const g = makeGridWithRowStructurePlugins();
+      const col = g._columns[0];
+      toggleSort(g, col); // asc — saves __originalOrder
+      toggleSort(g, col); // desc
+      toggleSort(g, col); // clear — should NOT directly set _rows
+
+      // _rows should not have been directly manipulated to __originalOrder.
+      // The scheduler handles it via #rebuildRowModel.
+      expect(g._requestSchedulerPhase).toHaveBeenCalledWith(4, 'sort-clear');
+    });
+  });
+
+  describe('_pluginManager._hasRowStructurePlugins detection', () => {
+    it('treats undefined _pluginManager as no row-structure plugins', () => {
+      const g = makeGrid(); // _pluginManager is undefined
+      applySort(g, g._columns[0], 1);
+
+      // Should take fast path (direct sort)
+      expect(g._rows.map((r: any) => r.id)).toEqual([1, 2, 3]);
+    });
+
+    it('treats _hasRowStructurePlugins=false as no row-structure plugins', () => {
+      const g = makeGrid({
+        _pluginManager: { _hasRowStructurePlugins: false },
+      });
+      applySort(g, g._columns[0], 1);
+
+      // Should take fast path
+      expect(g._rows.map((r: any) => r.id)).toEqual([1, 2, 3]);
+    });
   });
 });

@@ -98,6 +98,7 @@ export class PivotPlugin extends BaseGridPlugin<PivotConfig> {
    * @internal
    */
   static override readonly manifest: PluginManifest = {
+    modifiesRowStructure: true,
     hookPriority: {
       // Run before MultiSortPlugin so pivot columns are intercepted first
       // when MultiSort is NOT present; non-pivot columns fall through.
@@ -126,9 +127,7 @@ export class PivotPlugin extends BaseGridPlugin<PivotConfig> {
           'ServerSidePlugin lazy-loads rows in blocks, so pivot aggregation cannot be performed client-side.',
       },
     ],
-    queries: [
-      { type: 'sort:get-sort-config', description: 'Returns the current pivot sort configuration' },
-    ],
+    queries: [{ type: 'sort:get-sort-config', description: 'Returns the current pivot sort configuration' }],
   };
 
   /** @internal */

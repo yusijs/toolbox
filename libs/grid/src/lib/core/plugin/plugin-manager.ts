@@ -62,7 +62,10 @@ export class PluginManager {
   /** Cached hook presence flags — invalidated on plugin attach/detach */
   private _hasAfterCellRender = false;
   private _hasAfterRowRender = false;
-  private _hasProcessRows = false;
+  /** Whether any plugin has a processRows hook. */
+  _hasProcessRows = false;
+  /** Whether any plugin with `modifiesRowStructure` is attached. Exposed for the sorting module. */
+  _hasRowStructurePlugins = false;
 
   /** Cached plugin lists sorted by hookPriority per hook — invalidated on plugin attach/detach */
   #sortedPluginsByHook = new Map<HookName, BaseGridPlugin[]>();
@@ -410,6 +413,9 @@ export class PluginManager {
     this._hasAfterCellRender = this.plugins.some((p) => typeof p.afterCellRender === 'function');
     this._hasAfterRowRender = this.plugins.some((p) => typeof p.afterRowRender === 'function');
     this._hasProcessRows = this.plugins.some((p) => typeof p.processRows === 'function');
+    this._hasRowStructurePlugins = this.plugins.some(
+      (p) => (p.constructor as typeof BaseGridPlugin).manifest?.modifiesRowStructure === true,
+    );
     this.#sortedPluginsByHook.clear();
   }
 

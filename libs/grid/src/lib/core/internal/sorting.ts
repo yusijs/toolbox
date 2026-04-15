@@ -134,10 +134,36 @@ function finalizeSortResult<T>(grid: GridHost<T>, sortedRows: T[], col: ColumnCo
   }
   renderHeader(grid);
   grid.refreshVirtualWindow(true);
+  emitSortChange(grid, col, dir);
+}
+
+/**
+ * Emit sort-change event, aria announcement, and state change request.
+ * Shared by both the direct sort path and the scheduler-delegated path.
+ */
+function emitSortChange<T>(grid: GridHost<T>, col: ColumnConfig<T>, dir: 1 | -1 | 0): void {
   grid.dispatchEvent(new CustomEvent('sort-change', { detail: { field: col.field, direction: dir } }));
-  announce(grid, `Sorted by ${col.header ?? col.field}, ${dir === 1 ? 'ascending' : 'descending'}`);
+  if (dir === 0) {
+    announce(grid, 'Sort cleared');
+  } else {
+    announce(grid, `Sorted by ${col.header ?? col.field}, ${dir === 1 ? 'ascending' : 'descending'}`);
+  }
   // Trigger state change after sort applied
   grid.requestStateChange?.();
+}
+
+/**
+ * Check whether the grid has plugins that inject synthetic rows into `_rows`
+ * (group headers, tree nodes, pivot aggregates, etc.).
+ * When true, sorting must go through the render scheduler so the full row-model
+ * pipeline (reapplyCoreSort → processRows) runs on the base rows instead of
+ * directly mutating _rows which would corrupt plugin-generated row structures.
+ *
+ * This intentionally ignores plugins that only filter or reorder rows (Filtering,
+ * MultiSort) — direct in-place sorting is safe for those.
+ */
+function hasRowStructurePlugins(grid: GridHost): boolean {
+  return grid._pluginManager?._hasRowStructurePlugins ?? false;
 }
 
 /**
@@ -152,6 +178,18 @@ export function toggleSort(grid: GridHost, col: ColumnConfig<any>): void {
     applySort(grid, col, -1);
   } else {
     grid._sortState = null;
+
+    // When row-model plugins are active (grouping, tree, etc.), delegate to the
+    // render scheduler so #rebuildRowModel runs the full pipeline on base rows.
+    if (hasRowStructurePlugins(grid)) {
+      // RenderPhase.ROWS = 4 — triggers rebuildRowModel which skips reapplyCoreSort
+      // when _sortState is null, then runs processRows to rebuild groups.
+      grid._requestSchedulerPhase(4, 'sort-clear');
+      emitSortChange(grid, col, 0);
+      return;
+    }
+
+    // Fast path: no row-model plugins — direct _rows manipulation is safe.
     // Force full row rebuild after clearing sort so templated cells reflect original order
     grid.__rowRenderEpoch++;
     // Invalidate existing pooled row epochs so virtualization triggers a full inline rebuild
@@ -174,10 +212,7 @@ export function toggleSort(grid: GridHost, col: ColumnConfig<any>): void {
       }
     }
     grid.refreshVirtualWindow(true);
-    grid.dispatchEvent(new CustomEvent('sort-change', { detail: { field: col.field, direction: 0 } }));
-    announce(grid, 'Sort cleared');
-    // Trigger state change after sort is cleared
-    grid.requestStateChange?.();
+    emitSortChange(grid, col, 0);
   }
 }
 
@@ -219,10 +254,25 @@ export function reapplyCoreSort<T>(grid: InternalGrid<T>, rows: T[]): T[] {
  *
  * Uses custom sortHandler from gridConfig if provided, otherwise uses built-in sorting.
  * Supports both sync and async handlers (for server-side sorting).
+ *
+ * When row-model plugins are active (grouping, tree, pivot), delegates to the render
+ * scheduler so the full pipeline (reapplyCoreSort → processRows) runs on base rows.
+ * This prevents sorting from corrupting plugin-generated row structures.
  */
 export function applySort(grid: GridHost, col: ColumnConfig<any>, dir: 1 | -1): void {
   grid._sortState = { field: col.field, direction: dir };
 
+  // When row-model plugins are active, delegate to the render scheduler.
+  // #rebuildRowModel will call reapplyCoreSort on the base rows, then processRows
+  // rebuilds groups/trees on the sorted data.
+  if (hasRowStructurePlugins(grid)) {
+    // RenderPhase.ROWS = 4
+    grid._requestSchedulerPhase(4, 'sort-apply');
+    emitSortChange(grid, col, dir);
+    return;
+  }
+
+  // Fast path: no row-model plugins — sort _rows directly.
   const sortState: SortState = { field: col.field, direction: dir };
   const columns = grid._columns as ColumnConfig<any>[];
 

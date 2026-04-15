@@ -83,6 +83,7 @@ import type { ExpandCollapseAnimation, FlattenedTreeRow, TreeConfig, TreeExpandD
  */
 export class TreePlugin extends BaseGridPlugin<TreeConfig> {
   static override readonly manifest: PluginManifest = {
+    modifiesRowStructure: true,
     incompatibleWith: [
       {
         name: 'groupingRows',

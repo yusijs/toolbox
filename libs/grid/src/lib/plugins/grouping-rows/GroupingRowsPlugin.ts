@@ -105,6 +105,7 @@ export class GroupingRowsPlugin extends BaseGridPlugin<GroupingRowsConfig> {
    * @internal
    */
   static override readonly manifest: PluginManifest<GroupingRowsConfig> = {
+    modifiesRowStructure: true,
     incompatibleWith: [
       {
         name: 'tree',
