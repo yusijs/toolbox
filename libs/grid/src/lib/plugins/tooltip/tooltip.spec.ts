@@ -395,6 +395,51 @@ describe('TooltipPlugin', () => {
       cell.dispatchEvent(new MouseEvent('mouseout', { bubbles: true, relatedTarget: (grid as any)._root }));
       expect(cell.style.getPropertyValue('anchor-name')).toBe('');
     });
+
+    it('should skip cells that already have an anchor-name (e.g. overlay editors)', () => {
+      const columns: ColumnConfig[] = [{ field: 'name' }];
+      const rows = [{ name: 'Long text that overflows the cell container' }];
+      grid = createMockGrid({ _visibleColumns: columns, rows });
+      plugin = new TooltipPlugin();
+      plugin.attach(grid as any);
+
+      const cell = createDataCell(0, 0, 'Long text that overflows the cell container', true);
+      // Simulate an overlay editor anchor already on the cell
+      cell.style.setProperty('anchor-name', '--tbw-anchor-1');
+      (grid as any)._root.appendChild(cell);
+
+      plugin.afterRender();
+
+      // Hover — tooltip should NOT show on cells with existing anchors
+      cell.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+      expect(getPopover()!.textContent).toBe('');
+      // Editor anchor must remain untouched
+      expect(cell.style.getPropertyValue('anchor-name')).toBe('--tbw-anchor-1');
+    });
+
+    it('should not remove anchor-name if another plugin replaced it before mouseout', () => {
+      const columns: ColumnConfig[] = [{ field: 'name' }];
+      const rows = [{ name: 'Long text that overflows the cell container' }];
+      grid = createMockGrid({ _visibleColumns: columns, rows });
+      plugin = new TooltipPlugin();
+      plugin.attach(grid as any);
+
+      const cell = createDataCell(0, 0, 'Long text that overflows the cell container', true);
+      (grid as any)._root.appendChild(cell);
+
+      plugin.afterRender();
+
+      // Show tooltip — sets anchor-name to --tbw-tooltip-anchor
+      cell.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+      expect(cell.style.getPropertyValue('anchor-name')).toBe('--tbw-tooltip-anchor');
+
+      // Simulate overlay editor taking over the anchor while tooltip is still active
+      cell.style.setProperty('anchor-name', '--tbw-anchor-1');
+
+      // Mouseout — clearAnchor should NOT remove the editor's anchor
+      cell.dispatchEvent(new MouseEvent('mouseout', { bubbles: true, relatedTarget: (grid as any)._root }));
+      expect(cell.style.getPropertyValue('anchor-name')).toBe('--tbw-anchor-1');
+    });
   });
   // #endregion
 

@@ -232,10 +232,12 @@ export class TooltipPlugin extends BaseGridPlugin<TooltipConfig> {
     this.#clearAnchor();
   }
 
-  /** Remove the CSS anchor-name from the previous cell. */
+  /** Remove the CSS anchor-name from the previous cell, but only if it's still our tooltip anchor. */
   #clearAnchor(): void {
     if (this.#anchorCell) {
-      this.#anchorCell.style.removeProperty('anchor-name');
+      if (this.#anchorCell.style.getPropertyValue('anchor-name') === '--tbw-tooltip-anchor') {
+        this.#anchorCell.style.removeProperty('anchor-name');
+      }
       this.#anchorCell = null;
     }
   }
@@ -306,9 +308,10 @@ export class TooltipPlugin extends BaseGridPlugin<TooltipConfig> {
       return;
     }
 
-    // Check for data cell
+    // Check for data cell — skip cells that already have a CSS anchor (e.g. overlay editors)
+    // to avoid overwriting their anchor-name and breaking their positioning.
     const dataCell = target.closest('[data-row][data-col]') as HTMLElement | null;
-    if (dataCell && this.#cellEnabled) {
+    if (dataCell && this.#cellEnabled && !dataCell.style.getPropertyValue('anchor-name')) {
       this.#showCellTooltip(dataCell);
     }
   }

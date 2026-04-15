@@ -40,6 +40,13 @@ const OVERLAY_STYLES = /* css */ `
   overflow: auto;
 }
 
+/* Hide panels that have not been initialised via initOverlay() yet.
+   Prevents a flash-of-unstyled-content when the subclass defers
+   the initOverlay call (e.g. via setTimeout or afterNextRender). */
+.tbw-overlay-panel:not([data-anchor-id]) {
+  display: none;
+}
+
 .tbw-overlay-panel:popover-open {
   display: block;
 }
@@ -258,6 +265,14 @@ export abstract class BaseOverlayEditor<TRow = unknown, TValue = unknown> extend
     document.addEventListener('pointerdown', (e) => this._onDocumentPointerDown(e), {
       signal: this._abortCtrl.signal,
     });
+
+    // If the focus observer already fired before the panel was initialised
+    // (e.g. initOverlay called from a deferred setTimeout), the showOverlay()
+    // call was silently ignored because _panel was still null.  Catch up now.
+    if (this._getCell()?.classList.contains('cell-focus')) {
+      this.showOverlay();
+      this.onOverlayOpened();
+    }
   }
 
   /**
