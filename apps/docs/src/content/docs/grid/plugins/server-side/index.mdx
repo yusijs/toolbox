@@ -4,9 +4,7 @@ description: "Connect the grid to server-side data sources with virtual scrollin
 ---
 
 import { TabItem, Tabs } from '@astrojs/starlight/components';
-import ServerSideDefaultDemo from '@components/demos/server-side/ServerSideDefaultDemo.astro';
-import ServerSidePagingModeDemo from '@components/demos/server-side/ServerSidePagingModeDemo.astro';
-import ServerSideSortingDemo from '@components/demos/server-side/ServerSideSortingDemo.astro';
+import ServerSideDemo from '@components/demos/server-side/ServerSideDemo.astro';
 import ShowSource from '@components/ShowSource.astro';
 
 
@@ -201,61 +199,21 @@ export class ServerSideGridComponent {
   </TabItem>
 </Tabs>
 
-## Demos
+## Demo
 
-### Virtual Scroll Mode
+Toggle between virtual scrolling and paging mode, adjust the page size, and enable server-side sorting — all in one demo.
 
-<ShowSource file="demos/server-side/ServerSideDefaultDemo.astro">
-  <ServerSideDefaultDemo />
+<ShowSource file="demos/server-side/ServerSideDemo.astro">
+  <ServerSideDemo />
 </ShowSource>
-
-
-
-
-### Paging Mode
-
-<ShowSource file="demos/server-side/ServerSidePagingModeDemo.astro">
-  <ServerSidePagingModeDemo />
-</ShowSource>
-
-
 
 ### Server-Side Sorting
-
-<ShowSource file="demos/server-side/ServerSideSortingDemo.astro">
-  <ServerSideSortingDemo />
-</ShowSource>
 
 :::note
 `sortHandler` is a **core GridConfig property**, not a ServerSidePlugin feature. It works with or without the ServerSidePlugin. See the [Multi-Sort Plugin docs](/grid/plugins/multi-sort/#server-side-sorting) for full details.
 :::
 
-Use the `sortHandler` config option for async sorting. When a user clicks a sortable column header,
-your handler is called instead of the built-in sorting logic. This is ideal for large datasets
-where sorting should happen on the backend.
-
-
-
-```ts
-grid.gridConfig = {
-  columns: [...],
-  sortHandler: async (rows, sortState, columns) => {
-    // sortState: { field: 'name', direction: 1 } // 1 = asc, -1 = desc
-    const response = await fetch(
-      `/api/data?sort=${sortState.field}&dir=${sortState.direction === 1 ? 'asc' : 'desc'}`
-    );
-    return response.json();
-  },
-};
-```
-
-The handler receives:
-
-- `rows` - Current row array (may be useful for optimistic updates)
-- `sortState` - `{ field: string, direction: 1 | -1 }`
-- `columns` - Column configurations (access `sortComparator` if needed)
-
-Return the sorted array directly or a Promise that resolves to it.
+Enable the **Server-side sorting** toggle in the demo above to see `sortHandler` in action. When a user clicks a sortable column header, your handler is called instead of the built-in sorting logic.
 
 ### Server-Side Filtering
 
@@ -626,9 +584,83 @@ Both handlers work identically whether or not ServerSidePlugin is active. If you
 
 ## Composing with Other Plugins
 
-ServerSidePlugin acts as the **data layer** in the unified DataSource architecture. Structural plugins (Tree, Row Grouping) claim the root data and use `datasource:fetch-children` for on-demand child loading. Master-Detail uses child fetching for async detail panels.
+ServerSidePlugin acts as the **data layer** in the grid's unified DataSource architecture. In its simplest form it drives a flat grid with no extra plugins. It also composes with structural plugins (Tree, Row Grouping) and Master-Detail for hierarchical or expandable data.
 
-See the [Server-Side Data Loading guide](/grid/guides/server-side-data/) for architecture details and composition examples.
+```mermaid
+flowchart TB
+    subgraph SSP["ServerSidePlugin (data layer)"]
+        direction LR
+        GR["getRows()<br/>Block-based fetch"]
+        GCR["getChildRows()<br/>On-demand children"]
+    end
+
+    GR -- "broadcasts" --> E1["datasource:data"]
+    GCR -- "broadcasts" --> E2["datasource:children"]
+
+    E1 --> Flat & Tree & Group
+    E2 --> Tree & Group & MD
+
+    Flat["Flat Grid<br/>unclaimed → rendered directly"]
+    Tree["TreePlugin<br/>claims root data + children"]
+    Group["GroupingRowsPlugin<br/>claims root data + children"]
+    MD["MasterDetailPlugin<br/>claims children for detail panels"]
+```
+
+**Key concepts:**
+- **Flat grid by default**: When no structural plugin (Tree or Row Grouping) claims the data, ServerSidePlugin renders the rows directly. This is the simplest and most common mode — paginated API data driving a virtual-scrolling table.
+- **Structural plugins claim data**: When `datasource:data` fires, a structural plugin (Tree or Row Grouping) may *claim* the data by setting `detail.claimed = true`. If none claims it, ServerSidePlugin handles it as flat rows.
+- **On-demand children**: When a user expands a tree node, group, or detail row, the display plugin fires a `datasource:fetch-children` query. ServerSidePlugin calls `getChildRows()` and broadcasts the result as `datasource:children` with a `source` discriminator so only the requesting plugin consumes it.
+- **Child rows are not paginated**: `getChildRows()` returns all children in a single batch. If the server has a large child set, limit it server-side.
+
+### getChildRows() Interface
+
+When composing with Tree, Row Grouping, or Master-Detail, implement `getChildRows()` on the data source. The `context.source` discriminator tells you which plugin is requesting children:
+
+```typescript
+async getChildRows(params) {
+  const { source } = params.context;
+
+  if (source === 'tree') {
+    const { parentNode } = params.context;
+    const res = await fetch(`/api/tree/${parentNode.id}/children`);
+    return { rows: await res.json() };
+  }
+
+  if (source === 'grouping-rows') {
+    const { groupKey } = params.context;
+    const res = await fetch(`/api/groups/${groupKey}/rows`);
+    return { rows: await res.json() };
+  }
+
+  if (source === 'master-detail') {
+    const { row } = params.context;
+    const res = await fetch(`/api/orders/${row.id}/items`);
+    return { rows: await res.json() };
+  }
+
+  return { rows: [] };
+}
+```
+
+### ServerSide + Tree
+
+ServerSidePlugin fetches top-level tree nodes in blocks. TreePlugin claims the data and flattens the hierarchy. For lazy children, TreePlugin fires `datasource:fetch-children` with `source: 'tree'`.
+
+See the [Tree plugin docs](/grid/plugins/tree/#server-side-data) for full details and examples.
+
+### ServerSide + Row Grouping
+
+ServerSidePlugin fetches group definitions as root data. When a group is expanded, GroupingRowsPlugin fires `datasource:fetch-children` to load the group's rows.
+
+See the [Row Grouping plugin docs](/grid/plugins/grouping-rows/#server-side-data) for full details and examples.
+
+### ServerSide + Master-Detail
+
+ServerSidePlugin manages the master rows with full virtual scrolling or pagination — loading more master rows on scroll (infinite scroll) or on page navigation, just like it does for flat data, Tree, or Row Grouping. MasterDetail does not claim root data, so master rows flow through ServerSide's block cache and pagination unchanged.
+
+When a detail panel is expanded, MasterDetailPlugin fires `datasource:fetch-children` to load the detail data on demand. Detail data can also be embedded in the master row object, in which case `getChildRows()` is not needed.
+
+See the [Master-Detail plugin docs](/grid/plugins/master-detail/#server-side-data) for full details and examples.
 
 :::caution[Incompatible Plugins]
 The Server-Side plugin **cannot** be used with:
@@ -636,12 +668,41 @@ The Server-Side plugin **cannot** be used with:
 - **[Pivot](/grid/plugins/pivot/)** — Pivot requires the full dataset to compute aggregations. ServerSide lazy-loads rows in blocks, so pivot aggregation cannot be performed client-side.
 :::
 
+## DataSource Event Bus
+
+| Event / Query | Direction | Description |
+| --- | --- | --- |
+| `datasource:data` | ServerSide → plugins | Root data block loaded. Structural plugins may claim it; unclaimed data is rendered as flat rows |
+| `datasource:children` | ServerSide → plugins | Child data loaded. Filtered by `context.source` |
+| `datasource:loading` | ServerSide → plugins | Loading state changed (with optional context) |
+| `datasource:error` | ServerSide → plugins | Fetch failed (with optional context) |
+| `datasource:fetch-children` | Plugins → ServerSide | Query requesting child rows for a context |
+| `datasource:is-active` | Plugins → ServerSide | Query checking if a data source is configured |
+| `datasource:viewport-mapping` | ServerSide → plugins | Query mapping viewport indices to node-space indices |
+
+## Diagnostic Codes
+
+| Code | Level | Description |
+| --- | --- | --- |
+| `TBW140` | error | `getRows()` fetch failed |
+| `TBW141` | error | `getChildRows()` fetch failed |
+| `TBW142` | warn | Plugin requested children but `getChildRows()` is not implemented |
+| `TBW143` | info | `datasource:data` was not claimed by any structural plugin (flat grid mode) |
+
+## Limitations
+
+- **Child rows are not paginated.** `getChildRows()` returns all children in a single batch. For tree nodes, group rows, or detail data with many children, limit the response server-side.
+- **One structural claim per data event.** Only one of Tree or Row Grouping can claim `datasource:data`. They remain mutually incompatible. When neither is active, data is rendered as flat rows.
+- **Master-Detail is not a structural plugin.** It does not claim `datasource:data` — master rows are managed by ServerSide with full virtual scrolling and pagination support. MasterDetail only uses the child data path (`datasource:fetch-children` / `datasource:children`) for on-demand detail loading.
+
 ## See Also
 
 - **[Common Patterns — Real-Time Data](/grid/guides/common-patterns/#real-time--streaming-data)** — Transport-agnostic streaming patterns
+- **[Tree Plugin — Server-Side Data](/grid/plugins/tree/#server-side-data)** — Tree-specific data flow
+- **[Row Grouping — Server-Side Data](/grid/plugins/grouping-rows/#server-side-data)** — Group-specific data flow
+- **[Master-Detail — Server-Side Data](/grid/plugins/master-detail/#server-side-data)** — Detail panel data flow
 - **[Filtering](/grid/plugins/filtering/)** — Column-level filtering with async server-side support
 - **[Multi-Sort](/grid/plugins/multi-sort/)** — Multi-column sorting with async server-side support
 - **[Export](/grid/plugins/export/)** — Export grid data
-- **[Row Grouping](/grid/plugins/grouping-rows/)** — Row grouping with server-side lazy loading
 - **[Common Patterns](/grid/guides/common-patterns/)** — Full application recipes
 - **[Plugins Overview](/grid/plugins/)** — Plugin compatibility and combinations

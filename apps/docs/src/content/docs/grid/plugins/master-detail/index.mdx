@@ -191,9 +191,15 @@ Animation respects the grid-level `animation.mode` setting. If the grid has `ani
 
 ## Server-Side Data
 
-> **Requires:** `ServerSidePlugin` — [see Server-Side Data Loading guide](/grid/guides/server-side-data/)
+> **Requires:** `ServerSidePlugin` — [see Server-Side Plugin](/grid/plugins/server-side/)
 
-When `ServerSidePlugin` is loaded, MasterDetailPlugin can fetch detail data from the server on demand. On detail expand, it queries `datasource:fetch-children` and renders the result using `detailRenderer`. When ServerSide is not present, `detailRenderer` works synchronously as today.
+When `ServerSidePlugin` is loaded, master rows are lazily loaded via virtual scrolling (infinite scroll) or pagination — the same way flat data, Tree, or Row Grouping work. MasterDetail does not claim root data, so master rows flow through ServerSide's block cache unchanged.
+
+Detail data can be fetched on demand or embedded in the master row:
+- **Async detail data**: On detail expand, MasterDetailPlugin queries `datasource:fetch-children`. ServerSide calls `getChildRows()` and delivers the result.
+- **Embedded detail data**: If detail data is already in the master row object (e.g. `row.items`), `detailRenderer` accesses it directly — no `getChildRows()` needed.
+
+When ServerSide is not present, `detailRenderer` works synchronously from the row object.
 
 ```ts
 import '@toolbox-web/grid/features/master-detail';
@@ -252,11 +258,12 @@ grid.ready().then(() => {
 ```
 
 **Data flow:**
-1. ServerSide fetches rows → renders normally (MasterDetail does not claim root data)
-2. On detail expand → MasterDetailPlugin queries `datasource:fetch-children` with `{ source: 'master-detail', row, rowIndex }`
-3. ServerSide calls `getChildRows()` → broadcasts `datasource:children`
-4. MasterDetailPlugin stores the data and re-renders the detail panel
-5. `detailRenderer` uses `getDetailData(rowIndex)` to access the async data
+1. ServerSide fetches master rows in blocks (virtual scroll or pagination) → renders normally (MasterDetail does not claim root data)
+2. User scrolls → ServerSide loads more master rows on demand
+3. On detail expand → MasterDetailPlugin queries `datasource:fetch-children` with `{ source: 'master-detail', row, rowIndex }`
+4. ServerSide calls `getChildRows()` → broadcasts `datasource:children`
+5. MasterDetailPlugin stores the data and re-renders the detail panel
+6. `detailRenderer` uses `getDetailData(rowIndex)` to access the async data
 
 **Async API:**
 ```ts

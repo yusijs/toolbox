@@ -2,8 +2,8 @@ import { expect, test } from '@playwright/test';
 import { cellText, dataRows, grid, openDemo } from './utils';
 
 test.describe('Server-Side Demos', () => {
-  test('ServerSideDefaultDemo — infinite scroll loads more data', async ({ page }) => {
-    await openDemo(page, 'server-side/ServerSideDefaultDemo');
+  test('ServerSideDemo — infinite scroll loads more data', async ({ page }) => {
+    await openDemo(page, 'server-side/ServerSideDemo');
 
     const initialRows = await dataRows(page).count();
     expect(initialRows).toBeGreaterThan(0);
@@ -16,8 +16,13 @@ test.describe('Server-Side Demos', () => {
     await page.waitForTimeout(1000);
   });
 
-  test('ServerSidePagingModeDemo — page navigation buttons work', async ({ page }) => {
-    await openDemo(page, 'server-side/ServerSidePagingModeDemo');
+  test('ServerSideDemo — paging mode shows page navigation', async ({ page }) => {
+    await openDemo(page, 'server-side/ServerSideDemo');
+
+    // Switch to paging mode via DemoControls
+    const pagingRadio = page.locator('label', { hasText: 'paging' }).first();
+    await pagingRadio.click();
+    await page.waitForTimeout(500);
 
     const nextBtn = page.locator('button', { hasText: /next|→|›/i }).first();
     if (await nextBtn.isVisible({ timeout: 5000 })) {
@@ -26,8 +31,13 @@ test.describe('Server-Side Demos', () => {
     }
   });
 
-  test('ServerSideSortingDemo — sorting triggers server-side fetch', async ({ page }) => {
-    await openDemo(page, 'server-side/ServerSideSortingDemo');
+  test('ServerSideDemo — server-side sorting works', async ({ page }) => {
+    await openDemo(page, 'server-side/ServerSideDemo');
+
+    // Enable server-side sorting via DemoControls
+    const sortCheckbox = page.locator('label', { hasText: /server-side sorting/i }).first();
+    await sortCheckbox.click();
+    await page.waitForTimeout(500);
 
     const header = page.locator('tbw-grid [role="columnheader"]').first();
     await header.click();

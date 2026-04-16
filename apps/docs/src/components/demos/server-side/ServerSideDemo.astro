@@ -1,0 +1,152 @@
+---
+// ServerSideDemo.astro — Unified server-side demo with interactive controls
+import DemoControls from '@components/DemoControls.astro';
+import type { ControlDef } from '@components/DemoControls.astro';
+
+const controls: ControlDef[] = [
+  { section: 'MODE', name: 'mode', label: 'Scroll mode', type: 'radio', default: 'virtual',
+    options: ['virtual', 'paging'], description: 'Virtual scroll loads rows on demand; Paging shows one page at a time' },
+  { section: 'SERVER', name: 'pageSize', label: 'Page size', type: 'number',
+    min: 10, max: 100, step: 10, default: 50, description: 'Rows fetched per request' },
+  { section: 'SORTING', name: 'serverSort', label: 'Server-side sorting', type: 'boolean',
+    default: false, description: 'Sort on the server instead of client-side' },
+];
+---
+<div class="grid-demo not-content" id="server-side-demo">
+  <DemoControls controls={controls} />
+  <tbw-grid style="height: 400px;"></tbw-grid>
+  <div class="pager" style="display:none; padding: 8px; gap: 8px; align-items: center; justify-content: center;">
+    <button class="prev" style="padding: 4px 8px;">← Prev</button>
+    <span class="page-info">Page 1</span>
+    <button class="next" style="padding: 4px 8px;">Next →</button>
+  </div>
+</div>
+
+<script>
+import '@toolbox-web/grid';
+import { queryGrid } from '@toolbox-web/grid';
+import '@toolbox-web/grid/features/pinned-rows';
+import '@toolbox-web/grid/features/server-side';
+
+const container = document.getElementById('server-side-demo');
+if (container) {
+  const grid = queryGrid('tbw-grid', container)!;
+  const pager = container.querySelector('.pager') as HTMLElement;
+  const prevBtn = pager.querySelector('.prev') as HTMLButtonElement;
+  const nextBtn = pager.querySelector('.next') as HTMLButtonElement;
+  const pageInfo = pager.querySelector('.page-info') as HTMLSpanElement;
+
+  const columns = [
+    { field: 'id', header: 'ID', type: 'number', sortable: true },
+    { field: 'name', header: 'Name', sortable: true },
+    { field: 'department', header: 'Department', sortable: true },
+    { field: 'salary', header: 'Salary', type: 'number', sortable: true },
+    { field: 'email', header: 'Email' },
+  ];
+
+  const departments = ['Engineering', 'Marketing', 'Sales', 'HR', 'Finance'];
+  const allData = Array.from({ length: 10000 }, (_, i) => ({
+    id: i + 1,
+    name: `Employee ${i + 1}`,
+    department: departments[i % departments.length],
+    salary: 50000 + Math.floor(Math.random() * 50000),
+    email: `employee${i + 1}@example.com`,
+  }));
+
+  let currentPage = 0;
+  let currentPageSize = 50;
+
+  function sortData(data: typeof allData, sortState: { field: string; direction: number }) {
+    return [...data].sort((a, b) => {
+      const aVal = (a as Record<string, unknown>)[sortState.field];
+      const bVal = (b as Record<string, unknown>)[sortState.field];
+      const cmp = aVal! < bVal! ? -1 : aVal! > bVal! ? 1 : 0;
+      return cmp * sortState.direction;
+    });
+  }
+
+  function createSortHandler() {
+    return async (_rows: any, sortState: any) => {
+      grid.setAttribute('aria-busy', 'true');
+      try {
+        await new Promise((r) => setTimeout(r, 300));
+        return sortData(allData, sortState);
+      } finally {
+        grid.removeAttribute('aria-busy');
+      }
+    };
+  }
+
+  function createDataSource(pageSz: number) {
+    return {
+      async getRows(params: any) {
+        await new Promise((r) => setTimeout(r, 200));
+        let data = allData;
+        if (params.sortModel?.length) {
+          data = sortData(allData, params.sortModel[0]);
+        }
+        return { rows: data.slice(params.startNode, params.endNode), totalNodeCount: data.length };
+      },
+    };
+  }
+
+  function updatePager() {
+    const totalPages = Math.ceil(allData.length / currentPageSize);
+    pageInfo.textContent = `Page ${currentPage + 1} of ${totalPages}`;
+    prevBtn.disabled = currentPage === 0;
+    nextBtn.disabled = currentPage >= totalPages - 1;
+  }
+
+  function loadPage(page: number) {
+    currentPage = page;
+    grid.rows = allData.slice(page * currentPageSize, (page + 1) * currentPageSize);
+    updatePager();
+  }
+
+  function rebuild(values: Record<string, unknown>) {
+    const mode = values.mode as string;
+    const pageSize = values.pageSize as number;
+    const serverSort = values.serverSort as boolean;
+    currentPageSize = pageSize;
+
+    const config: any = { columns };
+
+    if (mode === 'virtual') {
+      pager.style.display = 'none';
+      config.features = {
+        serverSide: { pageSize, cacheBlockSize: pageSize },
+        pinnedRows: {
+          position: 'bottom',
+          showRowCount: true,
+          customPanels: [{ id: 'scroll-info', position: 'right', render: () => '<em>Scroll to load more rows...</em>' }],
+        },
+      };
+    } else {
+      pager.style.display = 'flex';
+      currentPage = 0;
+      config.features = { serverSide: { pageSize } };
+    }
+
+    if (serverSort) {
+      config.sortHandler = createSortHandler();
+    }
+
+    grid.gridConfig = config;
+
+    if (mode === 'virtual') {
+      grid.ready().then(() => grid.getPluginByName('serverSide')?.setDataSource(createDataSource(pageSize) as any));
+    } else {
+      loadPage(0);
+    }
+  }
+
+  rebuild({ mode: 'virtual', pageSize: 50, serverSort: false });
+
+  container.addEventListener('control-change', ((e: CustomEvent) => {
+    rebuild(e.detail.allValues);
+  }) as EventListener);
+
+  prevBtn.addEventListener('click', () => loadPage(currentPage - 1));
+  nextBtn.addEventListener('click', () => loadPage(currentPage + 1));
+}
+</script>
