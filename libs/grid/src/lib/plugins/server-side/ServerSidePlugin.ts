@@ -60,25 +60,25 @@ const SCROLL_DEBOUNCE_MS = 100;
  * @example Basic Server-Side Loading
  * ```ts
  * import '@toolbox-web/grid';
- * import { ServerSidePlugin } from '@toolbox-web/grid/plugins/server-side';
+ * import '@toolbox-web/grid/features/server-side';
  *
- * const dataSource = {
- *   async getRows(params) {
- *     const response = await fetch(
- *       `/api/data?start=${params.startNode}&end=${params.endNode}`
- *     );
- *     const data = await response.json();
- *     return { rows: data.rows, totalNodeCount: data.total };
- *   },
- * };
- *
- * const plugin = new ServerSidePlugin({ pageSize: 50 });
  * grid.gridConfig = {
  *   columns: [...],
- *   plugins: [plugin],
+ *   features: {
+ *     serverSide: {
+ *       pageSize: 50,
+ *       dataSource: {
+ *         async getRows(params) {
+ *           const response = await fetch(
+ *             `/api/data?start=${params.startNode}&end=${params.endNode}`
+ *           );
+ *           const data = await response.json();
+ *           return { rows: data.rows, totalNodeCount: data.total };
+ *         },
+ *       },
+ *     },
+ *   },
  * };
- *
- * grid.ready().then(() => plugin.setDataSource(dataSource));
  * ```
  *
  * @see {@link ServerSideConfig} for configuration options
@@ -149,6 +149,11 @@ export class ServerSidePlugin extends BaseGridPlugin<ServerSideConfig> {
     // Invalidate cache and refetch on sort/filter changes
     this.on('sort-change', () => this.onModelChange());
     this.on('filter-change', () => this.onModelChange());
+
+    // Auto-initialize from config when dataSource is provided declaratively
+    if (this.config.dataSource) {
+      this.setDataSource(this.config.dataSource);
+    }
   }
 
   /** @internal */

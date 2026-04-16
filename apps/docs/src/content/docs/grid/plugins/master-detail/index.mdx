@@ -214,7 +214,21 @@ grid.gridConfig = {
     { field: 'total', header: 'Total', type: 'currency' },
   ],
   features: {
-    serverSide: { pageSize: 50 },
+    serverSide: {
+      pageSize: 50,
+      dataSource: {
+        async getRows(params) {
+          const res = await fetch(`/api/orders?start=${params.startNode}&end=${params.endNode}`);
+          const data = await res.json();
+          return { rows: data.orders, totalNodeCount: data.total };
+        },
+        async getChildRows(params) {
+          const { row } = params.context;
+          const res = await fetch(`/api/orders/${row.id}/items`);
+          return { rows: await res.json() };
+        },
+      },
+    },
     masterDetail: {
       detailRenderer: (row, rowIndex) => {
         const plugin = grid.getPluginByName('masterDetail');
@@ -240,21 +254,6 @@ grid.gridConfig = {
     },
   },
 };
-
-grid.ready().then(() => {
-  grid.getPluginByName('serverSide').setDataSource({
-    async getRows(params) {
-      const res = await fetch(`/api/orders?start=${params.startNode}&end=${params.endNode}`);
-      const data = await res.json();
-      return { rows: data.orders, totalNodeCount: data.total };
-    },
-    async getChildRows(params) {
-      const { row } = params.context;
-      const res = await fetch(`/api/orders/${row.id}/items`);
-      return { rows: await res.json() };
-    },
-  });
-});
 ```
 
 **Data flow:**

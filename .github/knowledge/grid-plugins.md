@@ -19,6 +19,7 @@ related: [grid-core, grid-features]
 - FLOW: attach(grid) → merge defaults + user config → store grid ref → onPluginAttached() notifications → [runtime hooks] → detach() → abort signal fires → cleanup
 - INVARIANT: disconnectSignal (AbortSignal) fires on detach — use for all event listener cleanup
 - INVARIANT: plugin.grid is available after attach(), null after detach()
+- DECIDED: Plugins should prefer config-driven initialization over post-ready imperative setup. If a resource (e.g., data source) is known at config time, accept it as a config property and auto-init in `attach()`. Reserve imperative methods (e.g., `setDataSource()`) for runtime swaps only. Pattern: ServerSidePlugin reads `config.dataSource` in `attach()`.
 
 ## hook-system
 

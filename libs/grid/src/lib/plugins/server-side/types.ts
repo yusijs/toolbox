@@ -55,6 +55,26 @@ export interface ServerSideConfig {
    * @default 2
    */
   maxConcurrentRequests?: number;
+  /**
+   * Data source for server-side loading.
+   * When provided, the plugin auto-initializes on attach — no need to call `setDataSource()`.
+   *
+   * @example
+   * ```typescript
+   * features: {
+   *   serverSide: {
+   *     pageSize: 50,
+   *     dataSource: {
+   *       async getRows(params) {
+   *         const res = await fetch(`/api/data?start=${params.startNode}&end=${params.endNode}`);
+   *         return res.json();
+   *       },
+   *     },
+   *   },
+   * }
+   * ```
+   */
+  dataSource?: ServerSideDataSource;
 }
 
 export interface ServerSideState {

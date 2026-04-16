@@ -177,56 +177,46 @@ grid.gridConfig = {
     { field: 'role', header: 'Role' },
   ],
   features: {
-    serverSide: { pageSize: 50 },
+    serverSide: {
+      pageSize: 50,
+      dataSource: {
+        async getRows(params) {
+          // params: { startNode, endNode, sortModel, filterModel }
+          const res = await fetch(`/api/tree?start=${params.startNode}&end=${params.endNode}`);
+          const data = await res.json();
+          return {
+            rows: data.nodes,             // Top-level nodes with embedded children
+            totalNodeCount: data.total,   // Total top-level nodes on server
+          };
+        },
+      },
+    },
     tree: { childrenField: 'children' },
   },
 };
-
-grid.ready().then(() => {
-  grid.getPluginByName('serverSide').setDataSource({
-    async getRows(params) {
-      // params: { startNode, endNode, sortModel, filterModel }
-      const res = await fetch(`/api/tree?start=${params.startNode}&end=${params.endNode}`);
-      const data = await res.json();
-      return {
-        rows: data.nodes,             // Top-level nodes with embedded children
-        totalNodeCount: data.total,   // Total top-level nodes on server
-      };
-    },
-  });
-});
 ```
   </TabItem>
   <TabItem label="React">
 ```tsx
 import '@toolbox-web/grid-react/features/tree';
 import '@toolbox-web/grid-react/features/server-side';
-import { DataGrid, useGrid } from '@toolbox-web/grid-react';
-import { useEffect } from 'react';
+import { DataGrid } from '@toolbox-web/grid-react';
+
+const dataSource = {
+  async getRows(params) {
+    const res = await fetch(`/api/tree?start=${params.startNode}&end=${params.endNode}`);
+    return res.json();
+  },
+};
 
 function ServerTree() {
-  const { ref, element } = useGrid();
-
-  useEffect(() => {
-    if (!element) return;
-    element.ready().then(() => {
-      element.getPluginByName('serverSide')?.setDataSource({
-        async getRows(params) {
-          const res = await fetch(`/api/tree?start=${params.startNode}&end=${params.endNode}`);
-          return res.json();
-        },
-      });
-    });
-  }, [element]);
-
   return (
     <DataGrid
-      ref={ref}
       columns={[
         { field: 'name', header: 'Name' },
         { field: 'role', header: 'Role' },
       ]}
-      serverSide={{ pageSize: 50 }}
+      serverSide={{ pageSize: 50, dataSource }}
       tree={{ childrenField: 'children' }}
     />
   );
@@ -238,24 +228,21 @@ function ServerTree() {
 <script setup>
 import '@toolbox-web/grid-vue/features/tree';
 import '@toolbox-web/grid-vue/features/server-side';
-import { TbwGrid, TbwGridColumn, useGrid } from '@toolbox-web/grid-vue';
-import { watch } from 'vue';
+import { TbwGrid, TbwGridColumn } from '@toolbox-web/grid-vue';
 
-const { gridElement, isReady } = useGrid();
-
-watch(isReady, (ready) => {
-  if (!ready) return;
-  gridElement.value?.getPluginByName('serverSide')?.setDataSource({
+const serverSideConfig = {
+  pageSize: 50,
+  dataSource: {
     async getRows(params) {
       const res = await fetch(`/api/tree?start=${params.startNode}&end=${params.endNode}`);
       return res.json();
     },
-  });
-});
+  },
+};
 </script>
 
 <template>
-  <TbwGrid :server-side="{ pageSize: 50 }" :tree="{ childrenField: 'children' }">
+  <TbwGrid :server-side="serverSideConfig" :tree="{ childrenField: 'children' }">
     <TbwGridColumn field="name" header="Name" />
     <TbwGridColumn field="role" header="Role" />
   </TbwGrid>
@@ -266,8 +253,8 @@ watch(isReady, (ready) => {
 ```typescript
 import '@toolbox-web/grid-angular/features/tree';
 import '@toolbox-web/grid-angular/features/server-side';
-import { Component, effect } from '@angular/core';
-import { Grid, injectGrid } from '@toolbox-web/grid-angular';
+import { Component } from '@angular/core';
+import { Grid } from '@toolbox-web/grid-angular';
 import type { ColumnConfig } from '@toolbox-web/grid';
 
 @Component({
@@ -276,32 +263,27 @@ import type { ColumnConfig } from '@toolbox-web/grid';
   template: `
     <tbw-grid
       [columns]="columns"
-      [serverSide]="{ pageSize: 50 }"
+      [serverSide]="serverSideConfig"
       [tree]="{ childrenField: 'children' }"
       style="height: 400px; display: block;">
     </tbw-grid>
   `,
 })
 export class ServerTreeComponent {
-  grid = injectGrid();
-
   columns: ColumnConfig[] = [
     { field: 'name', header: 'Name' },
     { field: 'role', header: 'Role' },
   ];
 
-  constructor() {
-    effect(() => {
-      const el = this.grid.element();
-      if (!el) return;
-      el.getPluginByName('serverSide')?.setDataSource({
-        async getRows(params: any) {
-          const res = await fetch(`/api/tree?start=${params.startNode}&end=${params.endNode}`);
-          return res.json();
-        },
-      });
-    });
-  }
+  serverSideConfig = {
+    pageSize: 50,
+    dataSource: {
+      async getRows(params: any) {
+        const res = await fetch(`/api/tree?start=${params.startNode}&end=${params.endNode}`);
+        return res.json();
+      },
+    },
+  };
 }
 ```
   </TabItem>

@@ -477,6 +477,52 @@ describe('ServerSidePlugin', () => {
     });
   });
 
+  describe('config.dataSource (declarative)', () => {
+    it('should auto-initialize from config.dataSource on attach', async () => {
+      const mockDS: ServerSideDataSource = {
+        getRows: vi.fn().mockResolvedValue({ rows: [{ id: 1 }, { id: 2 }], totalNodeCount: 100 }),
+      };
+      const plugin = new ServerSidePlugin({ cacheBlockSize: 10, dataSource: mockDS });
+      const grid = createServerSideMockGrid();
+      plugin.attach(grid as any);
+
+      await vi.waitFor(() => expect(grid.requestRender).toHaveBeenCalled());
+
+      expect(mockDS.getRows).toHaveBeenCalledWith(expect.objectContaining({ startNode: 0, endNode: 10 }));
+      expect(plugin.getTotalRowCount()).toBe(100);
+      expect(plugin.getLoadedBlockCount()).toBe(1);
+    });
+
+    it('should allow setDataSource to override config.dataSource', async () => {
+      const configDS: ServerSideDataSource = {
+        getRows: vi.fn().mockResolvedValue({ rows: [{ id: 1 }], totalNodeCount: 50 }),
+      };
+      const plugin = new ServerSidePlugin({ cacheBlockSize: 10, dataSource: configDS });
+      const grid = createServerSideMockGrid();
+      plugin.attach(grid as any);
+
+      await vi.waitFor(() => expect(plugin.getTotalRowCount()).toBe(50));
+
+      const runtimeDS: ServerSideDataSource = {
+        getRows: vi.fn().mockResolvedValue({ rows: [{ id: 2 }], totalNodeCount: 200 }),
+      };
+      plugin.setDataSource(runtimeDS);
+      await vi.waitFor(() => expect(plugin.getTotalRowCount()).toBe(200));
+
+      expect(runtimeDS.getRows).toHaveBeenCalled();
+    });
+
+    it('should not auto-initialize when config.dataSource is not provided', () => {
+      const plugin = new ServerSidePlugin({ cacheBlockSize: 10 });
+      const grid = createServerSideMockGrid();
+      plugin.attach(grid as any);
+
+      // processRows should pass through when no dataSource is set
+      const rows = [{ id: 1 }];
+      expect(plugin.processRows(rows)).toEqual(rows);
+    });
+  });
+
   describe('processRows', () => {
     it('should pass through rows when no data source is set', () => {
       const plugin = new ServerSidePlugin();

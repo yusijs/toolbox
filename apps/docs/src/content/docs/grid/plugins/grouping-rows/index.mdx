@@ -360,65 +360,55 @@ grid.gridConfig = {
     { field: 'salary', header: 'Salary', type: 'currency' },
   ],
   features: {
-    serverSide: { pageSize: 50 },
+    serverSide: {
+      pageSize: 50,
+      dataSource: {
+        async getRows(params) {
+          // Return group definitions as root-level nodes
+          const res = await fetch(`/api/groups?start=${params.startNode}&end=${params.endNode}`);
+          const data = await res.json();
+          return { rows: data.groups, totalNodeCount: data.total };
+        },
+        async getChildRows(params) {
+          // Return rows for an expanded group
+          const { groupKey } = params.context;
+          const res = await fetch(`/api/groups/${groupKey}/rows`);
+          return { rows: await res.json() };
+        },
+      },
+    },
     groupingRows: true,
   },
 };
-
-grid.ready().then(() => {
-  grid.getPluginByName('serverSide').setDataSource({
-    async getRows(params) {
-      // Return group definitions as root-level nodes
-      const res = await fetch(`/api/groups?start=${params.startNode}&end=${params.endNode}`);
-      const data = await res.json();
-      return { rows: data.groups, totalNodeCount: data.total };
-    },
-    async getChildRows(params) {
-      // Return rows for an expanded group
-      const { groupKey } = params.context;
-      const res = await fetch(`/api/groups/${groupKey}/rows`);
-      return { rows: await res.json() };
-    },
-  });
-});
 ```
   </TabItem>
   <TabItem label="React">
 ```tsx
 import '@toolbox-web/grid-react/features/grouping-rows';
 import '@toolbox-web/grid-react/features/server-side';
-import { DataGrid, useGrid } from '@toolbox-web/grid-react';
-import { useEffect } from 'react';
+import { DataGrid } from '@toolbox-web/grid-react';
+
+const dataSource = {
+  async getRows(params) {
+    const res = await fetch(`/api/groups?start=${params.startNode}&end=${params.endNode}`);
+    return res.json();
+  },
+  async getChildRows(params) {
+    const { groupKey } = params.context;
+    const res = await fetch(`/api/groups/${groupKey}/rows`);
+    return { rows: await res.json() };
+  },
+};
 
 function ServerGroupedGrid() {
-  const { ref, element } = useGrid();
-
-  useEffect(() => {
-    if (!element) return;
-    element.ready().then(() => {
-      element.getPluginByName('serverSide')?.setDataSource({
-        async getRows(params) {
-          const res = await fetch(`/api/groups?start=${params.startNode}&end=${params.endNode}`);
-          return res.json();
-        },
-        async getChildRows(params) {
-          const { groupKey } = params.context;
-          const res = await fetch(`/api/groups/${groupKey}/rows`);
-          return { rows: await res.json() };
-        },
-      });
-    });
-  }, [element]);
-
   return (
     <DataGrid
-      ref={ref}
       columns={[
         { field: 'name', header: 'Employee' },
         { field: 'department', header: 'Department' },
         { field: 'salary', header: 'Salary', type: 'currency' },
       ]}
-      serverSide={{ pageSize: 50 }}
+      serverSide={{ pageSize: 50, dataSource }}
       groupingRows
     />
   );
@@ -430,14 +420,11 @@ function ServerGroupedGrid() {
 <script setup>
 import '@toolbox-web/grid-vue/features/grouping-rows';
 import '@toolbox-web/grid-vue/features/server-side';
-import { TbwGrid, TbwGridColumn, useGrid } from '@toolbox-web/grid-vue';
-import { watch } from 'vue';
+import { TbwGrid, TbwGridColumn } from '@toolbox-web/grid-vue';
 
-const { gridElement, isReady } = useGrid();
-
-watch(isReady, (ready) => {
-  if (!ready) return;
-  gridElement.value?.getPluginByName('serverSide')?.setDataSource({
+const serverSideConfig = {
+  pageSize: 50,
+  dataSource: {
     async getRows(params) {
       const res = await fetch(`/api/groups?start=${params.startNode}&end=${params.endNode}`);
       return res.json();
@@ -447,12 +434,12 @@ watch(isReady, (ready) => {
       const res = await fetch(`/api/groups/${groupKey}/rows`);
       return { rows: await res.json() };
     },
-  });
-});
+  },
+};
 </script>
 
 <template>
-  <TbwGrid :server-side="{ pageSize: 50 }" grouping-rows>
+  <TbwGrid :server-side="serverSideConfig" grouping-rows>
     <TbwGridColumn field="name" header="Employee" />
     <TbwGridColumn field="department" header="Department" />
     <TbwGridColumn field="salary" header="Salary" type="currency" />
@@ -464,8 +451,8 @@ watch(isReady, (ready) => {
 ```typescript
 import '@toolbox-web/grid-angular/features/grouping-rows';
 import '@toolbox-web/grid-angular/features/server-side';
-import { Component, effect } from '@angular/core';
-import { Grid, injectGrid } from '@toolbox-web/grid-angular';
+import { Component } from '@angular/core';
+import { Grid } from '@toolbox-web/grid-angular';
 import type { ColumnConfig } from '@toolbox-web/grid';
 
 @Component({
@@ -474,38 +461,33 @@ import type { ColumnConfig } from '@toolbox-web/grid';
   template: `
     <tbw-grid
       [columns]="columns"
-      [serverSide]="{ pageSize: 50 }"
+      [serverSide]="serverSideConfig"
       [groupingRows]="true"
       style="height: 400px; display: block;">
     </tbw-grid>
   `,
 })
 export class ServerGroupedGridComponent {
-  grid = injectGrid();
-
   columns: ColumnConfig[] = [
     { field: 'name', header: 'Employee' },
     { field: 'department', header: 'Department' },
     { field: 'salary', header: 'Salary', type: 'currency' },
   ];
 
-  constructor() {
-    effect(() => {
-      const el = this.grid.element();
-      if (!el) return;
-      el.getPluginByName('serverSide')?.setDataSource({
-        async getRows(params: any) {
-          const res = await fetch(`/api/groups?start=${params.startNode}&end=${params.endNode}`);
-          return res.json();
-        },
-        async getChildRows(params: any) {
-          const { groupKey } = params.context;
-          const res = await fetch(`/api/groups/${groupKey}/rows`);
-          return { rows: await res.json() };
-        },
-      });
-    });
-  }
+  serverSideConfig = {
+    pageSize: 50,
+    dataSource: {
+      async getRows(params: any) {
+        const res = await fetch(`/api/groups?start=${params.startNode}&end=${params.endNode}`);
+        return res.json();
+      },
+      async getChildRows(params: any) {
+        const { groupKey } = params.context;
+        const res = await fetch(`/api/groups/${groupKey}/rows`);
+        return { rows: await res.json() };
+      },
+    },
+  };
 }
 ```
   </TabItem>
