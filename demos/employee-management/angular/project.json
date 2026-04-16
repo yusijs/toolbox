@@ -6,6 +6,9 @@
   "root": "demos/employee-management/angular",
   "implicitDependencies": ["grid", "grid-angular"],
   "targets": {
+    "test": {
+      "command": "echo No tests for demo-angular"
+    },
     "build": {
       "dependsOn": ["grid:build", "grid-angular:build"],
       "executor": "@nx/angular:application",
