@@ -35,8 +35,8 @@ test.describe('Server-Side Demos', () => {
     await openDemo(page, 'server-side/ServerSideDemo');
 
     // Enable server-side sorting via DemoControls
-    const sortCheckbox = page.locator('label', { hasText: /server-side sorting/i }).first();
-    await sortCheckbox.click();
+    const sortToggle = page.locator('[data-ctrl-name="serverSort"] .dc-toggle');
+    await sortToggle.click();
     await page.waitForTimeout(500);
 
     const header = page.locator('tbw-grid [role="columnheader"]').first();
