@@ -47,6 +47,14 @@ export interface TypeDocType {
     signatures?: TypeDocSignature[];
     children?: TypeDocNode[];
   };
+  // indexedAccess: Obj[Key]
+  objectType?: TypeDocType;
+  indexType?: TypeDocType;
+  // typeOperator: keyof T
+  operator?: string;
+  target?: TypeDocType;
+  // query: typeof X
+  queryType?: TypeDocType;
 }
 
 // #endregion
@@ -228,6 +236,12 @@ export function formatType(t?: TypeDocType): string {
       }
       return 'object';
     }
+    case 'indexedAccess':
+      return `${formatType(t.objectType)}[${formatType(t.indexType)}]`;
+    case 'typeOperator':
+      return `${t.operator} ${formatType(t.target)}`;
+    case 'query':
+      return `typeof ${formatType(t.queryType)}`;
     default:
       return t.name ?? 'unknown';
   }
@@ -281,6 +295,12 @@ function formatTypeHtml(type: TypeDocType | undefined, typeRegistry: Map<string,
       }
       return 'object';
     }
+    case 'indexedAccess':
+      return `${formatTypeHtml(type.objectType, typeRegistry)}[${formatTypeHtml(type.indexType, typeRegistry)}]`;
+    case 'typeOperator':
+      return `${type.operator} ${formatTypeHtml(type.target, typeRegistry)}`;
+    case 'query':
+      return `typeof ${formatTypeHtml(type.queryType, typeRegistry)}`;
     default:
       return type.name ? linkify(type.name) : 'unknown';
   }
