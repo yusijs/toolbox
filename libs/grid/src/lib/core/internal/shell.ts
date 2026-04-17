@@ -490,8 +490,10 @@ export function parseLightDomToolPanels(
     if (adapterRenderer) {
       render = adapterRenderer;
     } else {
-      // Vanilla fallback: use innerHTML as static content
-      const content = panelEl.innerHTML.trim();
+      // Vanilla fallback: use sanitized innerHTML as static content.
+      // Light DOM authored markup is generally trusted, but we sanitize
+      // defensively in case the panel content was server-rendered from data.
+      const content = sanitizeHTML(panelEl.innerHTML.trim());
       render = (container: HTMLElement) => {
         const wrapper = document.createElement('div');
         wrapper.innerHTML = content;

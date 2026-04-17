@@ -621,6 +621,34 @@ describe('shell module', () => {
       panel!.render(container);
       expect(container.querySelector('.my-content')).toBeTruthy();
     });
+
+    it('sanitizes light DOM fallback content to prevent XSS', async () => {
+      const { parseLightDomToolPanels } = await import('./shell');
+
+      host.innerHTML = `
+        <tbw-grid-tool-panel id="xss" title="XSS Panel">
+          <div class="safe">hello</div>
+          <script>window.__xssFired = true;</script>
+          <img src="x" onerror="window.__xssFired = true">
+        </tbw-grid-tool-panel>
+      `;
+
+      parseLightDomToolPanels(host, state);
+
+      const panel = state.toolPanels.get('xss');
+      expect(panel).toBeDefined();
+
+      const container = document.createElement('div');
+      panel!.render(container);
+
+      // Safe content preserved
+      expect(container.querySelector('.safe')).toBeTruthy();
+      // <script> tags stripped by sanitizer
+      expect(container.querySelector('script')).toBeNull();
+      // Event-handler attributes stripped
+      const img = container.querySelector('img');
+      expect(img?.getAttribute('onerror')).toBeNull();
+    });
   });
 
   describe('setupClickOutsideDismiss', () => {

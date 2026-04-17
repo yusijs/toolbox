@@ -6,6 +6,7 @@
 
 // Import types to enable module augmentation
 import { COLUMN_GROUP_NO_ID, throwDiagnostic } from '../../core/internal/diagnostics';
+import { sanitizeHTML } from '../../core/internal/sanitize';
 import type { ColumnConfig } from '../../core/types';
 import './types';
 import type {
@@ -352,7 +353,9 @@ export function buildGroupHeaderRow(
       if (result instanceof HTMLElement) {
         cell.appendChild(result);
       } else if (typeof result === 'string') {
-        cell.innerHTML = result;
+        // Sanitize renderer-returned HTML to prevent XSS, mirroring the cell
+        // renderer pipeline in core/internal/rows.ts.
+        cell.innerHTML = sanitizeHTML(result);
       } else {
         cell.textContent = label;
       }

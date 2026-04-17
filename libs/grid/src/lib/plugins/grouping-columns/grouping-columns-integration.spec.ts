@@ -169,6 +169,36 @@ describe('GroupingColumnsPlugin groupHeaderRenderer', () => {
     expect(cell!.textContent).toBe('Keep');
   });
 
+  it('sanitizes string renderer output to prevent XSS', async () => {
+    grid.gridConfig = {
+      columns: [
+        { field: 'a', header: 'A', group: 'G1' },
+        { field: 'b', header: 'B', group: 'G1' },
+      ],
+      plugins: [
+        new GroupingColumnsPlugin({
+          groupHeaderRenderer: (params) =>
+            `<span class="safe">${params.label}</span>` +
+            `<script>window.__xssFired = true;</script>` +
+            `<img src="x" onerror="window.__xssFired = true">`,
+        }),
+      ],
+    };
+    grid.rows = [{ a: 1, b: 2 }];
+
+    await customElements.whenDefined('tbw-grid');
+    await grid.ready?.();
+    await nextFrame();
+
+    const cell = grid.querySelector('.header-group-cell:not(.implicit-group)');
+    expect(cell).toBeTruthy();
+    // Safe markup preserved
+    expect(cell!.querySelector('.safe')?.textContent).toBe('G1');
+    // <script> stripped, event handlers stripped
+    expect(cell!.querySelector('script')).toBeNull();
+    expect(cell!.querySelector('img')?.getAttribute('onerror')).toBeNull();
+  });
+
   it('provides correct params to the renderer', async () => {
     const receivedParams: Array<Record<string, unknown>> = [];
 
