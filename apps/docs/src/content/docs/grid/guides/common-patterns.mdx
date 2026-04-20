@@ -12,7 +12,7 @@ Real-world grids rarely use a single feature in isolation. This guide shows **te
 **Goal:** Let users sort, filter, and select rows from a large dataset.
 
 <Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
+  <TabItem label="TypeScript">
 ```typescript
 import '@toolbox-web/grid';
 import '@toolbox-web/grid/features/selection';
@@ -147,7 +147,7 @@ Use `getSelectedRows()` instead of `getSelectedRowIndices()` — row objects are
 **Goal:** Inline cell editing with full undo/redo support.
 
 <Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
+  <TabItem label="TypeScript">
 ```typescript
 import '@toolbox-web/grid/features/editing';
 import '@toolbox-web/grid/features/undo-redo';
@@ -330,7 +330,7 @@ If using the advanced plugins API directly, `EditingPlugin` must be loaded **bef
 **Goal:** Group rows by a field and show aggregated values (sum, average, count).
 
 <Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
+  <TabItem label="TypeScript">
 ```typescript
 import '@toolbox-web/grid/features/grouping-rows';
 import '@toolbox-web/grid/features/selection';
@@ -460,7 +460,7 @@ export class DepartmentGridComponent {
 **Goal:** Let users filter data, select a subset, and export it.
 
 <Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
+  <TabItem label="TypeScript">
 ```typescript
 import '@toolbox-web/grid/features/export';
 import '@toolbox-web/grid/features/selection';
@@ -575,7 +575,7 @@ export class ExportableGridComponent {
 **Goal:** Expand a row to show related detail records.
 
 <Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
+  <TabItem label="TypeScript">
 ```typescript
 import '@toolbox-web/grid/features/master-detail';
 
@@ -713,7 +713,7 @@ export class OrderGridComponent {
 **Goal:** Handle 10k+ rows with pinned identifier columns and column virtualization.
 
 <Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
+  <TabItem label="TypeScript">
 ```typescript
 import '@toolbox-web/grid/features/pinned-columns';
 import '@toolbox-web/grid/features/column-virtualization';

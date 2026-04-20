@@ -39,7 +39,7 @@ import '@toolbox-web/grid/features/editing';
 Enable the editing feature to use `editable` and `editor` column properties:
 
 <Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
+  <TabItem label="TypeScript">
 ```ts
 import { queryGrid } from '@toolbox-web/grid';
 import '@toolbox-web/grid/features/editing';
@@ -205,7 +205,7 @@ By default, `editable: true` makes a column editable for **every** row. For more
 In this demo, **Price** is only editable on "draft" rows, and the archived row (Thingamajig) is locked entirely via `rowEditable`.
 
 <Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
+  <TabItem label="TypeScript">
 ```ts
 const columns = [
   { field: 'name', editable: true }, // always editable
@@ -510,7 +510,7 @@ Instead of configuring renderers and editors on every column, you can define **t
 Define type defaults in your grid configuration:
 
 <Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
+  <TabItem label="TypeScript">
 ```ts
 import { queryGrid } from '@toolbox-web/grid';
 import '@toolbox-web/grid/features/editing';
@@ -689,7 +689,7 @@ export class MyGridComponent {
 For defaults that apply across **all grids** in your application, use the framework adapter's type registry:
 
 <Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
+  <TabItem label="TypeScript">
 Vanilla JS does not have an app-level provider — use `gridConfig.typeDefaults` on each grid instance
 as shown in the [Grid-Level Type Defaults](#grid-level-type-defaults) section above.
   </TabItem>
@@ -954,7 +954,7 @@ receive the new value automatically. The grid does this for built-in editors out
 For custom editors, use `onValueChange` to keep your inputs in sync:
 
 <Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
+  <TabItem label="TypeScript">
 ```ts
 {
   field: 'total',
@@ -1094,7 +1094,7 @@ This is especially useful when fields are interdependent — for example, updati
 recalculates `total`:
 
 <Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
+  <TabItem label="TypeScript">
 ```ts
 grid.on('cell-commit', ({ field, row, value, updateRow }) => {
   if (field === 'quantity') {

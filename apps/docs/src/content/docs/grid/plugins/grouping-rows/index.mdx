@@ -25,7 +25,7 @@ import '@toolbox-web/grid/features/grouping-rows';
 The `groupOn` callback receives each row and should return an array representing the group path. For single-level grouping, return a one-element array. For multi-level grouping, return multiple elements (e.g., `['Region', 'Department']`).
 
 <Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
+  <TabItem label="TypeScript">
 ```ts
 import { queryGrid } from '@toolbox-web/grid';
 
@@ -346,7 +346,7 @@ The row grouping plugin uses these class names:
 For server-side scenarios where group structure is fetched from the server and rows are loaded on demand, use `ServerSidePlugin` alongside Row Grouping. ServerSide returns group definitions as root data; when the user expands a group, the plugin fetches group rows via `getChildRows()`.
 
 <Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
+  <TabItem label="TypeScript">
 ```ts
 import '@toolbox-web/grid/features/grouping-rows';
 import '@toolbox-web/grid/features/server-side';

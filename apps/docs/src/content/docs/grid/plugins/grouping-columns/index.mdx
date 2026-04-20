@@ -27,7 +27,7 @@ There are three ways to define column groups, from most to least recommended:
 Define everything in one place — groups, renderers, and plugin behavior:
 
 <Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
+  <TabItem label="TypeScript">
 ```ts
 import { queryGrid } from '@toolbox-web/grid';
 import '@toolbox-web/grid/features/grouping-columns';
@@ -221,7 +221,7 @@ HTML strings returned from the renderer are automatically sanitized (scripts and
 Since the renderer receives `params.id`, a single function can differentiate rendering per group:
 
 <Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
+  <TabItem label="TypeScript">
 ```ts
 grid.gridConfig = {
   columns: [...],
@@ -365,7 +365,7 @@ export class MyGridComponent {
 You can also define a `renderer` directly on individual group definitions. A per-group renderer takes precedence over `groupHeaderRenderer` for that specific group:
 
 <Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
+  <TabItem label="TypeScript">
 ```ts
 grid.gridConfig = {
   columns: [...],

@@ -97,7 +97,7 @@ grid.rows = myData; // That's it!
 Use `<tbw-grid-column>` elements (or framework wrapper components) to declaratively define columns directly in your markup:
 
 <Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
+  <TabItem label="TypeScript">
 ```html
 <tbw-grid>
   <tbw-grid-column field="id" header="ID" width="80"></tbw-grid-column>
@@ -402,7 +402,7 @@ While formatters return plain text, renderers return DOM elements. Use renderers
 - **Rich formatting**: Multiple elements, images, complex layouts
 
 <Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
+  <TabItem label="TypeScript">
 ```typescript
 grid.columns = [
   {
@@ -590,7 +590,7 @@ When using the **EditingPlugin**, rows are automatically animated with `'change'
 Define default formatters and renderers for all columns of a specific `type`:
 
 <Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
+  <TabItem label="TypeScript">
 ```typescript
 grid.gridConfig = {
   typeDefaults: {
@@ -740,7 +740,7 @@ The framework adapters (React, Vue, Angular) bridge `headerRenderer` and `header
 **`headerLabelRenderer`** — Modify just the label portion of the header (sort icons and filter buttons are still managed by the grid):
 
 <Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
+  <TabItem label="TypeScript">
 ```typescript
 {
   field: 'name',
@@ -801,7 +801,7 @@ export class RequiredLabelComponent {
 **`headerRenderer`** — Full control over the entire header cell. You are responsible for rendering sort icons using `ctx.renderSortIcon()`:
 
 <Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
+  <TabItem label="TypeScript">
 ```typescript
 {
   field: 'email',
@@ -935,7 +935,7 @@ The grid tracks column state — widths, sort direction, order, and visibility. 
 The `column-state-change` event fires whenever the user resizes, reorders, sorts, or hides/shows columns:
 
 <Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
+  <TabItem label="TypeScript">
 ```typescript
 grid.on('column-state-change', (state) => {
   localStorage.setItem('my-grid-state', JSON.stringify(state));
@@ -1047,7 +1047,7 @@ Configure the shell declaratively using `<tbw-grid-header>` and `<tbw-grid-heade
 Register multiple tool panels — each gets a tab in the sidebar. Panels can be registered via configuration or the runtime `registerToolPanel()` API.
 
 <Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
+  <TabItem label="TypeScript">
 ```typescript
 grid.registerToolPanel({
   id: 'filter-panel',
@@ -1113,7 +1113,7 @@ import { TbwGrid, TbwGridToolPanel } from '@toolbox-web/grid-vue';
 Add custom buttons to the shell toolbar using framework wrapper components or the `registerToolbarContent()` API:
 
 <Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
+  <TabItem label="TypeScript">
 ```html
 <tbw-grid>
   <tbw-grid-tool-buttons>
@@ -1233,7 +1233,7 @@ grid.clearAllLoading();               // remove all indicators
 Replace the default spinner with a custom element using `loadingRenderer`:
 
 <Tabs syncKey="framework">
-  <TabItem label="Vanilla JS">
+  <TabItem label="TypeScript">
 ```typescript
 grid.gridConfig = {
   loadingRenderer: (context) => {
