@@ -88,8 +88,16 @@ modifiesRowStructure — affects render scheduler
 | Pivot         | onHeaderClick  | -10      | intercept before MultiSort                 |
 | GroupingRows  | onHeaderClick  | -1       | intercept group headers before MultiSort   |
 | Tree          | processRows    | 10       | after ServerSide, before others            |
-| GroupingRows  | processRows    | 10       | after ServerSide                           |
-| Pivot         | processRows    | 100      | after MultiSort, apply aggregation         |
+
+## scroll-dispatch
+
+- FLOW: faux-scrollbar `scroll` event → rAF batcher → `#onScrollBatched(scrollTop)` → geometry reads (unconditional) → `refreshVirtualWindow` → `onScrollRender` → pooled `ScrollEvent` → `pluginManager.onScroll` (gated by `#hasScrollPlugins`) → public `tbw-scroll` CustomEvent (always)
+- INVARIANT: geometry reads (`scrollHeight`/`clientHeight` etc.) MUST happen before any DOM writes in the same tick to avoid forced synchronous layout. Reads moved out of the `#hasScrollPlugins` gate when `tbw-scroll` shipped — they are now unconditional because the public event needs them too.
+- INVARIANT: pooled `#pooledScrollEvent` is reused across ticks — only safe for synchronous internal plugin consumers. Public `tbw-scroll` detail MUST be a fresh literal (consumers retain references).
+- INVARIANT: public dispatch is gated by `#connected` via `#emit` helper — events do not fire after the grid is removed from the DOM.
+- DECIDED (Apr 2026, #234): `tbw-scroll` is always-on, vertical-only, fresh detail per dispatch. `direction: 'vertical' | 'horizontal'` is declared up-front for forward compatibility; horizontal dispatch is intentionally not implemented (horizontal scroll listener is still gated behind `#hasScrollPlugins` to avoid attaching a listener for grids without scroll plugins). Adapter prop names disambiguated (`onTbwScroll` / `tbwScroll` / `@tbw-scroll`) to avoid collision with native scroll event handling.
+  | GroupingRows | processRows | 10 | after ServerSide |
+  | Pivot | processRows | 100 | after MultiSort, apply aggregation |
 
 ## incompatibility-graph
 

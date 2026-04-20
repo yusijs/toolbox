@@ -24,6 +24,7 @@ import type {
   DataGridElement as GridElement,
   RowClickDetail,
   SortChangeDetail,
+  TbwScrollDetail,
 } from '@toolbox-web/grid';
 import { DataGridElement as GridElementClass } from '@toolbox-web/grid';
 // Import editing event types from the editing plugin
@@ -1108,6 +1109,23 @@ export class Grid implements OnInit, AfterContentInit, OnDestroy {
    */
   printComplete = output<PrintCompleteDetail>();
 
+  /**
+   * Emitted (rAF-batched) when the grid's viewport is scrolled vertically.
+   *
+   * For server-side pagination of large datasets prefer `ServerSidePlugin`
+   * — this event is the lower-level primitive for custom load-more triggers,
+   * deferring heavy cell content, dismissing overlays, etc.
+   *
+   * Named `tbwScroll` (not `scroll`) to avoid collision with the native DOM
+   * scroll event that bubbles from focusable internals.
+   *
+   * @example
+   * ```html
+   * <tbw-grid (tbwScroll)="onScroll($event)">...</tbw-grid>
+   * ```
+   */
+  tbwScroll = output<TbwScrollDetail>();
+
   // Map of output names to event names for automatic wiring
   private readonly eventOutputMap = {
     cellClick: 'cell-click',
@@ -1135,6 +1153,7 @@ export class Grid implements OnInit, AfterContentInit, OnDestroy {
     exportComplete: 'export-complete',
     printStart: 'print-start',
     printComplete: 'print-complete',
+    tbwScroll: 'tbw-scroll',
   } as const;
 
   // Store event listeners for cleanup

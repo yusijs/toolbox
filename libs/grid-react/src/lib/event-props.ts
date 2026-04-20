@@ -45,6 +45,7 @@ import type {
   RowMoveDetail,
   SelectionChangeDetail,
   SortChangeDetail,
+  TbwScrollDetail,
   TreeExpandDetail,
   UndoRedoDetail,
 } from '@toolbox-web/grid/all';
@@ -434,6 +435,28 @@ export interface EventProps<TRow = unknown> {
    * ```
    */
   onPrintComplete?: EventHandler<PrintCompleteDetail>;
+
+  // ═══════════════════════════════════════════════════════════════════
+  // SCROLL EVENTS
+  // ═══════════════════════════════════════════════════════════════════
+
+  /**
+   * Fired (rAF-batched) when the grid's viewport scrolls vertically.
+   *
+   * For server-side pagination of large datasets prefer `ServerSidePlugin`
+   * — this event is the lower-level primitive for custom load-more
+   * triggers, deferring heavy cell content, dismissing overlays, etc.
+   *
+   * @example
+   * ```tsx
+   * onTbwScroll={(detail) => {
+   *   if (detail.scrollTop + detail.clientHeight >= detail.scrollHeight - 200) {
+   *     loadMore();
+   *   }
+   * }}
+   * ```
+   */
+  onTbwScroll?: EventHandler<TbwScrollDetail>;
 }
 
 /**
@@ -466,6 +489,7 @@ export const EVENT_PROP_MAP: Record<keyof EventProps, string> = {
   onExportComplete: 'export-complete',
   onPrintStart: 'print-start',
   onPrintComplete: 'print-complete',
+  onTbwScroll: 'tbw-scroll',
 };
 
 /**

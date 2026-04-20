@@ -825,6 +825,77 @@ Four events support `preventDefault()` to reject the action:
 | `column-move` | Reorder | Rejects the column drag-and-drop |
 | `row-move` | Row Reorder | Rejects the row drag/keyboard move |
 
+### `tbw-scroll` — viewport scroll
+
+Fires (rAF-batched) whenever the grid's vertical viewport scrolls. The detail
+payload contains `scrollTop`, `scrollHeight`, `clientHeight`, and a
+`direction: 'vertical'` discriminator (reserved for future horizontal opt-in).
+
+The detail is a fresh object literal each tick — safe to retain, freeze,
+copy into framework state, or post to a worker.
+
+:::tip[Server-side pagination?]
+For paginated server-side data, prefer the [`ServerSidePlugin`](/grid/server-side/) — it handles block fetching out of the box. `tbw-scroll` is the lower-level primitive for cases the plugin doesn't cover (custom load-more triggers, deferred cell content, scroll-driven UI, etc.).
+:::
+
+#### Infinite scroll / load more
+
+```typescript
+grid.on('tbw-scroll', ({ scrollTop, scrollHeight, clientHeight }) => {
+  if (scrollTop + clientHeight >= scrollHeight - 200) {
+    loadNextPage();
+  }
+});
+```
+
+#### Sticky scroll-progress indicator
+
+A toolbar or progress bar that lives outside the grid and tracks scroll position:
+
+```typescript
+grid.on('tbw-scroll', ({ scrollTop, scrollHeight, clientHeight }) => {
+  const max = scrollHeight - clientHeight;
+  const pct = max > 0 ? scrollTop / max : 0;
+  progressBarEl.style.width = `${pct * 100}%`;
+});
+```
+
+For purely visual scroll-driven CSS effects on a different scroller, also consider
+the native `animation-timeline: scroll()` — no JS needed.
+
+#### Defer heavy cell content (Angular `@defer` style)
+
+Render expensive content (charts, images, embedded video) only when its row is
+near the viewport:
+
+```typescript
+grid.on('tbw-scroll', ({ scrollTop, clientHeight }) => {
+  // Lazy-mount components in the visible window
+  hydrateHeavyCellsBetween(scrollTop, scrollTop + clientHeight);
+});
+```
+
+#### Dismiss overlays on scroll
+
+Tooltips, popovers, context menus rendered outside the grid should typically
+close when the user scrolls:
+
+```typescript
+grid.on('tbw-scroll', () => closeOpenOverlays());
+```
+
+:::note[Not for per-row visibility tracking]
+`tbw-scroll` fires at most once per frame, **not** per row entering or leaving the viewport. For "row N just became visible" semantics, observe rendered row elements directly in `afterRowRender` or use `IntersectionObserver` from a custom plugin.
+:::
+
+**Framework adapter names** — disambiguated to avoid colliding with native scroll events:
+
+| Adapter | Binding |
+|---------|---------|
+| React | `<DataGrid onTbwScroll={...} />` |
+| Vue | `<TbwGrid @tbw-scroll="..." />` |
+| Angular | `<tbw-grid (tbwScroll)="..." />` |
+
 ### Event Reference
 
 The [`DataGridEventMap`](/grid/api/core/interfaces/datagrideventmap/) is the complete, auto-generated reference for every event the grid dispatches — core events and plugin events alike. It includes detail payload types, descriptions, and code examples, grouped by plugin.

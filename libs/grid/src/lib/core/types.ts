@@ -2838,6 +2838,43 @@ export interface DataChangeDetail {
   sourceRowCount: number;
 }
 
+/**
+ * Detail payload for the `tbw-scroll` event.
+ *
+ * Dispatched on the grid host whenever the vertical viewport scrolls
+ * (rAF-batched — at most one per frame). Use to trigger pagination,
+ * defer heavy cell content rendering, dismiss overlays, or sync a
+ * scroll-tracking UI outside the grid.
+ *
+ * For server-side pagination of large datasets, prefer
+ * `ServerSidePlugin` which handles block fetching out of the box.
+ *
+ * @example
+ * ```typescript
+ * grid.addEventListener('tbw-scroll', (e) => {
+ *   const { scrollTop, scrollHeight, clientHeight } = e.detail;
+ *   if (scrollTop + clientHeight >= scrollHeight - 200) loadMore();
+ * });
+ * ```
+ *
+ * @see {@link DataGridEventMap} for all event types
+ * @category Events
+ */
+export interface TbwScrollDetail {
+  /** Current vertical scroll offset in pixels (faux scrollbar). */
+  scrollTop: number;
+  /** Total scrollable height in pixels (faux scrollbar). */
+  scrollHeight: number;
+  /** Visible viewport height in pixels (faux scrollbar). */
+  clientHeight: number;
+  /**
+   * Axis that triggered this dispatch. Currently always `'vertical'`;
+   * `'horizontal'` is reserved for a future opt-in dispatch and is
+   * declared up-front so consumer narrowing remains source-compatible.
+   */
+  direction: 'vertical' | 'horizontal';
+}
+
 // #endregion
 
 // #region Data Update Management
@@ -3916,6 +3953,35 @@ export interface DataGridEventMap<TRow = unknown> {
    * @group Core Events
    */
   'data-change': DataChangeDetail;
+
+  /**
+   * Fired when the grid's viewport is scrolled vertically (rAF-batched).
+   * Use to trigger pagination, defer heavy cell content, dismiss overlays,
+   * or sync external UI to the grid's scroll position.
+   *
+   * For server-side pagination of large datasets, prefer the
+   * `ServerSidePlugin` — it handles block fetching out of the box.
+   *
+   * @example
+   * ```typescript
+   * // Infinite scroll
+   * grid.on('tbw-scroll', ({ scrollTop, scrollHeight, clientHeight }) => {
+   *   if (scrollTop + clientHeight >= scrollHeight - 200) loadMore();
+   * });
+   *
+   * // Defer heavy cell content (Angular @defer style)
+   * grid.on('tbw-scroll', ({ scrollTop }) => {
+   *   updateVisibleHeavyCells(scrollTop);
+   * });
+   *
+   * // Dismiss tooltip/popover on scroll
+   * grid.on('tbw-scroll', () => closeOpenOverlays());
+   * ```
+   *
+   * @see {@link TbwScrollDetail}
+   * @group Core Events
+   */
+  'tbw-scroll': TbwScrollDetail;
 
   /**
    * Emitted when a cell with an external view renderer (React, Angular, Vue component)

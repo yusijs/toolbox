@@ -42,6 +42,7 @@ import type {
   SelectionConfig,
   ServerSideConfig,
   SortChangeDetail,
+  TbwScrollDetail,
   TooltipConfig,
   TreeConfig,
   TreeExpandDetail,
@@ -301,6 +302,7 @@ const EVENT_MAP = {
   'export-complete': '' as unknown as ExportCompleteDetail,
   'print-start': '' as unknown as PrintStartDetail,
   'print-complete': '' as unknown as PrintCompleteDetail,
+  'tbw-scroll': '' as unknown as TbwScrollDetail,
 } as const;
 
 /**
@@ -332,6 +334,7 @@ const emit = defineEmits<{
   (e: 'export-complete', event: CustomEvent<ExportCompleteDetail>): void;
   (e: 'print-start', event: CustomEvent<PrintStartDetail>): void;
   (e: 'print-complete', event: CustomEvent<PrintCompleteDetail>): void;
+  (e: 'tbw-scroll', event: CustomEvent<TbwScrollDetail>): void;
 }>();
 
 // Template ref for the grid element

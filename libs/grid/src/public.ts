@@ -168,6 +168,8 @@ export const DGEvents = {
   COLUMN_STATE_CHANGE: 'column-state-change',
   /** Emitted when grid row data changes (set, insert, remove, update) */
   DATA_CHANGE: 'data-change',
+  /** Emitted (rAF-batched) on vertical viewport scroll */
+  TBW_SCROLL: 'tbw-scroll',
 } as const;
 
 /**
@@ -348,6 +350,7 @@ export type {
   // Sorting types
   SortHandler,
   SortState,
+  TbwScrollDetail,
   ToolbarContentDefinition,
   ToolPanelConfig,
   ToolPanelDefinition,

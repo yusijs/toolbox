@@ -82,6 +82,7 @@ import type {
   RowElementInternal,
   RowTransaction,
   ScrollToRowOptions,
+  TbwScrollDetail,
   ToolbarContentDefinition,
   ToolPanelDefinition,
   TransactionResult,
@@ -2679,20 +2680,17 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
     // refreshVirtualWindow and onScrollRender write to the DOM (transforms, innerHTML, attributes).
     // Reading geometry after those writes forces the browser to synchronously compute layout.
     // By reading first, we batch reads together, then do all writes.
-    let scrollLeft = 0;
-    let scrollHeight = 0;
-    let scrollWidth = 0;
-    let clientHeight = 0;
-    let clientWidth = 0;
-    if (this.#hasScrollPlugins) {
-      const fauxScrollbar = this._virtualization.container;
-      const scrollArea = this.#scrollAreaEl;
-      scrollLeft = scrollArea?.scrollLeft ?? 0;
-      scrollHeight = fauxScrollbar?.scrollHeight ?? 0;
-      scrollWidth = scrollArea?.scrollWidth ?? 0;
-      clientHeight = fauxScrollbar?.clientHeight ?? 0;
-      clientWidth = scrollArea?.clientWidth ?? 0;
-    }
+    //
+    // Reads are unconditional now because the public `tbw-scroll` event always fires
+    // (and needs scrollHeight/clientHeight for its detail). The plugin pooled-event
+    // path also consumes these values when #hasScrollPlugins is true.
+    const fauxScrollbar = this._virtualization.container;
+    const scrollArea = this.#scrollAreaEl;
+    const scrollLeft = scrollArea?.scrollLeft ?? 0;
+    const scrollHeight = fauxScrollbar?.scrollHeight ?? 0;
+    const scrollWidth = scrollArea?.scrollWidth ?? 0;
+    const clientHeight = fauxScrollbar?.clientHeight ?? 0;
+    const clientWidth = scrollArea?.clientWidth ?? 0;
 
     // Faux scrollbar pattern: content never scrolls, just update transforms
     // Old content stays visible until new transforms are applied
@@ -2729,6 +2727,16 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
       scrollEvent.clientWidth = clientWidth;
       this.#pluginManager?.onScroll(scrollEvent);
     }
+
+    // Public `tbw-scroll` CustomEvent — always dispatched (vertical only).
+    // Detail must be a fresh object literal: consumers may retain or store it,
+    // unlike the pooled #pooledScrollEvent which is mutated in place each tick.
+    this.#emit<TbwScrollDetail>('tbw-scroll', {
+      scrollTop,
+      scrollHeight,
+      clientHeight,
+      direction: 'vertical',
+    });
   }
 
   /**

@@ -50,6 +50,11 @@ describe('event-props', () => {
     expect(EVENT_PROP_MAP['onColumnMove']).toBe('column-move');
   });
 
+  it('should map onTbwScroll to tbw-scroll event', async () => {
+    const { EVENT_PROP_MAP } = await import('./event-props');
+    expect(EVENT_PROP_MAP['onTbwScroll']).toBe('tbw-scroll');
+  });
+
   it('should have all event props defined', async () => {
     const { getEventPropNames } = await import('./event-props');
     const names = getEventPropNames();
