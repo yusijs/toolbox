@@ -298,6 +298,25 @@ describe('pinnedRows', () => {
       expect(context.totalRows).toBe(10);
       expect(context.filteredRows).toBe(3);
     });
+
+    it('should report processedRows.length as totalRows when sourceRows is empty (server-side)', () => {
+      // Simulates ServerSidePlugin: user never sets grid.rows directly so
+      // sourceRows is []. The plugin populates grid.rows with placeholders
+      // sized to totalNodeCount. Pinned-rows should report a meaningful total
+      // (the server total) and NOT show a phantom "Filtered: N" panel.
+      const sourceRows: unknown[] = [];
+      const processedRows = Array.from({ length: 10000 }, (_, i) => ({ id: i }));
+      const columns = [{ field: 'id' }];
+      const grid = document.createElement('div');
+      Object.defineProperty(grid, 'rows', { get: () => processedRows, configurable: true });
+      Object.defineProperty(grid, 'sourceRows', { get: () => sourceRows, configurable: true });
+
+      const context = buildContext(sourceRows, columns, grid);
+
+      expect(context.totalRows).toBe(10000);
+      // No filter active → filteredRows === totalRows so the panel hides
+      expect(context.filteredRows).toBe(10000);
+    });
   });
 
   describe('createAggregationContainer', () => {

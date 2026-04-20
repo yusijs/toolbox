@@ -331,14 +331,29 @@ export function buildContext(
   // filtering (built-in filter plugin, column filters, custom pipeline, etc.).
   // Fall back to the passed `rows` when the grid element does not expose
   // these properties (e.g. in unit tests using a plain <div>).
+  //
+  // When `sourceRows` is empty (e.g. ServerSidePlugin owns the data and the
+  // user never assigned `grid.rows = ...`), fall back to the processed count
+  // so we report a meaningful total instead of 0.
   const gridSourceRows = (grid as unknown as { sourceRows?: unknown[] })?.sourceRows;
   const gridProcessedRows = (grid as unknown as { rows?: unknown[] })?.rows;
-  const totalRows = Array.isArray(gridSourceRows) ? gridSourceRows.length : rows.length;
+  const sourceLen = Array.isArray(gridSourceRows) ? gridSourceRows.length : rows.length;
   const processedCount = Array.isArray(gridProcessedRows) ? gridProcessedRows.length : rows.length;
+  const totalRows = sourceLen > 0 ? sourceLen : processedCount;
+
+  // filteredRows resolution (in priority order):
+  // 1. Plugin filter state's cachedResult (authoritative when filtering plugin owns the data)
+  // 2. Custom pipeline signal: processed < source means the host filtered rows itself
+  // 3. Default to totalRows so the renderer's `filteredRows !== totalRows` check
+  //    hides the panel when no filter is active. This is critical for the
+  //    server-side case where processedCount > sourceLen (placeholders inflate
+  //    grid.rows beyond grid.sourceRows.length) and would otherwise show a
+  //    spurious "Filtered: N" panel.
+  const filteredRows = filterState?.cachedResult?.length ?? (processedCount < sourceLen ? processedCount : totalRows);
 
   return {
     totalRows,
-    filteredRows: filterState?.cachedResult?.length ?? processedCount,
+    filteredRows,
     selectedRows: selectionState?.selected?.size ?? 0,
     columns: columns as PinnedRowsContext['columns'],
     rows,
