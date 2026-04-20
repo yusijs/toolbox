@@ -291,6 +291,17 @@ export abstract class BaseOverlayEditor<TRow = unknown, TValue = unknown> extend
       signal: this._abortCtrl.signal,
     });
 
+    // Close overlay when the grid viewport scrolls. Mirrors outside-click
+    // semantics so subclasses' `onOverlayOutsideClick()` drives commit/cancel.
+    // Uses the public `tbw-scroll` CustomEvent dispatched on the grid host —
+    // no shadow-DOM reach-arounds required (composed: true crosses boundaries).
+    const grid = this._getGridElement();
+    if (grid) {
+      grid.addEventListener('tbw-scroll', () => this._onGridScroll(), {
+        signal: this._abortCtrl.signal,
+      });
+    }
+
     // If the focus observer already fired before the panel was initialised
     // (e.g. initOverlay called from a deferred setTimeout), the showOverlay()
     // call was silently ignored because _panel was still null.  Catch up now.
@@ -598,6 +609,20 @@ export abstract class BaseOverlayEditor<TRow = unknown, TValue = unknown> extend
     // Click inside panel or host — ignore
     if (this._panel.contains(target) || hostEl.contains(target)) return;
 
+    this.onOverlayOutsideClick();
+  }
+
+  /**
+   * Handle the grid's `tbw-scroll` CustomEvent while the overlay is open.
+   *
+   * When the viewport scrolls, the anchored overlay would otherwise float
+   * over content that no longer corresponds to the edited cell (or the
+   * cell may be virtualized out entirely). Treat scroll as a dismissal
+   * signal equivalent to clicking outside so subclasses' overlay-outside
+   * handler drives the appropriate commit/cancel path.
+   */
+  private _onGridScroll(): void {
+    if (!this._isOpen || !this._panel) return;
     this.onOverlayOutsideClick();
   }
 

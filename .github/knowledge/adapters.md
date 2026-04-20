@@ -76,3 +76,16 @@ releaseCell(element) → void      // cleanup when cell removed from DOM
 - REGISTRATION TIMING: React/Vue auto-register at module load (synchronous); Angular requires explicit DI setup
 - WEAKMAP FALLBACK: dual lookup (WeakMap → field name → factory) needed because framework re-renders can create new DOM elements
 - PORTAL/TELEPORT OVERHEAD: mounting framework components into web component cells requires bridge layer that manages lifecycle outside framework's component tree
+
+## angular-overlay-editors (BaseOverlayEditor)
+
+- OWNS: panel element (moved to `document.body` to escape grid overflow clipping), `_abortCtrl: AbortController` for all document-level / grid-level listener cleanup
+- DISMISSAL SIGNALS (all call abstract `onOverlayOutsideClick()`, subclass decides commit vs cancel):
+  - `pointerdown` on document outside panel + host
+  - `tbw-scroll` CustomEvent on the closest `<tbw-grid>` ancestor (dogfoods the public event)
+  - Focus observer: cell losing `cell-focus` class via MutationObserver → `hideOverlay()` (different path — cancel, not commit)
+- INVARIANT: all listeners share the same `_abortCtrl.signal` so `teardownOverlay()` releases everything in one abort
+- INVARIANT: handler must guard on `_isOpen && _panel` — listener is attached eagerly in `initOverlay()` before the panel is shown
+- FLOW: `initOverlay(panel)` → AbortController created → pointerdown listener on document → `tbw-scroll` listener on grid host → panel moved to body → registerExternalFocusContainer(panel)
+- TENSION: anchor positioning uses CSS Anchor (`anchor-name`) when supported, else `_positionWithJs()` — JS fallback only runs on open, so scroll-while-open without dismissal would float the panel at a stale position. Scroll-dismissal sidesteps needing a live reposition loop.
+- DECIDED (Apr 2026, #234 follow-up): scroll → dismiss (call `onOverlayOutsideClick()`), not scroll → reposition. Rationale: (a) same semantics as click-outside preserves subclass commit/cancel contracts, (b) avoids coupling overlay to grid scroll cadence, (c) consumes the public `tbw-scroll` API — no shadow-DOM reach-arounds, validates the API dogfood-style.

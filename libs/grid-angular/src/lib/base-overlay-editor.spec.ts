@@ -367,7 +367,10 @@ describe('BaseOverlayEditor', () => {
       instance['overlayPosition'] = 'below';
       instance['_elementRef'] = { nativeElement: document.createElement('div') };
       instance['_getCell'] = () => null;
-      instance['_getGridElement'] = () => ({ registerExternalFocusContainer: registerFn });
+      const gridMock: HTMLDivElement & { registerExternalFocusContainer?: typeof registerFn } =
+        document.createElement('div');
+      gridMock.registerExternalFocusContainer = registerFn;
+      instance['_getGridElement'] = () => gridMock;
       instance['_onDocumentPointerDown'] = vi.fn();
 
       instance['initOverlay'](panel);
@@ -445,6 +448,147 @@ describe('BaseOverlayEditor', () => {
       panel.remove();
       cell.remove();
       instance['_abortCtrl']?.abort();
+    });
+  });
+
+  describe('close-on-scroll (tbw-scroll)', () => {
+    it('should attach a tbw-scroll listener on the grid during initOverlay', () => {
+      const instance = Object.create(BaseOverlayEditor.prototype);
+      const panel = document.createElement('div');
+      const cell = document.createElement('div');
+      cell.setAttribute('part', 'cell');
+      const host = document.createElement('span');
+      cell.appendChild(host);
+      const grid = document.createElement('div');
+      grid.appendChild(cell);
+      document.body.appendChild(grid);
+      const addSpy = vi.spyOn(grid, 'addEventListener');
+
+      instance['_panel'] = null;
+      instance['_anchorId'] = '';
+      instance['_supportsAnchor'] = false;
+      instance['_abortCtrl'] = null;
+      instance['overlayPosition'] = 'below';
+      instance['_elementRef'] = { nativeElement: host };
+      instance['_getCell'] = () => cell;
+      instance['_getGridElement'] = () => grid;
+      instance['_onDocumentPointerDown'] = vi.fn();
+      instance['_onGridScroll'] = vi.fn();
+
+      instance['initOverlay'](panel);
+
+      const scrollCall = addSpy.mock.calls.find((c) => c[0] === 'tbw-scroll');
+      expect(scrollCall).toBeDefined();
+
+      // Cleanup
+      panel.remove();
+      grid.remove();
+      instance['_abortCtrl']?.abort();
+    });
+
+    it('should call onOverlayOutsideClick when overlay is open and scroll fires', () => {
+      const instance = Object.create(BaseOverlayEditor.prototype);
+      instance['_isOpen'] = true;
+      instance['_panel'] = document.createElement('div');
+      instance['onOverlayOutsideClick'] = vi.fn();
+
+      instance['_onGridScroll']();
+
+      expect(instance['onOverlayOutsideClick']).toHaveBeenCalledOnce();
+    });
+
+    it('should not call onOverlayOutsideClick when overlay is closed', () => {
+      const instance = Object.create(BaseOverlayEditor.prototype);
+      instance['_isOpen'] = false;
+      instance['_panel'] = document.createElement('div');
+      instance['onOverlayOutsideClick'] = vi.fn();
+
+      instance['_onGridScroll']();
+
+      expect(instance['onOverlayOutsideClick']).not.toHaveBeenCalled();
+    });
+
+    it('should not call onOverlayOutsideClick when panel is null', () => {
+      const instance = Object.create(BaseOverlayEditor.prototype);
+      instance['_isOpen'] = true;
+      instance['_panel'] = null;
+      instance['onOverlayOutsideClick'] = vi.fn();
+
+      instance['_onGridScroll']();
+
+      expect(instance['onOverlayOutsideClick']).not.toHaveBeenCalled();
+    });
+
+    it('should dispatch to onOverlayOutsideClick end-to-end via tbw-scroll event', () => {
+      const instance = Object.create(BaseOverlayEditor.prototype);
+      const panel = document.createElement('div');
+      const cell = document.createElement('div');
+      cell.setAttribute('part', 'cell');
+      const host = document.createElement('span');
+      cell.appendChild(host);
+      const grid = document.createElement('div');
+      grid.appendChild(cell);
+      document.body.appendChild(grid);
+
+      instance['_panel'] = null;
+      instance['_anchorId'] = '';
+      instance['_supportsAnchor'] = false;
+      instance['_abortCtrl'] = null;
+      instance['overlayPosition'] = 'below';
+      instance['_elementRef'] = { nativeElement: host };
+      instance['_getCell'] = () => cell;
+      instance['_getGridElement'] = () => grid;
+      instance['_onDocumentPointerDown'] = vi.fn();
+      instance['onOverlayOutsideClick'] = vi.fn();
+
+      instance['initOverlay'](panel);
+      instance['_isOpen'] = true; // simulate open state
+
+      grid.dispatchEvent(new CustomEvent('tbw-scroll', { detail: { scrollTop: 100 } }));
+
+      expect(instance['onOverlayOutsideClick']).toHaveBeenCalledOnce();
+
+      // Cleanup
+      panel.remove();
+      grid.remove();
+      instance['_abortCtrl']?.abort();
+    });
+
+    it('should stop listening after teardownOverlay via AbortController', () => {
+      const instance = Object.create(BaseOverlayEditor.prototype);
+      const panel = document.createElement('div');
+      const cell = document.createElement('div');
+      cell.setAttribute('part', 'cell');
+      const host = document.createElement('span');
+      cell.appendChild(host);
+      const grid = document.createElement('div');
+      grid.appendChild(cell);
+      document.body.appendChild(grid);
+
+      instance['_panel'] = null;
+      instance['_anchorId'] = '';
+      instance['_supportsAnchor'] = false;
+      instance['_abortCtrl'] = null;
+      instance['overlayPosition'] = 'below';
+      instance['_elementRef'] = { nativeElement: host };
+      instance['_getCell'] = () => cell;
+      instance['_getGridElement'] = () => grid;
+      instance['_onDocumentPointerDown'] = vi.fn();
+      instance['onOverlayOutsideClick'] = vi.fn();
+
+      instance['initOverlay'](panel);
+      instance['_isOpen'] = true;
+
+      // Abort signal (simulates teardownOverlay())
+      instance['_abortCtrl'].abort();
+
+      grid.dispatchEvent(new CustomEvent('tbw-scroll', { detail: { scrollTop: 100 } }));
+
+      expect(instance['onOverlayOutsideClick']).not.toHaveBeenCalled();
+
+      // Cleanup
+      panel.remove();
+      grid.remove();
     });
   });
 
