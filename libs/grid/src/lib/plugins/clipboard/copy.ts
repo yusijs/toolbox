@@ -5,6 +5,7 @@
  */
 
 import { CLIPBOARD_FAILED, warnDiagnostic } from '../../core/internal/diagnostics';
+import { resolveCellValue } from '../../core/internal/value-accessor';
 import type { ColumnConfig } from '../../core/types';
 import type { ClipboardConfig } from './types';
 
@@ -94,9 +95,7 @@ export function buildClipboardText(params: CopyParams): string {
     const row = rows[idx];
     if (!row) continue;
 
-    const cells = visibleColumns.map((col) =>
-      formatCellValue((row as Record<string, unknown>)[col.field], col.field, row, config),
-    );
+    const cells = visibleColumns.map((col) => formatCellValue(resolveCellValue(row, col), col.field, row, config));
     lines.push(cells.join(delimiter));
   }
 

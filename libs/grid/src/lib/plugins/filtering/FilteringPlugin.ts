@@ -7,6 +7,7 @@
  */
 
 import { announce, getA11yMessage } from '../../core/internal/aria';
+import { resolveCellValue } from '../../core/internal/value-accessor';
 import { BaseGridPlugin, type GridElement, type PluginManifest, type PluginQuery } from '../../core/plugin/base-plugin';
 import { isUtilityColumn } from '../../core/plugin/expander-column';
 import type { ColumnConfig, ColumnState } from '../../core/types';
@@ -190,6 +191,9 @@ export class FilteringPlugin extends BaseGridPlugin<FilterConfig> {
 
   /**
    * Build a map of field → filterValue extractor for columns that have one.
+   * Falls back to {@link ColumnConfig.valueAccessor} when `filterValue` is
+   * absent, so accessor-defined columns filter correctly out of the box.
+   * Documented precedence: filterValue → valueAccessor → row[field].
    * Used to pass array-aware value extraction to the pure filter functions.
    */
   private getFilterValues():
@@ -200,9 +204,14 @@ export class FilteringPlugin extends BaseGridPlugin<FilterConfig> {
 
     let map: Map<string, (value: unknown, row: Record<string, unknown>) => unknown | unknown[]> | undefined;
     for (const col of columns) {
-      if (col.field && col.filterValue) {
+      if (!col.field) continue;
+      if (col.filterValue) {
         if (!map) map = new Map();
         map.set(col.field, col.filterValue);
+      } else if (col.valueAccessor) {
+        if (!map) map = new Map();
+        const column = col;
+        map.set(col.field, (_value, row) => resolveCellValue(row as Record<string, unknown>, column));
       }
     }
     return map;
@@ -249,7 +258,10 @@ export class FilteringPlugin extends BaseGridPlugin<FilterConfig> {
       }
       if (filter.operator === 'notIn') {
         const col = this.grid.effectiveConfig?.columns?.find((c) => c.field === field);
-        notInFields.push({ field, filterValue: col?.filterValue });
+        const extractor =
+          col?.filterValue ??
+          (col?.valueAccessor ? (_v: unknown, row: Record<string, unknown>) => resolveCellValue(row, col) : undefined);
+        notInFields.push({ field, filterValue: extractor });
       }
     }
 
@@ -857,7 +869,10 @@ export class FilteringPlugin extends BaseGridPlugin<FilterConfig> {
 
     // Sync path: get unique values from locally available rows (raw input or
     // plugin-managed processed rows when a plugin owns the data, e.g. ServerSide).
-    const uniqueValues = getUniqueValues(this.getDataRows(), field, column.filterValue);
+    const filterExtractor =
+      column.filterValue ??
+      (column.valueAccessor ? (_v: unknown, row: Record<string, unknown>) => resolveCellValue(row, column) : undefined);
+    const uniqueValues = getUniqueValues(this.getDataRows(), field, filterExtractor);
 
     // Position and append to body BEFORE rendering content
     // so getListItemHeight() can read CSS variables from computed styles

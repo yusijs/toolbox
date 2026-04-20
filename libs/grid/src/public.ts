@@ -361,6 +361,9 @@ export { DEFAULT_A11Y_MESSAGES, DEFAULT_ANIMATION_CONFIG, DEFAULT_GRID_ICONS, Fi
 
 // Re-export sorting utilities for custom sort handlers
 export { builtInSort, defaultComparator } from './lib/core/internal/sorting';
+
+// Re-export value-accessor utilities for custom plugins and manual cache invalidation
+export { invalidateAccessorCache, resolveCellValue } from './lib/core/internal/value-accessor';
 // #endregion
 
 // #region Plugin Development

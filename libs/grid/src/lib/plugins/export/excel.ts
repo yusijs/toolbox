@@ -5,6 +5,7 @@
  * Produces XML Spreadsheet 2003 format which opens in Excel.
  */
 
+import { resolveCellValue } from '../../core/internal/value-accessor';
 import type { ColumnConfig } from '../../core/types';
 import { downloadBlob } from './csv';
 import { buildColumnWidthsXml, buildStyleRegistry, resolveDataStyleId } from './excel-styles';
@@ -41,7 +42,7 @@ export function buildExcelXml(rows: any[], columns: ColumnConfig[], params: Expo
     if (styles!.cellStyle) {
       for (const row of rows) {
         for (const col of columns) {
-          const value = row[col.field];
+          const value = resolveCellValue(row, col);
           const dynamic = styles!.cellStyle(value, col.field, row);
           if (dynamic) registry.register(dynamic);
         }
@@ -76,7 +77,7 @@ export function buildExcelXml(rows: any[], columns: ColumnConfig[], params: Expo
   for (const row of rows) {
     xml += '\n<Row>';
     for (const col of columns) {
-      let value = row[col.field];
+      let value = resolveCellValue(row, col);
       if (params.processCell) {
         value = params.processCell(value, col.field, row);
       }

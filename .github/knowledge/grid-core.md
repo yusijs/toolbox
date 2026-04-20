@@ -102,17 +102,18 @@ related: [grid-plugins, grid-features, data-flow-traces]
 
 ## state-ownership-matrix
 
-| State                      | Owner                 | Mutators                                     | Notes                                                        |
-| -------------------------- | --------------------- | -------------------------------------------- | ------------------------------------------------------------ |
-| gridConfig/columns/fitMode | ConfigManager         | merge(), property setters                    | frozen original + mutable effective                          |
-| \_rows (processed)         | grid.ts               | rebuildRowModel, processRows hooks           | after plugin transforms                                      |
-| #rows (raw input)          | grid.ts               | property setter only                         | raw user input, copied to \_rows                             |
-| \_sortState                | grid.ts               | sort API, rebuildRowModel                    | field + direction                                            |
-| \_rowIdMap                 | grid.ts               | \_rebuildRowIdMap on row changes             | O(1): rowId → {row, index}; lazy-rebuilt via #ensureRowIdMap |
-| VirtualState               | VirtualizationManager | refreshVirtualWindow, init methods           | shared mutable object                                        |
-| positionCache/heightCache  | VirtualizationManager | initializePositionCache, invalidateRowHeight | variable height support                                      |
-| shell config + runtime     | grid.ts + ShellState  | registerToolPanel, light DOM parsing         | config maps vs runtime sets                                  |
-| plugin instances           | PluginManager         | Plugin.attach                                | registered in array order                                    |
+| State                      | Owner                 | Mutators                                     | Notes                                                           |
+| -------------------------- | --------------------- | -------------------------------------------- | --------------------------------------------------------------- |
+| gridConfig/columns/fitMode | ConfigManager         | merge(), property setters                    | frozen original + mutable effective                             |
+| \_rows (processed)         | grid.ts               | rebuildRowModel, processRows hooks           | after plugin transforms                                         |
+| #rows (raw input)          | grid.ts               | property setter only                         | raw user input, copied to \_rows                                |
+| \_sortState                | grid.ts               | sort API, rebuildRowModel                    | field + direction                                               |
+| \_rowIdMap                 | grid.ts               | \_rebuildRowIdMap on row changes             | O(1): rowId → {row, index}; lazy-rebuilt via #ensureRowIdMap    |
+| VirtualState               | VirtualizationManager | refreshVirtualWindow, init methods           | shared mutable object                                           |
+| positionCache/heightCache  | VirtualizationManager | initializePositionCache, invalidateRowHeight | variable height support                                         |
+| shell config + runtime     | grid.ts + ShellState  | registerToolPanel, light DOM parsing         | config maps vs runtime sets                                     |
+| plugin instances           | PluginManager         | Plugin.attach                                | registered in array order                                       |
+| accessor cache             | value-accessor.ts     | resolveCellValue, invalidateAccessorCache    | WeakMap<row, Map<field, value>>; in-place edits must invalidate |
 
 ## type-interfaces
 
@@ -143,5 +144,10 @@ related: [grid-plugins, grid-features, data-flow-traces]
 | style-injector     | CSS injection, plugin styles, custom styles                                    |
 | aria / aria-labels | accessibility state, ARIA attributes, announcements                            |
 | aggregators        | sum, avg, count for grouping                                                   |
+| value-accessor     | single source of truth for cell value resolution; per-row WeakMap cache        |
 
 - INVARIANT: numeric aggregators (`sum`, `avg`, `min`, `max`) skip blank cells (`null` / `undefined` / `''` / `NaN`) — matches Excel SUM/AVG/MIN/MAX semantics. `Number('') || 0` would otherwise pull blanks in as zero, dragging `min` down against positive data, inflating `avg`'s denominator, and letting blanks beat all-negative data in `max`. `avg` divides by the count of non-blank cells (returns 0 if all blank or empty). Pivot's value extraction applies the same filter before calling value aggregators. DECIDED (Apr 2026): blank-skipping is the default — callers who need zero-substitution must provide a custom aggregator.
+
+- DECIDED (#230): `column.valueAccessor({ row, column, rowIndex })` is the single source of truth for cell value resolution. Used by sort, filter, render, export, clipboard, and **built-in aggregators (sum/avg/min/max/first/last)** via `resolveCellValue(row, column, rowIndex)`. Precedence rules — `sortComparator` overrides `valueAccessor` for sort; `filterValue` overrides `valueAccessor` for filter; `valueAccessor` always wins over plain field reads for render/format/export/copy/aggregate. `valueAccessor` is the _default_ value source, never an override of a per-feature escape hatch. `resolveCellValue` and `invalidateAccessorCache` are exported from `public.ts` so userland plugins / manual mutators can participate.
+
+- INVARIANT: accessor results are memoized per `(row identity, column.field)` in a `WeakMap<row, Map<field, value>>`. Immutable updates (new row reference) auto-invalidate. In-place mutations MUST call `invalidateAccessorCache(row, field)` — wired into `RowManager.updateRow/updateRows/applyTransaction` and `EditingPlugin` commit. Primitive rows bypass the cache (WeakMap key constraint). FLOW: sort/filter/render/export → resolveCellValue → cache hit OR accessor() → cache write.

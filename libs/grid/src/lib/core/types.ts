@@ -836,6 +836,46 @@ export interface BaseColumnConfig<TRow = any, TValue = any> {
   resizable?: boolean;
   /** Optional custom comparator for sorting (a,b) -> number */
   sortComparator?: (a: TValue, b: TValue, rowA: TRow, rowB: TRow) => number;
+  /**
+   * Compute the cell's value from the row. When defined, this is the single
+   * source of truth used by sorting, filtering, formatting, cell rendering,
+   * export, and clipboard — eliminating the need to duplicate value-extraction
+   * logic across `sortComparator`, `filterValue`, and per-renderer code.
+   *
+   * **Resolution precedence**:
+   * - **Sort**: `sortComparator` → `valueAccessor` → `row[field]`
+   * - **Filter**: `filterValue` → `valueAccessor` → `row[field]`
+   * - **Render / format / export / copy**: `valueAccessor` → `row[field]`
+   *
+   * The accessor is the *default* value source — per-column escape hatches
+   * (`sortComparator`, `filterValue`) still take precedence when set.
+   *
+   * Results are memoized per `(row identity, column field)` so accessors are
+   * free to be "slow but correct" (e.g. `array.find(...)`). Immutable row
+   * updates auto-invalidate; in-place mutations are invalidated by the grid's
+   * edit / transaction paths.
+   *
+   * Note: a `valueAccessor` without a paired `valueSetter` (planned API)
+   * implies the column is read-only — editors will not commit through it.
+   *
+   * @example
+   * ```typescript
+   * // Computed value from nested data
+   * {
+   *   field: 'bolDate',
+   *   header: 'BL date',
+   *   valueAccessor: ({ row }) => {
+   *     if (isCargo(row)) {
+   *       return row.movements.find(m => m.operationType === 'LOAD')?.movementDate ?? null;
+   *     }
+   *     return row.movementDate ?? null;
+   *   },
+   *   filterType: 'date',
+   *   // No need for sortComparator or filterValue — they fall back to the accessor.
+   * }
+   * ```
+   */
+  valueAccessor?: (ctx: { row: TRow; column: ColumnConfig<TRow>; rowIndex: number }) => TValue;
   /** For select type - available options */
   options?: Array<{ label: string; value: unknown }> | (() => Array<{ label: string; value: unknown }>);
   /**

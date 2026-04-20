@@ -7,6 +7,7 @@
 import type { ColumnConfig, GridHost, InternalGrid, SortHandler, SortState } from '../types';
 import { announce, getA11yMessage } from './aria';
 import { renderHeader } from './header';
+import { resolveCellValue } from './value-accessor';
 
 /**
  * Default comparator used when no column-level `sortComparator` is configured.
@@ -79,8 +80,19 @@ export function builtInSort<T>(rows: T[], sortState: SortState, columns: ColumnC
   const sorted = [...rows];
 
   if (customComparator) {
-    // Custom comparator path — keep the indirect call
-    sorted.sort((rA: any, rB: any) => customComparator(rA[field], rB[field], rA, rB) * direction);
+    // Custom comparator path — keep the indirect call.
+    // sortComparator wins over valueAccessor (per-column override).
+    if (col?.valueAccessor) {
+      sorted.sort(
+        (rA: any, rB: any) =>
+          customComparator(resolveCellValue(rA, col), resolveCellValue(rB, col), rA, rB) * direction,
+      );
+    } else {
+      sorted.sort((rA: any, rB: any) => customComparator(rA[field], rB[field], rA, rB) * direction);
+    }
+  } else if (col?.valueAccessor) {
+    // valueAccessor path — extract values via the accessor.
+    sortInPlaceWithAccessor(sorted, col, direction);
   } else {
     // Fast path — inline default comparator and fold direction to avoid
     // ~20M indirect function calls + multiplications at 1M rows.
@@ -107,6 +119,22 @@ function sortInPlace(rows: any[], field: string, direction: 1 | -1): void {
 }
 
 /**
+ * Sort an array in-place using `column.valueAccessor` to extract each cell value.
+ * Mirrors {@link sortInPlace} but routes value reads through the accessor +
+ * shared per-row cache. Used when no `sortComparator` is configured.
+ */
+function sortInPlaceWithAccessor(rows: any[], column: ColumnConfig<any>, direction: 1 | -1): void {
+  rows.sort((rA: any, rB: any) => {
+    const a = resolveCellValue(rA, column);
+    const b = resolveCellValue(rB, column);
+    if (a == null && b == null) return 0;
+    if (a == null) return -direction;
+    if (b == null) return direction;
+    return a > b ? direction : a < b ? -direction : 0;
+  });
+}
+
+/**
  * Execute the built-in sort on rows in-place, using a column-level custom
  * comparator when present, otherwise the default comparator.
  */
@@ -114,7 +142,17 @@ function executeBuiltInSortInPlace(rows: any[], field: string, direction: 1 | -1
   const col = columns.find((c) => c.field === field);
   const customComparator = col?.sortComparator;
   if (customComparator) {
-    rows.sort((rA: any, rB: any) => customComparator(rA[field], rB[field], rA, rB) * direction);
+    // sortComparator wins over valueAccessor.
+    if (col?.valueAccessor) {
+      rows.sort(
+        (rA: any, rB: any) =>
+          customComparator(resolveCellValue(rA, col), resolveCellValue(rB, col), rA, rB) * direction,
+      );
+    } else {
+      rows.sort((rA: any, rB: any) => customComparator(rA[field], rB[field], rA, rB) * direction);
+    }
+  } else if (col?.valueAccessor) {
+    sortInPlaceWithAccessor(rows, col, direction);
   } else {
     sortInPlace(rows, field, direction);
   }

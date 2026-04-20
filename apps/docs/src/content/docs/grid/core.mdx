@@ -190,18 +190,143 @@ The grid is configured through the `gridConfig` property (or individual shorthan
 
 ## Presentation
 
-### Choosing: Formatter vs Renderer
+### Value Accessors
 
-The grid offers two ways to customize how cell data is displayed:
+**Resolve a cell's value when it isn't a plain field read.** By default the grid reads `row[field]`. A `valueAccessor` is only relevant when that's not the right value — typically because the cell is computed from multiple row fields, plucked from a nested structure, or derived from something outside the row.
 
-| | Formatter (`format`) | Renderer (`renderer`) |
-|---|---|---|
-| **Returns** | String | DOM element |
-| **Use for** | Currency, dates, percentages, text formatting | Checkboxes, badges, buttons, links, images |
-| **Performance** | Faster (text only) | Slower (DOM creation) |
-| **Interactivity** | None (display only) | Full (event listeners, components) |
+You _could_ achieve the visual result with a custom `renderer` or `format` function alone, but you'd lose every other feature that depends on knowing what the cell's value actually is — sorting (unless you also write a `sortComparator`), filtering (unless you also write a `filterValue`), grouping, aggregations, copy-to-clipboard, and exports (CSV / Excel) would all see `undefined` or the raw `row[field]`. `valueAccessor` plugs the value in once and every consumer stays consistent.
 
-**Rule of thumb:** If you only need to change how a value *looks*, use a `format` function. If you need interactive elements or custom HTML structure, use a `renderer`.
+```typescript
+grid.columns = [
+  // Computed from sibling fields
+  {
+    field: 'total',
+    headerName: 'Total',
+    valueAccessor: ({ row }) => row.qty * row.price,
+  },
+
+  // Pluck from a nested array
+  {
+    field: 'lastShipmentDate',
+    headerName: 'Last Shipment',
+    valueAccessor: ({ row }) => row.shipments?.find((s) => s.kind === 'BL')?.date,
+    format: (v) => (v ? new Date(v).toLocaleDateString() : '—'),
+  },
+
+  // Normalize / coerce
+  {
+    field: 'name',
+    valueAccessor: ({ row }) => `${row.firstName} ${row.lastName}`.trim(),
+  },
+];
+```
+
+**The accessor receives** `{ row, column, rowIndex }` and returns the column's typed value. Use it whenever the *cell value* isn't a plain field read.
+
+#### Precedence
+
+For each operation, the grid looks for a column-level override first, then falls back to the accessor, then to the field:
+
+| Operation | Order |
+|---|---|
+| **Sort comparison** | `sortComparator` → `valueAccessor` → `row[field]` |
+| **Filter value** | `filterValue` → `valueAccessor` → `row[field]` |
+| **Group key & aggregations** (`sum`, `avg`, `min`, `max`, `first`, `last`) | `valueAccessor` → `row[field]` |
+| **Copy / export (CSV, Excel)** | `valueAccessor` → `row[field]` (then `format` if present) |
+| **Display** (`format` / `renderer`) | `valueAccessor` → `row[field]` |
+
+This means you write the lookup logic once and every consumer stays consistent.
+
+#### Caching & invalidation
+
+Accessor results are cached per `(row, column.field)` in a `WeakMap` keyed on the row object — so an expensive accessor (e.g. `array.find`) runs once per row regardless of how many features read it. Primitive rows bypass the cache.
+
+The cache is invalidated automatically when:
+
+- A row reference changes (immutable updates — recommended pattern).
+- You call `RowManager.updateRow` / `updateRows` / `applyTransaction` (in-place edits).
+- The Editing plugin commits a value.
+
+If you mutate row data outside of those paths, call `invalidateAccessorCache(row?, field?)` manually:
+
+```typescript
+import { invalidateAccessorCache } from '@toolbox-web/grid';
+
+row.shipments.push(newShipment);
+invalidateAccessorCache(row, 'lastShipmentDate'); // narrow scope
+// or invalidateAccessorCache(row);                // all fields on this row
+// or invalidateAccessorCache();                   // entire cache
+```
+
+:::tip[Reactive accessors (signals / refs / state)]
+If your accessor closes over reactive state — an Angular `signal`, a Vue `ref`, a React store value — the cache won't notice when that state changes (the row reference is still the same). Pair the accessor with a framework-level effect that invalidates the cache and asks the grid to re-render:
+
+<Tabs syncKey="framework">
+  <TabItem label="Angular">
+```typescript
+import { effect, inject } from '@angular/core';
+import { invalidateAccessorCache } from '@toolbox-web/grid';
+
+fxRate = signal(1.0);
+
+columns = [{
+  field: 'totalUsd',
+  valueAccessor: ({ row }) => row.totalEur * this.fxRate(),
+}];
+
+constructor() {
+  effect(() => {
+    this.fxRate(); // tracked dependency
+    invalidateAccessorCache();
+    this.grid()?.requestRender();
+  });
+}
+```
+  </TabItem>
+  <TabItem label="Vue">
+```typescript
+import { ref, watch } from 'vue';
+import { invalidateAccessorCache } from '@toolbox-web/grid';
+
+const fxRate = ref(1.0);
+
+const columns = [{
+  field: 'totalUsd',
+  valueAccessor: ({ row }) => row.totalEur * fxRate.value,
+}];
+
+watch(fxRate, () => {
+  invalidateAccessorCache();
+  gridRef.value?.requestRender();
+});
+```
+  </TabItem>
+  <TabItem label="React">
+```typescript
+import { useEffect } from 'react';
+import { invalidateAccessorCache } from '@toolbox-web/grid';
+
+const [fxRate, setFxRate] = useState(1.0);
+
+const columns = useMemo(() => [{
+  field: 'totalUsd',
+  valueAccessor: ({ row }) => row.totalEur * fxRate,
+}], [fxRate]);
+
+useEffect(() => {
+  invalidateAccessorCache();
+  gridRef.current?.requestRender();
+}, [fxRate]);
+```
+  </TabItem>
+</Tabs>
+:::
+
+#### Editing
+
+Accessors are **read-only**. Cells driven by a `valueAccessor` cannot currently be written back through the Editing plugin (a matching `valueSetter` API is planned). For now, gate them with `editable: false` or omit `editable`.
+
+---
 
 ### Formatters
 
@@ -406,6 +531,19 @@ For event-driven use cases, click and activation events (`cell-click`, `row-clic
 <ShowSource file="demos/CustomRenderersDemo.astro">
   <CustomRenderersDemo />
 </ShowSource>
+
+### Choosing: Formatter vs Renderer
+
+Now that you've seen both, here's a quick reference for picking the right one:
+
+| | Formatter (`format`) | Renderer (`renderer`) |
+|---|---|---|
+| **Returns** | String | DOM element |
+| **Use for** | Currency, dates, percentages, text formatting | Checkboxes, badges, buttons, links, images |
+| **Performance** | Faster (text only) | Slower (DOM creation) |
+| **Interactivity** | None (display only) | Full (event listeners, components) |
+
+**Rule of thumb:** If you only need to change how a value *looks*, use a `format` function. If you need interactive elements or custom HTML structure, use a `renderer`.
 
 ### Row Animation
 

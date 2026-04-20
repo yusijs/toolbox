@@ -8,6 +8,7 @@
  * **Without Selection plugin:** Copies entire grid
  */
 
+import { resolveCellValue } from '../../core/internal/value-accessor';
 import {
   BaseGridPlugin,
   type GridElement,
@@ -382,7 +383,7 @@ export class ClipboardPlugin extends BaseGridPlugin<ClipboardConfig> {
     // Data rows
     for (const row of rows) {
       const cells = columns.map((col) => {
-        const value = row[col.field];
+        const value = resolveCellValue(row, col);
         if (processCell) return processCell(value, col.field, row);
         return this.#formatCellAsDisplayed(col, value, row);
       });

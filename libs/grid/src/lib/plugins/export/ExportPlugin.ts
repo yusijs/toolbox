@@ -7,6 +7,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { resolveCellValue } from '../../core/internal/value-accessor';
 import { BaseGridPlugin, type PluginManifest, type PluginQuery } from '../../core/plugin/base-plugin';
 import type { ColumnConfig } from '../../core/types';
 import { resolveColumns, resolveRows } from '../shared/data-collection';
@@ -178,7 +179,7 @@ export class ExportPlugin extends BaseGridPlugin<ExportConfig> {
           const jsonData = rows.map((row) => {
             const obj: Record<string, any> = {};
             for (const col of columns) {
-              let value = row[col.field];
+              let value = resolveCellValue(row, col);
               if (fullParams.processCell) {
                 value = fullParams.processCell(value, col.field, row);
               }

@@ -11,6 +11,7 @@ import {
 import { ensureCellVisible } from './keyboard';
 import { evalTemplateString, finalCellScrub, sanitizeHTML } from './sanitize';
 import { booleanCellHTML, clearCellFocus, formatDateValue, getRowIndexFromCell } from './utils';
+import { resolveCellValue } from './value-accessor';
 
 /** Callback type for plugin row rendering hook */
 export type RenderRowHook = (row: any, rowEl: HTMLElement, rowIndex: number) => boolean;
@@ -479,7 +480,7 @@ function fastPatchRow(grid: GridHost, rowEl: HTMLElement, rowData: any, rowIndex
       if (cell.firstElementChild) grid.__frameworkAdapter?.releaseCell?.(cell);
 
       const col = columns[i];
-      const value = rowData[col.field];
+      const value = resolveCellValue(rowData, col, rowIndex);
       cell.textContent = value == null ? '' : String(value);
       // Update data-row for click handling
       if (cell.getAttribute('data-row') !== rowIndexStr) {
@@ -561,7 +562,7 @@ function fastPatchRow(grid: GridHost, rowEl: HTMLElement, rowData: any, rowIndex
         }
       }
       try {
-        const value = rowData[col.field];
+        const value = resolveCellValue(rowData, col, rowIndex);
         const result = cellClassFn(value, rowData, col);
         const cellClasses = typeof result === 'string' ? result.split(/\s+/) : result;
         if (cellClasses && cellClasses.length > 0) {
@@ -590,7 +591,7 @@ function fastPatchRow(grid: GridHost, rowEl: HTMLElement, rowData: any, rowIndex
     // Uses priority chain: column → typeDefaults → adapter → built-in
     const cellRenderer = resolveRenderer(grid, col);
     if (cellRenderer) {
-      const renderedValue = rowData[col.field];
+      const renderedValue = resolveCellValue(rowData, col, rowIndex);
       // Pass cellEl for framework adapters that want to cache per-cell
       const produced = cellRenderer({
         row: rowData,
@@ -636,7 +637,7 @@ function fastPatchRow(grid: GridHost, rowEl: HTMLElement, rowData: any, rowIndex
 
     // Handle compiled view templates — re-evaluate with current row data
     if (col.__compiledView) {
-      const value = rowData[col.field];
+      const value = resolveCellValue(rowData, col, rowIndex);
       const output = col.__compiledView({ row: rowData, value, field: col.field, column: col });
       const blocked = col.__compiledView.__blocked;
       if (blocked) {
@@ -663,7 +664,7 @@ function fastPatchRow(grid: GridHost, rowEl: HTMLElement, rowData: any, rowIndex
 
     // Handle inline view templates — re-evaluate with current row data
     if (col.__viewTemplate) {
-      const value = rowData[col.field];
+      const value = resolveCellValue(rowData, col, rowIndex);
       const rawTpl = col.__viewTemplate.innerHTML;
       if (/Reflect\.|\bProxy\b|ownKeys\(/.test(rawTpl)) {
         cell.textContent = '';
@@ -692,7 +693,7 @@ function fastPatchRow(grid: GridHost, rowEl: HTMLElement, rowData: any, rowIndex
     }
 
     // Compute and set display value
-    const value = rowData[col.field];
+    const value = resolveCellValue(rowData, col, rowIndex);
     let displayStr: string;
 
     // Release editor views if cell has element children (indicating prior editor/renderer DOM).
@@ -789,7 +790,7 @@ export function renderInlineRow(grid: GridHost, rowEl: HTMLElement, rowData: any
     cell.setAttribute('data-header', col.header ?? col.field); // Header text for responsive CSS
     if (col.type) cell.setAttribute('data-type', col.type);
 
-    let value = (rowData as Record<string, unknown>)[col.field];
+    let value = resolveCellValue(rowData, col, rowIndex);
     // Resolve format using priority chain: column → typeDefaults → adapter
     const formatFn = resolveFormat(grid, col);
     if (formatFn) {
@@ -947,7 +948,7 @@ export function renderInlineRow(grid: GridHost, rowEl: HTMLElement, rowData: any
     const cellClassFn = col.cellClass;
     if (cellClassFn) {
       try {
-        const cellValue = (rowData as Record<string, unknown>)[col.field];
+        const cellValue = resolveCellValue(rowData, col, rowIndex);
         const result = cellClassFn(cellValue, rowData, col);
         const cellClasses = typeof result === 'string' ? result.split(/\s+/) : result;
         if (cellClasses && cellClasses.length > 0) {

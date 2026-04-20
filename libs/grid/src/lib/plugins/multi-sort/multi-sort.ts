@@ -4,6 +4,7 @@
  * Pure functions for multi-column sorting operations.
  */
 
+import { resolveCellValue } from '../../core/internal/value-accessor';
 import type { ColumnConfig } from '../../core/types';
 import type { SortModel } from './types';
 
@@ -40,22 +41,29 @@ export function sortRowsInPlace<TRow = unknown>(rows: TRow[], sorts: SortModel[]
       field: sort.field,
       asc: sort.direction === 'asc',
       comparator: col?.sortComparator ?? defaultComparator,
+      column: col,
     };
   });
 
+  // sortComparator (when present) takes precedence over valueAccessor; both still
+  // receive the accessor-resolved value when no comparator is given. Documented
+  // precedence: sortComparator → valueAccessor → field.
+  const getValue = (row: any, link: (typeof chain)[number]) =>
+    link.column?.valueAccessor ? resolveCellValue(row, link.column) : row[link.field];
+
   if (chain.length === 1) {
     // Single-sort fast path — avoid loop overhead
-    const { field, asc, comparator } = chain[0];
+    const link = chain[0];
     rows.sort((a: any, b: any) => {
-      const result = comparator(a[field], b[field], a, b);
-      return asc ? result : -result;
+      const result = link.comparator(getValue(a, link), getValue(b, link), a, b);
+      return link.asc ? result : -result;
     });
   } else {
     rows.sort((a: any, b: any) => {
       for (let i = 0; i < chain.length; i++) {
-        const { field, asc, comparator } = chain[i];
-        const result = comparator(a[field], b[field], a, b);
-        if (result !== 0) return asc ? result : -result;
+        const link = chain[i];
+        const result = link.comparator(getValue(a, link), getValue(b, link), a, b);
+        if (result !== 0) return link.asc ? result : -result;
       }
       return 0;
     });

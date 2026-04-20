@@ -128,13 +128,17 @@ const columns = [
   // Static header tooltip
   { field: 'revenue', header: 'Rev.', headerTooltip: 'Total revenue in USD (before tax)' },
 
-  // Dynamic cell tooltip from row data
-  { field: 'name', cellTooltip: (ctx) => `${ctx.row.firstName} ${ctx.row.lastName}` },
+  // Dynamic cell tooltip that adds context beyond the cell value
+  { field: 'name', cellTooltip: (ctx) => `Hired ${new Date(ctx.row.hireDate).toLocaleDateString()}` },
 
   // Disable tooltip for a specific column
   { field: 'actions', cellTooltip: false, headerTooltip: false },
 ];
 ```
+
+:::tip
+If the cell value itself isn't a plain `row[field]` read (for example, a "Full Name" computed from `firstName + lastName`), use [`valueAccessor`](/grid/core/#value-accessors) on the column rather than computing it inside `cellTooltip`. The accessor runs once per row and is reused by sorting, filtering, exports, and the default tooltip — `cellTooltip` only adds extra information beyond the cell's value.
+:::
 
 | Property | Type | Description |
 | -------- | ---- | ----------- |

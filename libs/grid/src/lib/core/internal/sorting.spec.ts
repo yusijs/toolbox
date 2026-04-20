@@ -341,6 +341,42 @@ describe('builtInSort', () => {
     builtInSort(rows, { field: 'id', direction: 1 }, columns as any);
     expect(rows.map((r) => r.id)).toEqual(original.map((r) => r.id));
   });
+
+  it('uses valueAccessor when no field-level value exists', () => {
+    const data = [
+      { first: 'Ada', last: 'Lovelace' },
+      { first: 'Grace', last: 'Hopper' },
+      { first: 'Margaret', last: 'Hamilton' },
+    ];
+    const cols = [
+      {
+        field: 'fullName',
+        sortable: true,
+        valueAccessor: ({ row }: { row: { first: string; last: string } }) => `${row.last}, ${row.first}`,
+      },
+    ];
+    const result = builtInSort(data, { field: 'fullName', direction: 1 }, cols as any);
+    expect(result.map((r) => r.last)).toEqual(['Hamilton', 'Hopper', 'Lovelace']);
+  });
+
+  it('sortComparator overrides valueAccessor', () => {
+    const data = [
+      { first: 'Ada', last: 'Lovelace' },
+      { first: 'Grace', last: 'Hopper' },
+    ];
+    const cols = [
+      {
+        field: 'fullName',
+        sortable: true,
+        valueAccessor: ({ row }: { row: { first: string; last: string } }) => row.last,
+        // Comparator receives raw values from field; we feed it row.first via custom signature.
+        sortComparator: (a: unknown, b: unknown, rowA: { first: string }, rowB: { first: string }) =>
+          rowA.first.localeCompare(rowB.first),
+      },
+    ];
+    const result = builtInSort(data, { field: 'fullName', direction: 1 }, cols as any);
+    expect(result.map((r) => r.first)).toEqual(['Ada', 'Grace']);
+  });
 });
 
 describe('reapplyCoreSort', () => {

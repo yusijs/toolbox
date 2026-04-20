@@ -4,6 +4,7 @@
  * Functions for building and downloading CSV content.
  */
 
+import { resolveCellValue } from '../../core/internal/value-accessor';
 import type { ColumnConfig } from '../../core/types';
 import type { ExportParams } from './types';
 
@@ -62,7 +63,7 @@ export function buildCsv(rows: any[], columns: ColumnConfig[], params: ExportPar
   // Build data rows
   for (const row of rows) {
     const cells = columns.map((col) => {
-      let value = row[col.field];
+      let value = resolveCellValue(row, col);
       if (params.processCell) {
         value = params.processCell(value, col.field, row);
       }

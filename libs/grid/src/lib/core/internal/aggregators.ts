@@ -13,8 +13,20 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { resolveCellValue } from './value-accessor';
+
 export type AggregatorFn = (rows: any[], field: string, column?: any) => any;
 export type AggregatorRef = string | AggregatorFn;
+
+/**
+ * Read a cell for an aggregator. When the column has a `valueAccessor`,
+ * route through it (single source of truth — see issue #230); otherwise
+ * fall back to a direct field read for the fast path.
+ */
+function readCell(row: any, field: string, column?: any): unknown {
+  if (column?.valueAccessor) return resolveCellValue(row, column);
+  return row?.[field];
+}
 
 /**
  * Check whether a cell value should be treated as blank and skipped by numeric
@@ -32,22 +44,22 @@ function isBlankCell(v: unknown): boolean {
 
 /** Built-in aggregator functions */
 const builtInAggregators: Record<string, AggregatorFn> = {
-  sum: (rows, field) => {
+  sum: (rows, field, column) => {
     let sum = 0;
     for (let i = 0; i < rows.length; i++) {
-      const raw = rows[i][field];
+      const raw = readCell(rows[i], field, column);
       if (isBlankCell(raw)) continue;
       const n = Number(raw);
       if (!isNaN(n)) sum += n;
     }
     return sum;
   },
-  avg: (rows, field) => {
+  avg: (rows, field, column) => {
     if (!rows.length) return 0;
     let sum = 0;
     let count = 0;
     for (let i = 0; i < rows.length; i++) {
-      const raw = rows[i][field];
+      const raw = readCell(rows[i], field, column);
       if (isBlankCell(raw)) continue;
       const n = Number(raw);
       if (isNaN(n)) continue;
@@ -57,11 +69,11 @@ const builtInAggregators: Record<string, AggregatorFn> = {
     return count > 0 ? sum / count : 0;
   },
   count: (rows) => rows.length,
-  min: (rows, field) => {
+  min: (rows, field, column) => {
     if (!rows.length) return 0;
     let min = Infinity;
     for (let i = 0; i < rows.length; i++) {
-      const raw = rows[i][field];
+      const raw = readCell(rows[i], field, column);
       if (isBlankCell(raw)) continue;
       const v = Number(raw);
       if (isNaN(v)) continue;
@@ -69,11 +81,11 @@ const builtInAggregators: Record<string, AggregatorFn> = {
     }
     return min === Infinity ? 0 : min;
   },
-  max: (rows, field) => {
+  max: (rows, field, column) => {
     if (!rows.length) return 0;
     let max = -Infinity;
     for (let i = 0; i < rows.length; i++) {
-      const raw = rows[i][field];
+      const raw = readCell(rows[i], field, column);
       if (isBlankCell(raw)) continue;
       const v = Number(raw);
       if (isNaN(v)) continue;
@@ -81,8 +93,8 @@ const builtInAggregators: Record<string, AggregatorFn> = {
     }
     return max === -Infinity ? 0 : max;
   },
-  first: (rows, field) => rows[0]?.[field],
-  last: (rows, field) => rows[rows.length - 1]?.[field],
+  first: (rows, field, column) => (rows[0] ? readCell(rows[0], field, column) : undefined),
+  last: (rows, field, column) => (rows.length ? readCell(rows[rows.length - 1], field, column) : undefined),
 };
 
 /** Custom aggregator registry (for plugins to add to) */

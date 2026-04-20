@@ -15,6 +15,7 @@ import { MISSING_ROW_ID, ROW_NOT_FOUND, throwDiagnostic } from './diagnostics';
 import { RenderPhase } from './render-scheduler';
 import { animateRow } from './row-animation';
 import { invalidateCellCache } from './rows';
+import { invalidateAccessorCache } from './value-accessor';
 
 // #region Standalone Row ID Helpers
 
@@ -103,6 +104,9 @@ export class RowManager<T = any> {
       if (oldValue !== newValue) {
         changedFields.push({ field, oldValue, newValue });
         (row as Record<string, unknown>)[field] = newValue;
+        // valueAccessor cache is keyed by row identity; in-place mutations
+        // need explicit invalidation per (row, field).
+        invalidateAccessorCache(row as object, field);
       }
     }
 
@@ -162,6 +166,7 @@ export class RowManager<T = any> {
         if (oldValue !== newValue) {
           anyChanged = true;
           (row as Record<string, unknown>)[field] = newValue;
+          invalidateAccessorCache(row as object, field);
 
           // Emit cell-change for each changed field
           grid.dispatchEvent(
@@ -358,6 +363,7 @@ export class RowManager<T = any> {
           if (oldValue !== newValue) {
             changed = true;
             (row as Record<string, unknown>)[field] = newValue;
+            invalidateAccessorCache(row as object, field);
 
             grid.dispatchEvent(
               new CustomEvent('cell-change', {

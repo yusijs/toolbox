@@ -17,6 +17,7 @@
 
 import { announce, getA11yMessage } from '../../core/internal/aria';
 import { ensureCellVisible } from '../../core/internal/keyboard';
+import { invalidateAccessorCache } from '../../core/internal/value-accessor';
 import type {
   AfterCellRenderContext,
   AfterRowRenderContext,
@@ -2195,6 +2196,7 @@ export class EditingPlugin<T = unknown> extends BaseGridPlugin<EditingConfig> {
 
     // Apply the value and mark row as changed
     (rowData as Record<string, unknown>)[field] = newValue;
+    invalidateAccessorCache(rowData as object, field);
     if (rowId) {
       this.#dirty.changedRowIds.add(rowId);
     }

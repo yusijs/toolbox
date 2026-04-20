@@ -133,6 +133,25 @@ describe('aggregators', () => {
       const result = runAggregator(colAwareFn, testRows, 'value', { customProp: 'test' });
       expect(result).toBe('test');
     });
+
+    it('built-in aggregators route through column.valueAccessor when present (#230)', () => {
+      const rows = [
+        { qty: 2, price: 5 },
+        { qty: 3, price: 4 },
+        { qty: 1, price: 10 },
+      ];
+      const column = {
+        field: 'total',
+        valueAccessor: ({ row }: { row: { qty: number; price: number } }) => row.qty * row.price,
+      };
+      // Direct field reads would yield no value (no `total` field); accessor wires it up.
+      // Computed totals: 2*5=10, 3*4=12, 1*10=10
+      expect(runAggregator('sum', rows, 'total', column)).toBe(32);
+      expect(runAggregator('min', rows, 'total', column)).toBe(10);
+      expect(runAggregator('max', rows, 'total', column)).toBe(12);
+      expect(runAggregator('first', rows, 'total', column)).toBe(10);
+      expect(runAggregator('last', rows, 'total', column)).toBe(10);
+    });
   });
 
   describe('custom aggregator registration', () => {
