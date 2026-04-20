@@ -45,6 +45,19 @@ The feature requires a **data source** that implements the `getRows` method. Pas
 ```ts
 import { queryGrid } from '@toolbox-web/grid';
 import '@toolbox-web/grid/features/server-side';
+import type { GetRowsParams, ServerSideDataSource } from '@toolbox-web/grid/plugins/server-side';
+
+const dataSource: ServerSideDataSource = {
+  async getRows(params: GetRowsParams) {
+    // params: { startNode, endNode, sortModel, filterModel }
+    const response = await fetch(`/api/data?start=${params.startNode}&end=${params.endNode}`);
+    const data = await response.json();
+    return {
+      rows: data.rows,
+      totalNodeCount: data.total, // Required for scroll height calculation
+    };
+  },
+};
 
 const grid = queryGrid('tbw-grid');
 grid.gridConfig = {
@@ -56,17 +69,7 @@ grid.gridConfig = {
   features: {
     serverSide: {
       pageSize: 50,
-      dataSource: {
-        async getRows(params) {
-          // params: { startNode, endNode, sortModel, filterModel }
-          const response = await fetch(`/api/data?start=${params.startNode}&end=${params.endNode}`);
-          const data = await response.json();
-          return {
-            rows: data.rows,
-            totalNodeCount: data.total, // Required for scroll height calculation
-          };
-        },
-      },
+      dataSource,
     },
   },
 };
@@ -76,9 +79,10 @@ grid.gridConfig = {
 ```tsx
 import '@toolbox-web/grid-react/features/server-side';
 import { DataGrid } from '@toolbox-web/grid-react';
+import type { GetRowsParams, ServerSideDataSource } from '@toolbox-web/grid/plugins/server-side';
 
-const dataSource = {
-  async getRows(params) {
+const dataSource: ServerSideDataSource = {
+  async getRows(params: GetRowsParams) {
     const response = await fetch(`/api/data?start=${params.startNode}&end=${params.endNode}`);
     const data = await response.json();
     return { rows: data.rows, totalNodeCount: data.total };
@@ -102,19 +106,22 @@ function ServerSideGrid() {
   </TabItem>
   <TabItem label="Vue">
 ```html
-<script setup>
+<script setup lang="ts">
 import '@toolbox-web/grid-vue/features/server-side';
 import { TbwGrid, TbwGridColumn } from '@toolbox-web/grid-vue';
+import type { GetRowsParams, ServerSideDataSource } from '@toolbox-web/grid/plugins/server-side';
+
+const dataSource: ServerSideDataSource = {
+  async getRows(params: GetRowsParams) {
+    const response = await fetch(`/api/data?start=${params.startNode}&end=${params.endNode}`);
+    const data = await response.json();
+    return { rows: data.rows, totalNodeCount: data.total };
+  },
+};
 
 const serverSideConfig = {
   pageSize: 50,
-  dataSource: {
-    async getRows(params) {
-      const response = await fetch(`/api/data?start=${params.startNode}&end=${params.endNode}`);
-      const data = await response.json();
-      return { rows: data.rows, totalNodeCount: data.total };
-    },
-  },
+  dataSource,
 };
 </script>
 
@@ -135,6 +142,7 @@ import '@toolbox-web/grid-angular/features/server-side';
 import { Component } from '@angular/core';
 import { Grid } from '@toolbox-web/grid-angular';
 import type { ColumnConfig } from '@toolbox-web/grid';
+import type { GetRowsParams, ServerSideDataSource } from '@toolbox-web/grid/plugins/server-side';
 
 @Component({
   selector: 'app-server-side-grid',
@@ -154,15 +162,17 @@ export class ServerSideGridComponent {
     { field: 'email', header: 'Email' },
   ];
 
+  dataSource: ServerSideDataSource = {
+    getRows: async (params: GetRowsParams) => {
+      const response = await fetch(`/api/data?start=${params.startNode}&end=${params.endNode}`);
+      const data = await response.json();
+      return { rows: data.rows, totalNodeCount: data.total };
+    },
+  };
+
   serverSideConfig = {
     pageSize: 50,
-    dataSource: {
-      getRows: async (params: any) => {
-        const response = await fetch(`/api/data?start=${params.startNode}&end=${params.endNode}`);
-        const data = await response.json();
-        return { rows: data.rows, totalNodeCount: data.total };
-      },
-    },
+    dataSource: this.dataSource,
   };
 }
 ```
@@ -275,12 +285,20 @@ The grid deliberately does **not** manage transport connections. Your applicatio
 import { queryGrid } from '@toolbox-web/grid';
 import '@toolbox-web/grid/features/server-side';
 import type { RowTransaction } from '@toolbox-web/grid';
+import type { GetRowsParams, ServerSideDataSource } from '@toolbox-web/grid/plugins/server-side';
 
 interface Employee {
   id: string;
   name: string;
   status: string;
 }
+
+const dataSource: ServerSideDataSource<Employee> = {
+  async getRows(params: GetRowsParams) {
+    const res = await fetch(`/api/employees?start=${params.startNode}&end=${params.endNode}`);
+    return res.json();
+  },
+};
 
 const grid = queryGrid<Employee>('tbw-grid');
 grid.gridConfig = {
@@ -292,12 +310,7 @@ grid.gridConfig = {
   features: {
     serverSide: {
       pageSize: 50,
-      dataSource: {
-        async getRows(params) {
-          const res = await fetch(`/api/employees?start=${params.startNode}&end=${params.endNode}`);
-          return res.json();
-        },
-      },
+      dataSource,
     },
   },
 };
@@ -330,6 +343,7 @@ ws.onmessage = (event) => {
 import '@toolbox-web/grid-react/features/server-side';
 import { DataGrid, useGrid } from '@toolbox-web/grid-react';
 import type { RowTransaction } from '@toolbox-web/grid';
+import type { GetRowsParams, ServerSideDataSource } from '@toolbox-web/grid/plugins/server-side';
 import { useEffect } from 'react';
 
 interface Employee {
@@ -338,8 +352,8 @@ interface Employee {
   status: string;
 }
 
-const dataSource = {
-  async getRows(params) {
+const dataSource: ServerSideDataSource<Employee> = {
+  async getRows(params: GetRowsParams) {
     const res = await fetch(`/api/employees?start=${params.startNode}&end=${params.endNode}`);
     return res.json();
   },
@@ -386,6 +400,7 @@ function LiveGrid() {
 import '@toolbox-web/grid-vue/features/server-side';
 import { TbwGrid, TbwGridColumn, useGrid } from '@toolbox-web/grid-vue';
 import type { RowTransaction } from '@toolbox-web/grid';
+import type { GetRowsParams, ServerSideDataSource } from '@toolbox-web/grid/plugins/server-side';
 import { watch, onUnmounted } from 'vue';
 
 interface Employee {
@@ -394,14 +409,16 @@ interface Employee {
   status: string;
 }
 
+const dataSource: ServerSideDataSource<Employee> = {
+  async getRows(params: GetRowsParams) {
+    const res = await fetch(`/api/employees?start=${params.startNode}&end=${params.endNode}`);
+    return res.json();
+  },
+};
+
 const serverSideConfig = {
   pageSize: 50,
-  dataSource: {
-    async getRows(params) {
-      const res = await fetch(`/api/employees?start=${params.startNode}&end=${params.endNode}`);
-      return res.json();
-    },
-  },
+  dataSource,
 };
 
 const { gridElement, isReady } = useGrid<Employee>();
@@ -440,6 +457,7 @@ import '@toolbox-web/grid-angular/features/server-side';
 import { Component, effect, OnDestroy } from '@angular/core';
 import { Grid, injectGrid } from '@toolbox-web/grid-angular';
 import type { ColumnConfig, RowTransaction } from '@toolbox-web/grid';
+import type { GetRowsParams, ServerSideDataSource } from '@toolbox-web/grid/plugins/server-side';
 
 interface Employee {
   id: string;
@@ -466,14 +484,16 @@ export class LiveGridComponent implements OnDestroy {
     { field: 'status', header: 'Status' },
   ];
 
+  dataSource: ServerSideDataSource<Employee> = {
+    async getRows(params: GetRowsParams) {
+      const res = await fetch(`/api/employees?start=${params.startNode}&end=${params.endNode}`);
+      return res.json();
+    },
+  };
+
   serverSideConfig = {
     pageSize: 50,
-    dataSource: {
-      async getRows(params: any) {
-        const res = await fetch(`/api/employees?start=${params.startNode}&end=${params.endNode}`);
-        return res.json();
-      },
-    },
+    dataSource: this.dataSource,
   };
 
   private ws: WebSocket | null = null;
@@ -597,7 +617,9 @@ flowchart TB
 When composing with Tree, Row Grouping, or Master-Detail, implement `getChildRows()` on the data source. The `context.source` discriminator tells you which plugin is requesting children:
 
 ```typescript
-async getChildRows(params) {
+import type { GetChildRowsParams, GetChildRowsResult } from '@toolbox-web/grid/plugins/server-side';
+
+async getChildRows(params: GetChildRowsParams): Promise<GetChildRowsResult> {
   const { source } = params.context;
 
   if (source === 'tree') {
