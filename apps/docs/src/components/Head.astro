@@ -41,6 +41,70 @@ import Default from '@astrojs/starlight/components/Head.astro';
 <meta property="twitter:card" content="summary_large_image" />
 <meta property="twitter:image" content="https://toolboxjs.com/grid_logo.png" />
 
+<!-- Heading anchor links: copy URL to clipboard on click instead of just navigating -->
+<script is:inline>
+(function() {
+  function setup() {
+    document.addEventListener('click', function(e) {
+      var link = e.target.closest('.sl-anchor-link');
+      if (!link) return;
+      e.preventDefault();
+      var url = link.href || (location.origin + location.pathname + link.getAttribute('href'));
+      // Update the URL hash so it's visible in the address bar
+      history.replaceState(null, '', link.getAttribute('href'));
+      var icon = link.querySelector('.sl-anchor-icon');
+      function flash(state) {
+        if (!icon) return;
+        icon.dataset.copied = state;
+        setTimeout(function() { delete icon.dataset.copied; }, 1500);
+      }
+      // Copy to clipboard. writeText() requires a secure context and transient
+      // user activation (which we have inside this click handler). It can still
+      // reject if the page is in an iframe without `clipboard-write` permission
+      // or if navigator.clipboard is unavailable (insecure context, very old browser).
+      if (!navigator.clipboard || !navigator.clipboard.writeText) {
+        flash('failed');
+        return;
+      }
+      navigator.clipboard.writeText(url).then(
+        function() { flash('true'); },
+        function() { flash('failed'); }
+      );
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setup);
+  else setup();
+})();
+</script>
+<style is:global>
+  .sl-anchor-icon[data-copied]::after {
+    content: 'Copied!';
+    position: absolute;
+    top: -1.8em;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.7rem;
+    background: var(--sl-color-gray-5, #444);
+    color: var(--sl-color-text, #fff);
+    padding: 0.15em 0.5em;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+    animation: sl-copied-fade 1.5s ease-out forwards;
+  }
+  .sl-anchor-icon[data-copied='failed']::after {
+    content: 'Copy failed';
+    background: var(--sl-color-red, #b91c1c);
+  }
+  .sl-anchor-icon {
+    position: relative;
+  }
+  @keyframes sl-copied-fade {
+    0%, 70% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+</style>
+
 <!-- Sidebar framework icons — injected via script since Starlight has no icon prop on groups -->
 <script is:inline>
 (function() {
