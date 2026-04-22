@@ -1029,17 +1029,6 @@ export interface ColumnConfig<TRow = any> extends BaseColumnConfig<TRow, any> {
   /** Prevent this column from being hidden programmatically */
   lockVisible?: boolean;
   /**
-   * Prevent this column from being reordered by the user. When `true`, the column
-   * cannot be dragged in the header row or rearranged via the visibility panel.
-   * Programmatic reordering (e.g. `setColumnOrder()`) is not affected.
-   *
-   * Equivalent to setting `meta.lockPosition: true` (kept for backward compatibility);
-   * the top-level property takes precedence.
-   *
-   * @default false
-   */
-  lockPosition?: boolean;
-  /**
    * Dynamic CSS class(es) for cells in this column.
    * Called for each cell during rendering. Return class names to add to the cell element.
    *

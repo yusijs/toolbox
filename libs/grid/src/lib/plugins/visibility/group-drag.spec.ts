@@ -85,8 +85,15 @@ describe('VisibilityPlugin group drag-and-drop', async () => {
         if (PluginClass === ReorderPlugin) return reorderPlugin;
         return null;
       },
-      query: <T>(type: string): T[] => {
+      query: <T>(type: string, ctx?: any): T[] => {
         if (type === 'getColumnGrouping') return [makeGroupInfo()] as T[];
+        if (type === 'canMoveColumn') {
+          const col = ctx ?? {};
+          if (col.lockPosition === true) return [false] as T[];
+          const meta = col.meta ?? {};
+          if (meta.lockPosition === true || meta.suppressMovable === true) return [false] as T[];
+          return [true] as T[];
+        }
         return [];
       },
       queryPlugins: () => [],

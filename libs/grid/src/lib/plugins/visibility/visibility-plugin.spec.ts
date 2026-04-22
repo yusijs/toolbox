@@ -13,6 +13,11 @@ function createGridMock(columns: any[] = []) {
   const expandedSections: string[] = [];
   let toolPanelOpen = false;
 
+  // Track whether the reorder plugin is "present" so the query mock can answer
+  // `canMoveColumn` the way the real ReorderPlugin would.
+  const getPluginByName = vi.fn(() => undefined as unknown);
+  const reorderPresent = () => !!getPluginByName('reorder');
+
   const allColumnsProvider = () =>
     columns.map((c: any) => ({
       field: c.field,
@@ -33,9 +38,22 @@ function createGridMock(columns: any[] = []) {
     gridConfig: {},
     effectiveConfig: {},
     getPlugin: vi.fn(() => undefined),
-    getPluginByName: vi.fn(() => undefined),
+    getPluginByName,
     getPluginState: vi.fn(() => null),
-    query: vi.fn(() => []),
+    // Simulate the plugin query system. When ReorderPlugin is "present" (via
+    // getPluginByName mock), answer `canMoveColumn` the way ReorderPlugin would:
+    // honoring top-level `lockPosition`, legacy `meta.lockPosition`, and
+    // `meta.suppressMovable`.
+    query: vi.fn((type: string, ctx?: any) => {
+      if (type === 'canMoveColumn' && reorderPresent()) {
+        const col = ctx ?? {};
+        if (col.lockPosition === true) return [false];
+        const meta = col.meta ?? {};
+        if (meta.lockPosition === true || meta.suppressMovable === true) return [false];
+        return [true];
+      }
+      return [];
+    }),
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(() => true),

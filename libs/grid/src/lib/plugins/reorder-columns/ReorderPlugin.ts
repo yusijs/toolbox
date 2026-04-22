@@ -10,11 +10,13 @@
 
 import { GridClasses } from '../../core/constants';
 import { ensureCellVisible } from '../../core/internal/keyboard';
-import { BaseGridPlugin } from '../../core/plugin/base-plugin';
+import { BaseGridPlugin, type PluginManifest, type PluginQuery } from '../../core/plugin/base-plugin';
 import type { ColumnConfig, GridHost } from '../../core/types';
 import { canMoveColumn, moveColumn } from './column-drag';
 import styles from './reorder.css?inline';
 import type { ColumnMoveDetail, ReorderConfig } from './types';
+
+const QUERY_CAN_MOVE_COLUMN = 'canMoveColumn';
 
 /**
  * Column Reorder Plugin for tbw-grid
@@ -86,6 +88,28 @@ export class ReorderPlugin extends BaseGridPlugin<ReorderConfig> {
   /** @internal */
   override readonly styles = styles;
 
+  /**
+   * Plugin manifest - declares handled queries.
+   * @internal
+   */
+  static override readonly manifest: PluginManifest = {
+    queries: [
+      {
+        type: QUERY_CAN_MOVE_COLUMN,
+        description: 'Authoritative check for whether a column may be reordered (honors lockPosition).',
+      },
+    ],
+  };
+
+  /** @internal */
+  override handleQuery(query: PluginQuery): unknown {
+    if (query.type === QUERY_CAN_MOVE_COLUMN) {
+      const column = query.context as ColumnConfig | undefined;
+      return column ? canMoveColumn(column) : undefined;
+    }
+    return undefined;
+  }
+
   /** @internal */
   protected override get defaultConfig(): Partial<ReorderConfig> {
     return {
@@ -134,11 +158,15 @@ export class ReorderPlugin extends BaseGridPlugin<ReorderConfig> {
 
   /**
    * Check if a column can be moved, considering both column config and plugin queries.
+   *
+   * The local `canMoveColumn(column)` check (lockPosition / suppressMovable) runs first;
+   * cross-plugin vetoes (e.g. PinnedColumnsPlugin blocking sticky columns) are then
+   * collected via the `canMoveColumn` query. Other plugins (e.g. VisibilityPlugin) get
+   * the same answer by querying — ReorderPlugin's `handleQuery` returns the local check.
    */
   private canMoveColumnWithPlugins(column: ColumnConfig | undefined): boolean {
     if (!column || !canMoveColumn(column)) return false;
-    // Query plugins that respond to 'canMoveColumn' (e.g., PinnedColumnsPlugin)
-    const responses = this.grid.query<boolean>('canMoveColumn', column);
+    const responses = this.grid.query<boolean>(QUERY_CAN_MOVE_COLUMN, column);
     return !responses.includes(false);
   }
 

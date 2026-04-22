@@ -31,6 +31,7 @@ type ColumnEntry = {
   header: string;
   visible: boolean;
   lockVisible?: boolean;
+  /** Forwarded to the `canMoveColumn` query; not consulted directly. */
   lockPosition?: boolean;
   utility?: boolean;
 };
@@ -45,18 +46,6 @@ export interface ColumnReorderRequestDetail {
   fromIndex: number;
   /** The target index (after move) */
   toIndex: number;
-}
-
-/**
- * Check if a column can be moved (respects lockPosition/suppressMovable).
- * Honors both the top-level `lockPosition` (preferred) and legacy
- * `meta.lockPosition` / `meta.suppressMovable`.
- * Inlined to avoid importing from reorder plugin.
- */
-function canMoveColumn(column: ColumnConfig): boolean {
-  if (column.lockPosition === true) return false;
-  const meta = column.meta ?? {};
-  return meta.lockPosition !== true && meta.suppressMovable !== true;
 }
 
 /**
@@ -466,6 +455,19 @@ export class VisibilityPlugin extends BaseGridPlugin<VisibilityConfig> {
   }
 
   /**
+   * Ask the plugin system whether a column may be reordered.
+   *
+   * Delegates to the `canMoveColumn` query handled by ReorderPlugin (authoritative
+   * `lockPosition` check) and any plugin that vetoes moves (e.g. PinnedColumnsPlugin
+   * blocking sticky columns). Returns `false` when no plugin answers, which keeps the
+   * panel non-draggable when reorder is absent.
+   */
+  private canMoveColumn(column: ColumnConfig): boolean {
+    const responses = this.grid.query<boolean>('canMoveColumn', column);
+    return responses.length > 0 && !responses.includes(false);
+  }
+
+  /**
    * Build the column toggle checkboxes.
    * When GroupingColumnsPlugin is present, renders columns under collapsible group headers.
    * Groups that are fragmented (same group split across non-contiguous positions) are
@@ -666,7 +668,7 @@ export class VisibilityPlugin extends BaseGridPlugin<VisibilityConfig> {
     row.setAttribute('data-index', String(index));
 
     // Add drag handle if reorder is enabled
-    if (reorderEnabled && canMoveColumn(col)) {
+    if (reorderEnabled && this.canMoveColumn(col)) {
       row.draggable = true;
       row.classList.add('reorderable');
       this.setupDragListeners(row, col.field, index, columnList);
@@ -692,7 +694,7 @@ export class VisibilityPlugin extends BaseGridPlugin<VisibilityConfig> {
     labelWrapper.appendChild(text);
 
     // Add drag handle icon if reorderable
-    if (reorderEnabled && canMoveColumn(col)) {
+    if (reorderEnabled && this.canMoveColumn(col)) {
       const handle = document.createElement('span');
       handle.className = 'tbw-visibility-handle';
       this.setIcon(handle, 'dragHandle');

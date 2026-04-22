@@ -920,7 +920,7 @@ export class GridAdapter implements FrameworkAdapter {
     const gridElement = element.closest('tbw-grid') as HTMLElement | null;
 
     return (container: HTMLElement) => {
-      const ctx: ToolPanelContext = { grid: gridElement ?? container };
+      const ctx: ToolPanelContext = { gridElement: gridElement ?? container };
       const vnodes = renderFn(ctx);
       if (!vnodes || vnodes.length === 0) return;
 

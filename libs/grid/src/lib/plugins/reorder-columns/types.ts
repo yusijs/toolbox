@@ -65,6 +65,19 @@ export interface ColumnMoveDetail {
 
 // Module Augmentation - Register plugin name for type-safe getPluginByName()
 declare module '../../core/types' {
+  interface BaseColumnConfig<TRow, TValue> {
+    /**
+     * Prevent this column from being reordered by the user. When `true`, the column
+     * cannot be dragged in the header row or rearranged via the visibility panel.
+     * Programmatic reordering (e.g. `setColumnOrder()`) is not affected.
+     *
+     * Requires ReorderPlugin (or VisibilityPlugin for the panel-drag case).
+     *
+     * @default false
+     */
+    lockPosition?: boolean;
+  }
+
   interface DataGridEventMap {
     /** Fired when a column is reordered via drag-and-drop (cancelable). Call `preventDefault()` to reject the move. @group Column Reorder Events */
     'column-move': ColumnMoveDetail;
