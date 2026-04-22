@@ -73,6 +73,7 @@ related: [grid-plugins, grid-features, data-flow-traces]
 - TENSION: \_baseColumns must be tracked separately from processed columns (plugins reorder/transform; need original to restore hidden)
 - TENSION: \_\_rowRenderEpoch forces full row rebuild on column changes (avoids stale cell reuse) but adds cost when only data changed
 - TENSION: two sources of sort — core sort (grid-based) vs plugin sort (tree); core sort re-applied before plugin processRows
+- DECIDED (Apr 2026): `#applyColumnState` width-only fast path must also check for sort entries in the incoming state. Plugins (e.g., MultiSortPlugin) null `_sortState` after restoring their own sort model, making `_sortState` before/after comparison blind to plugin-level sort changes. Without this check the fast path skips `#setup()` → `processRows()` never runs → sort icons render but data stays unsorted.
 
 ## dom-structure (shadow DOM tree)
 

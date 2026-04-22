@@ -680,6 +680,28 @@ describe('MultiSortPlugin', () => {
 
       expect(plugin.getSortModel()).toEqual([{ field: 'name', direction: 'desc' }]);
     });
+
+    it('should broadcast a single batched sort-change event after applying column state', async () => {
+      const plugin = new MultiSortPlugin();
+      const grid = createGridMock([], sortableColumns);
+      plugin.attach(grid as any);
+
+      plugin.applyColumnState('name', { sort: { direction: 'asc', priority: 0 } } as any);
+      plugin.applyColumnState('age', { sort: { direction: 'desc', priority: 1 } } as any);
+
+      // Broadcast is deferred to microtask to batch per-column calls
+      await Promise.resolve();
+
+      const sortChangeCalls = (grid.dispatchEvent as any).mock.calls.filter(([e]: [Event]) => e.type === 'sort-change');
+      // Exactly ONE event for the whole batch — guards the #pendingStateBroadcast invariant.
+      expect(sortChangeCalls).toHaveLength(1);
+      expect(sortChangeCalls[0][0].detail).toEqual({
+        sortModel: [
+          { field: 'name', direction: 'asc' },
+          { field: 'age', direction: 'desc' },
+        ],
+      });
+    });
   });
 
   describe('detach', () => {

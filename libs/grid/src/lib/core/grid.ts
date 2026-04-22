@@ -3690,6 +3690,9 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
     // restoring its own model). The core _sortState comparison in
     // isWidthOnlyChange cannot detect plugin-level sort changes, so always
     // take the structural path to ensure processRows re-sorts the data.
+    // (Sort *removal* — going from sorted → no sort entries — is handled
+    // by the sort-owning plugin via `requestRender()` after it clears its
+    // model; core stays out of the plugin's sort lifecycle.)
     const hasPluginSort = state.columns.some((c) => c.sort !== undefined);
 
     // Detect if only widths changed (fast path: skip full row rebuild)

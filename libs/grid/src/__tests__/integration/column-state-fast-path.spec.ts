@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import '../../lib/core/grid';
+import { MultiSortPlugin } from '../../lib/plugins/multi-sort/MultiSortPlugin';
 
 function nextFrame() {
   return new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -161,5 +162,83 @@ describe('columnState width-only fast path', () => {
 
     const idCol = grid._visibleColumns.find((c: any) => c.field === 'id');
     expect(idCol.width).toBe(250);
+  }, 20000);
+
+  it('applying state with sort entries restores plugin sort and re-sorts rows', async () => {
+    const grid: any = document.createElement('tbw-grid');
+    document.body.appendChild(grid);
+    grid.gridConfig = {
+      columns: [
+        { field: 'id', header: 'ID', width: 80, sortable: true },
+        { field: 'name', header: 'Name', width: 120, sortable: true },
+      ],
+      fitMode: 'fixed',
+      plugins: [new MultiSortPlugin()],
+    };
+    grid.rows = [
+      { id: 2, name: 'Bob' },
+      { id: 1, name: 'Alice' },
+      { id: 3, name: 'Charlie' },
+    ];
+    await waitUpgrade(grid);
+
+    // Apply state that asks for ascending sort on `id`.
+    const state = grid.getColumnState();
+    state.columns[0].sort = { direction: 'asc', priority: 0 };
+    grid.applyColumnState(state);
+    await nextFrame();
+
+    // Behavioral assertion: processed rows are in ascending id order.
+    // `_rows` is the output of processRows() — the data path MultiSortPlugin
+    // sorts. If the fast path skips processRows when it shouldn't, this array
+    // stays in input order [2, 1, 3].
+    const visibleIds = grid._rows.map((r: any) => r.id);
+    expect(visibleIds).toEqual([1, 2, 3]);
+  }, 20000);
+
+  it('applying state that clears sort empties the plugin model and broadcasts the change', async () => {
+    const grid: any = document.createElement('tbw-grid');
+    document.body.appendChild(grid);
+    const sortPlugin = new MultiSortPlugin();
+    grid.gridConfig = {
+      columns: [
+        { field: 'id', header: 'ID', width: 80, sortable: true },
+        { field: 'name', header: 'Name', width: 120, sortable: true },
+      ],
+      fitMode: 'fixed',
+      plugins: [sortPlugin],
+    };
+    grid.rows = [
+      { id: 2, name: 'Bob' },
+      { id: 1, name: 'Alice' },
+      { id: 3, name: 'Charlie' },
+    ];
+    await waitUpgrade(grid);
+
+    // First apply a sort — plugin model becomes non-empty.
+    const sortedState = grid.getColumnState();
+    sortedState.columns[0].sort = { direction: 'asc', priority: 0 };
+    grid.applyColumnState(sortedState);
+    await nextFrame();
+    expect(sortPlugin.sortModel.length).toBe(1);
+
+    // Listen for the sort-change broadcast that fires after sort clears.
+    const sortChangeEvents: any[] = [];
+    grid.addEventListener('sort-change', (e: any) => sortChangeEvents.push(e.detail));
+
+    // Apply state with no sort entries — sort must clear.
+    const clearedState = grid.getColumnState();
+    clearedState.columns.forEach((c: any) => delete c.sort);
+    grid.applyColumnState(clearedState);
+    await nextFrame();
+
+    // Behavioral assertions that this PR's fix guarantees:
+    //  1. The plugin's sort model is now empty.
+    //  2. Exactly one batched sort-change event fired with the empty model
+    //     (proves `requestRender()` path ran: the plugin's microtask both
+    //     broadcasts and requests a render — they're emitted together).
+    expect(sortPlugin.sortModel).toEqual([]);
+    expect(sortChangeEvents).toHaveLength(1);
+    expect(sortChangeEvents[0].sortModel).toEqual([]);
   }, 20000);
 });

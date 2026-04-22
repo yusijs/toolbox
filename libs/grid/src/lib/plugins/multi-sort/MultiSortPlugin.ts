@@ -105,6 +105,11 @@ export class MultiSortPlugin extends BaseGridPlugin<MultiSortConfig> {
    *  the edited row from jumping to a new sorted position mid-edit. Row data
    *  mutations are still visible because the array holds shared object refs. */
   private cachedSortResult: unknown[] | null = null;
+  /** Guards deferred sort-change broadcast during applyColumnState batch. */
+  #pendingStateBroadcast = false;
+  /** Snapshot of sortModel taken at the start of an applyColumnState batch,
+   *  used by the deferred broadcast to skip when the model didn't change. */
+  #preBatchSortModel: SortModel[] = [];
 
   /** Typed internal grid accessor. */
   get #internalGrid(): GridHost {
@@ -362,32 +367,63 @@ export class MultiSortPlugin extends BaseGridPlugin<MultiSortConfig> {
    * @internal
    */
   override applyColumnState(field: string, state: ColumnState): void {
-    // Only process if the column has sort state
+    // Snapshot model before mutation so the microtask can skip a no-op
+    // broadcast/render when nothing actually changed.
+    if (!this.#pendingStateBroadcast) {
+      this.#preBatchSortModel = [...this.sortModel];
+    }
+
     if (!state.sort) {
       // Remove this field from sortModel if it exists
       this.sortModel = this.sortModel.filter((s) => s.field !== field);
-      return;
-    }
-
-    // Find existing entry or add new one
-    const existingIndex = this.sortModel.findIndex((s) => s.field === field);
-    const newEntry: SortModel = {
-      field,
-      direction: state.sort.direction,
-    };
-
-    if (existingIndex !== -1) {
-      // Update existing entry
-      this.sortModel[existingIndex] = newEntry;
     } else {
-      // Add at the correct priority position
-      this.sortModel.splice(state.sort.priority, 0, newEntry);
+      // Find existing entry or add new one
+      const existingIndex = this.sortModel.findIndex((s) => s.field === field);
+      const newEntry: SortModel = {
+        field,
+        direction: state.sort.direction,
+      };
+
+      if (existingIndex !== -1) {
+        // Update existing entry
+        this.sortModel[existingIndex] = newEntry;
+      } else {
+        // Add at the correct priority position
+        this.sortModel.splice(state.sort.priority, 0, newEntry);
+      }
     }
 
     // Clear core sort state — this plugin exclusively handles sorting via
     // processRows. The core _sortState is set by ConfigManager.applyState()
     // before plugins run; null it so reapplyCoreSort() is a no-op.
     this.clearCoreSortState();
+
+    // Broadcast sort-change + force a row re-render after state restoration.
+    // Both are deferred to a microtask so per-column calls coalesce into one
+    // event and one render. The render handles the "sort cleared" case that
+    // core's width-only fast path cannot detect (core only inspects the
+    // *incoming* state, not what the plugin's model became). Skip entirely
+    // when the model is unchanged so unrelated state restores stay cheap.
+    if (!this.#pendingStateBroadcast) {
+      this.#pendingStateBroadcast = true;
+      queueMicrotask(() => {
+        this.#pendingStateBroadcast = false;
+        const prev = this.#preBatchSortModel;
+        this.#preBatchSortModel = [];
+        if (sortModelEquals(prev, this.sortModel)) return;
+        this.broadcast('sort-change', { sortModel: [...this.sortModel] });
+        this.requestRender();
+      });
+    }
   }
   // #endregion
+}
+
+/** Shallow equality for two sort models (order-sensitive). */
+function sortModelEquals(a: SortModel[], b: SortModel[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i].field !== b[i].field || a[i].direction !== b[i].direction) return false;
+  }
+  return true;
 }
