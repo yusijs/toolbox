@@ -336,7 +336,7 @@ async function measureColumnResize(page: Page): Promise<number> {
         wide = !wide;
         await raf();
         const start = performance.now();
-        grid.columnState = state;
+        grid.applyColumnState(state);
         await raf();
         samples.push(performance.now() - start);
         await new Promise(r => setTimeout(r, 30));

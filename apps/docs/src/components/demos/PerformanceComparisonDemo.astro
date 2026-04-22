@@ -354,7 +354,7 @@ import '@toolbox-web/grid/features/filtering';
           if (state?.columns?.[0]) {
             state.columns[0].width = wide ? 200 : 80;
             wide = !wide;
-            grid.columnState = state;
+            grid.applyColumnState(state);
           }
         }),
       );

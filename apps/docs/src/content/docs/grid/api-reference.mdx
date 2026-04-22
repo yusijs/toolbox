@@ -545,7 +545,7 @@ localStorage.setItem('gridState', JSON.stringify(state));
 // Restore column state
 const saved = localStorage.getItem('gridState');
 if (saved) {
-  grid.columnState = JSON.parse(saved);
+  grid.applyColumnState(JSON.parse(saved));
 }
 
 // Reset to initial configuration

@@ -237,18 +237,30 @@ export interface PublicGrid<T = any> {
    */
   getColumnState?(): GridColumnState;
   /**
-   * Set/restore the column state.
-   * Can be set before or after grid initialization.
+   * Read the current column state. Property-style accessor that mirrors
+   * {@link PublicGrid.getColumnState}. To restore state, use
+   * {@link PublicGrid.applyColumnState}.
+   *
+   * @example
+   * ```typescript
+   * const snapshot = grid.columnState;
+   * ```
+   */
+  columnState?: GridColumnState;
+
+  /**
+   * Apply a previously saved column state, restoring column order, widths,
+   * visibility, sort, and any plugin-contributed state. Can be called before
+   * or after grid initialization — pre-init calls are deferred and applied
+   * during setup.
    *
    * @example
    * ```typescript
    * const saved = localStorage.getItem('gridState');
-   * if (saved) {
-   *   grid.columnState = JSON.parse(saved);
-   * }
+   * if (saved) grid.applyColumnState(JSON.parse(saved));
    * ```
    */
-  columnState?: GridColumnState;
+  applyColumnState?(state: GridColumnState | undefined): void;
 
   // Sort API
   /**
@@ -3510,9 +3522,7 @@ export interface HeaderContentDefinition {
  *
  * // Restore on page load
  * const saved = localStorage.getItem('gridState');
- * if (saved) {
- *   grid.columnState = JSON.parse(saved);
- * }
+ * if (saved) grid.applyColumnState(JSON.parse(saved));
  *
  * // Example column state structure
  * const state: GridColumnState = {
@@ -3575,7 +3585,7 @@ export interface ColumnSortState {
  * localStorage.setItem('grid-state', JSON.stringify(state));
  *
  * // Restore state
- * grid.columnState = JSON.parse(localStorage.getItem('grid-state'));
+ * grid.applyColumnState(JSON.parse(localStorage.getItem('grid-state')));
  * ```
  *
  * @see {@link ColumnState} for individual column state
@@ -4086,7 +4096,7 @@ export interface DataGridEventMap<TRow = unknown> {
    *
    * // Restore on load
    * const saved = localStorage.getItem('grid-state');
-   * if (saved) grid.columnState = JSON.parse(saved);
+   * if (saved) grid.applyColumnState(JSON.parse(saved));
    * ```
    *
    * @see {@link GridColumnState}

@@ -48,7 +48,7 @@ describe('columnState width-only fast path', () => {
     // Apply width-only change via columnState
     const state = grid.getColumnState();
     state.columns[0].width = 200;
-    grid.columnState = state;
+    grid.applyColumnState(state);
     await nextFrame();
 
     // Epoch should NOT have been bumped (no full row rebuild)
@@ -77,7 +77,7 @@ describe('columnState width-only fast path', () => {
     // Hide a column via columnState
     const state = grid.getColumnState();
     state.columns[1].visible = false;
-    grid.columnState = state;
+    grid.applyColumnState(state);
     await nextFrame();
 
     // Epoch SHOULD have been bumped (structural change)
@@ -103,7 +103,7 @@ describe('columnState width-only fast path', () => {
     const state = grid.getColumnState();
     state.columns[0].order = 1;
     state.columns[1].order = 0;
-    grid.columnState = state;
+    grid.applyColumnState(state);
     await nextFrame();
 
     // Epoch SHOULD have been bumped (structural change)
@@ -127,7 +127,7 @@ describe('columnState width-only fast path', () => {
     // Apply width change only
     const state = grid.getColumnState();
     state.columns[2].width = 300;
-    grid.columnState = state;
+    grid.applyColumnState(state);
     await nextFrame();
 
     // Columns should still be in same order

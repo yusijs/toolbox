@@ -1441,7 +1441,7 @@ const existing = queryGrid<Employee>('#my-grid');
 | `gridConfig` | `GridConfig` | Full configuration object |
 | `fitMode` | `'stretch' \| 'fixed' \| 'auto'` | Column fit behavior |
 | `loading` | `boolean` | Show loading overlay |
-| `columnState` | `GridColumnState` | Save/restore column state |
+| `columnState` | `GridColumnState` (readonly) | Current column state snapshot — use `applyColumnState()` to restore |
 | `focusedCell` | `{ rowIndex, colIndex, field } \| null` | Currently focused cell (readonly) |
 
 ### Grid Methods
@@ -1451,6 +1451,8 @@ const existing = queryGrid<Employee>('#my-grid');
 | `ready()` | Promise that resolves when grid is fully rendered |
 | `forceLayout()` | Force recalculate layout |
 | `resetColumnState()` | Reset column widths, order, visibility |
+| `getColumnState()` | Returns current column state for persistence |
+| `applyColumnState(state)` | Restore a previously saved column state |
 | `getPluginByName(name)` | Get plugin instance by name string — **preferred** (type-safe, no import needed) |
 | `getPlugin(PluginClass)` | Get plugin instance by class (requires import) |
 | `animateRow(index, type)` | Animate row ('change', 'insert', 'remove') → `Promise<boolean>` |

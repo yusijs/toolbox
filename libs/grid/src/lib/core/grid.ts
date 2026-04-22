@@ -3625,9 +3625,7 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
    *
    * // Later, restore the state
    * const saved = localStorage.getItem('gridState');
-   * if (saved) {
-   *   grid.columnState = JSON.parse(saved);
-   * }
+   * if (saved) grid.applyColumnState(JSON.parse(saved));
    * ```
    */
   getColumnState(): GridColumnState {
@@ -3636,8 +3634,19 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
   }
 
   /**
-   * Set the column state, restoring all saved preferences.
-   * Can be set before or after grid initialization.
+   * Get the current column state.
+   * Alias for `getColumnState()` for property-style read access.
+   * @group State Persistence
+   */
+  get columnState(): GridColumnState | undefined {
+    return this.getColumnState();
+  }
+
+  /**
+   * Apply a previously saved column state, restoring column order, widths,
+   * visibility, sort, and any plugin-contributed state. Can be called
+   * before or after grid initialization — pre-init calls are deferred and
+   * applied during setup.
    *
    * @group State Persistence
    * @fires column-state-change - Emitted after state is applied (if grid is initialized)
@@ -3646,12 +3655,10 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
    * // Restore saved state on page load
    * const grid = queryGrid('tbw-grid');
    * const saved = localStorage.getItem('myGridState');
-   * if (saved) {
-   *   grid.columnState = JSON.parse(saved);
-   * }
+   * if (saved) grid.applyColumnState(JSON.parse(saved));
    * ```
    */
-  set columnState(state: GridColumnState | undefined) {
+  applyColumnState(state: GridColumnState | undefined): void {
     if (!state) return;
 
     // Store for use after initialization if called before ready
@@ -3662,31 +3669,6 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
     if (this.#initialized) {
       this.#applyColumnState(state);
     }
-  }
-
-  /**
-   * Get the current column state.
-   * Alias for `getColumnState()` for property-style access.
-   * @group State Persistence
-   */
-  get columnState(): GridColumnState | undefined {
-    return this.getColumnState();
-  }
-
-  /**
-   * Apply a previously saved column state. Equivalent to assigning the
-   * `columnState` setter — provided as a method for fluent / imperative
-   * call-sites and to mirror the documented public API.
-   *
-   * @group State Persistence
-   * @example
-   * ```typescript
-   * const saved = localStorage.getItem('myGridState');
-   * if (saved) grid.applyColumnState(JSON.parse(saved));
-   * ```
-   */
-  applyColumnState(state: GridColumnState | undefined): void {
-    this.columnState = state;
   }
 
   /**
