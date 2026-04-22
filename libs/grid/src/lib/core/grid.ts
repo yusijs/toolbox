@@ -3566,7 +3566,6 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
     header: string;
     visible: boolean;
     lockVisible?: boolean;
-    lockPosition?: boolean;
     utility?: boolean;
   }> {
     return this.#configManager.getAllColumns();
@@ -3686,8 +3685,15 @@ export class DataGridElement<T = any> extends HTMLElement implements InternalGri
     const plugins = (this.#pluginManager?.getAll() ?? []) as BaseGridPlugin[];
     this.#configManager.applyState(state, plugins);
 
+    // If the applied state contains sort entries, plugins may have updated
+    // their sort model (e.g., MultiSortPlugin clears _sortState after
+    // restoring its own model). The core _sortState comparison in
+    // isWidthOnlyChange cannot detect plugin-level sort changes, so always
+    // take the structural path to ensure processRows re-sorts the data.
+    const hasPluginSort = state.columns.some((c) => c.sort !== undefined);
+
     // Detect if only widths changed (fast path: skip full row rebuild)
-    if (this.#isWidthOnlyChange(prevColumns, prevSort)) {
+    if (!hasPluginSort && this.#isWidthOnlyChange(prevColumns, prevSort)) {
       // Invalidate visible columns cache (configManager bypasses grid._columns setter)
       this.#visibleColumnsCache = undefined;
       // Update CSS grid-template-columns — O(m) column count

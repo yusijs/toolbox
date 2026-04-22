@@ -768,7 +768,6 @@ export class ConfigManager<T = unknown> {
     header: string;
     visible: boolean;
     lockVisible?: boolean;
-    lockPosition?: boolean;
     utility?: boolean;
   }> {
     return this.columns.map((c) => ({
@@ -776,7 +775,6 @@ export class ConfigManager<T = unknown> {
       header: c.header || c.field,
       visible: !c.hidden,
       lockVisible: c.lockVisible,
-      lockPosition: c.lockPosition,
       utility: c.utility === true,
     }));
   }

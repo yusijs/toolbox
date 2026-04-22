@@ -75,6 +75,9 @@ describe('VisibilityPlugin group drag-and-drop', async () => {
       _hostElement: el,
       effectiveConfig: { columns: groupedColumns, plugins: [reorderPlugin, visPlugin] },
       gridConfig: {},
+      get columns() {
+        return groupedColumns;
+      },
       getAllColumns: () => makeColumns(currentOrder),
       getColumnOrder: () => [...currentOrder],
       getPluginByName: (name: string) => {

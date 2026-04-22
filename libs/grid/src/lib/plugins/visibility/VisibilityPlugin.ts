@@ -31,8 +31,6 @@ type ColumnEntry = {
   header: string;
   visible: boolean;
   lockVisible?: boolean;
-  /** Forwarded to the `canMoveColumn` query; not consulted directly. */
-  lockPosition?: boolean;
   utility?: boolean;
 };
 
@@ -457,13 +455,16 @@ export class VisibilityPlugin extends BaseGridPlugin<VisibilityConfig> {
   /**
    * Ask the plugin system whether a column may be reordered.
    *
-   * Delegates to the `canMoveColumn` query handled by ReorderPlugin (authoritative
-   * `lockPosition` check) and any plugin that vetoes moves (e.g. PinnedColumnsPlugin
-   * blocking sticky columns). Returns `false` when no plugin answers, which keeps the
-   * panel non-draggable when reorder is absent.
+   * Looks up the real `ColumnConfig` by field (the projection from `getAllColumns()`
+   * intentionally omits plugin-owned flags like `lockPosition`) and forwards it to
+   * the `canMoveColumn` query handled by ReorderPlugin and vetoed by other plugins
+   * (e.g. PinnedColumnsPlugin blocking sticky columns). Returns `false` when no
+   * plugin answers, which keeps the panel non-draggable when reorder is absent.
    */
-  private canMoveColumn(column: ColumnConfig): boolean {
-    const responses = this.grid.query<boolean>('canMoveColumn', column);
+  private canMoveColumn(column: ColumnEntry): boolean {
+    const config = this.grid.columns.find((c) => c.field === column.field);
+    if (!config) return false;
+    const responses = this.grid.query<boolean>('canMoveColumn', config);
     return responses.length > 0 && !responses.includes(false);
   }
 
